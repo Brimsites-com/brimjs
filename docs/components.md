@@ -43,6 +43,7 @@ All of them come from `brimjs/components`.
 | `Field` | An item's picked value: a date, number, choice, switch, link or email |
 | `Setting` | One of the site's settings, edited in Site Settings |
 | `Navbar`, `Footer` | The logo, name and links; you render the markup ([Navigation](./navigation.md)) |
+| `MobileMenu` | Nothing: a menu that opens over the page on phones ([Menu on phones](./navigation.md#menu-on-phones)) |
 | `Seo` | Title, description, share image and the rest of Page Settings ([SEO, pages and feeds](./seo-and-pages.md)) |
 | `Analytics` | Nothing: visitor statistics, once the visitor accepts ([Visitor statistics](./seo-and-pages.md#visitor-statistics)) |
 | `Shared` | Makes everything inside it site-wide |

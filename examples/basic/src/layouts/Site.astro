@@ -1,5 +1,5 @@
 ---
-import { Analytics, Footer, Navbar, Seo, Setting } from "brimjs/components";
+import { Analytics, Footer, MobileMenu, Navbar, Seo, Setting } from "brimjs/components";
 import { getSiteSettings } from "brimjs/content";
 import { siteSettings } from "../site-settings.ts";
 import type { FooterValue, NavbarValue } from "brimjs";
@@ -7,9 +7,11 @@ import type { FooterValue, NavbarValue } from "brimjs";
 interface Props {
   title: string;
   description?: string;
+  /** Also draws the links in a menu that opens over the page. */
+  mobileMenu?: boolean;
 }
 
-const { title, description } = Astro.props;
+const { title, description, mobileMenu = false } = Astro.props;
 // From Site Settings: the owner changes the phone number and the profiles once, for every page.
 const { phone, instagram } = await getSiteSettings(siteSettings);
 const pages = [
@@ -48,6 +50,17 @@ const pages = [
               </li>
             ))}
           </ul>
+          {mobileMenu && (
+            <MobileMenu label="Menu" closeLabel="Close menu">
+              <ul>
+                {items.map((item) => (
+                  <li>
+                    <a href={item.href}>{item.label}</a>
+                  </li>
+                ))}
+              </ul>
+            </MobileMenu>
+          )}
         </nav>
       )}
     </Navbar>

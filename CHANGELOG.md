@@ -3,7 +3,7 @@
 What changed in Brim.js, newest first. Until 1.0, a minor version (0.x) may change the API of components and config
 and says so here under **Changed**; a patch version never does. Database migrations are append-only.
 
-## Unreleased
+## 0.1.80
 
 ### Added
 
@@ -34,9 +34,18 @@ and says so here under **Changed**; a patch version never does. Database migrati
   is scrolled near.
 - **`brim check` warns about `<Image>` without `sizes`** (`image-sizes`, once per file): the browser takes such a
   picture for the page's width and downloads a copy that wide.
+- **`MobileMenu`**: a menu that opens over the whole page from a button, for phones. Brim keeps how it opens and
+  closes (the browser's own popover: Escape, the button, a click outside or following a link closes it, and the page
+  does not scroll behind it); the links inside, their look and the width from which it shows are the site's. A header
+  with a `backdrop-filter` or a `transform` cannot cut it, as it does a `position: fixed` panel. New sites from
+  `create-brim` have one in their header.
 
 ### Changed
 
+- **Brim.js is the public npm package `brimjs`**, and `create-brim` is on npm with it. `create-brim` and `brim init`
+  write `"brimjs": "^<version>"` instead of `npm:@brimsites/brimjs@…`. A site on the private package changes that one
+  line in its `package.json`.
+- **`npx brimjs init` writes the version it came from.** The published command wrote `^0.0.0`.
 - **The server makes copies of the pictures in `public/` with sharp only when asked.** It did so whenever sharp could
   be found; a site behind a CDN that resizes needs neither the package nor the work. A site with no such CDN that
   wants them sets `brim({ media: { sharp: true } })` or `BRIM_MEDIA_SHARP=1` and depends on `sharp` itself

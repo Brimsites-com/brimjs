@@ -34,7 +34,7 @@ describe("what brim check --content takes for a stand-in", () => {
   it("finds the values left from testing or a template", () => {
     expect(placeholderIn("Lorem ipsum dolor sit amet")).toMatch(/lorem ipsum/);
     expect(placeholderIn("office@example.com")).toMatch(/example address/);
-    expect(placeholderIn("admin@codeso.demo")).toMatch(/test address/);
+    expect(placeholderIn("admin@studionord.demo")).toMatch(/test address/);
     expect(placeholderIn("https://wa.me/40000000000")).toMatch(/stand-in number/);
     expect(placeholderIn("+40 700 000 000")).toMatch(/stand-in number/);
     expect(placeholderIn("Preț: TODO")).toMatch(/note left/);
@@ -44,8 +44,8 @@ describe("what brim check --content takes for a stand-in", () => {
     for (const text of [
       "Gresie porțelanată, 60 × 60 cm, cod M2EC",
       "+40 722 518 304",
-      "contact@codeso.ro",
-      "https://www.instagram.com/codeso",
+      "contact@studionord.ro",
+      "https://www.instagram.com/studionord",
       "Anul 2000, 100% lucrat manual",
       "Todo-ul săptămânii",
     ]) {
@@ -73,7 +73,7 @@ describe("brim check --content", () => {
       contentTypes: [category, product, article],
       items,
       nodes: [{ scope: "page:/contact", nodeId: "contact-email", kind: "text", value: { text: "hello@example.com" } }],
-      settings: [{ locale: "", values: { whatsapp: "40000000000", email: "contact@codeso.ro" } }],
+      settings: [{ locale: "", values: { whatsapp: "40000000000", email: "contact@studionord.ro" } }],
       patterns: [
         "/produse/[category]/[slug]",
         "/produse/[slug]",

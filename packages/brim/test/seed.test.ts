@@ -230,6 +230,6 @@ describe("brim seed and brim seed --export", () => {
   it("signs in by itself only to a site on this computer", () => {
     expect(isLocalSite("http://localhost:4321")).toBe(true);
     expect(isLocalSite("http://127.0.0.1:4327")).toBe(true);
-    expect(isLocalSite("https://codeso.ro")).toBe(false);
+    expect(isLocalSite("https://studionord.ro")).toBe(false);
   });
 });

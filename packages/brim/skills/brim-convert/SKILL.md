@@ -74,6 +74,10 @@ Work page by page and build after each one (`astro build` or the dev server): a 
    </Navbar>
    ```
 
+   A menu that opens from a button on phones becomes `<MobileMenu label="Menu" closeLabel="Close menu">…</MobileMenu>`
+   inside that function, with the site's links in it and its CSS on them. Never a `position: fixed` panel of its own: a
+   header with a `backdrop-filter`, `filter` or `transform` cuts it to the header's height.
+
 3. **Texts.** One `Text` per element: `<h1 class="x">Hello</h1>` becomes
    `<Text nodeId="hero-title" as="h1" class="x">Hello</Text>`. Inside a Text keep only words and inline formatting
    (`<br>`, `<strong>`, `<em>`, `<a href>`…, without classes); move links with a class, icons and pictures out of it,

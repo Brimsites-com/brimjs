@@ -85,7 +85,8 @@ function startRepository(target, siteName) {
   const git = (...args) => spawnSync("git", args, { cwd: target, stdio: "ignore" }).status === 0;
   if (git("rev-parse", "--is-inside-work-tree")) return "skipped";
   if (!git("init", "--quiet")) return "skipped";
-  if (git("add", "--all") && git("commit", "--quiet", "--message", `Start ${siteName} with create-brim`)) return "committed";
+  if (git("add", "--all") && git("commit", "--quiet", "--message", `Start ${siteName} with create-brim`))
+    return "committed";
   return "initialised";
 }
 
@@ -141,12 +142,8 @@ async function fillIn(folder, values) {
   }
 }
 
-/** Where brim.js is published: GitHub Packages, for the Brimsites organization. */
-const PACKAGE = "@brimsites/brimjs";
-
 /**
- * A version becomes `npm:@brimsites/brimjs@<version>`, so the site still imports `brimjs`.
- * A path becomes a `file:` dependency, relative to the new site: the package manager copies brimjs into
+ * A version is written as it is. A path becomes a `file:` dependency, relative to the new site: the package manager copies brimjs into
  * the site's node_modules, so the site builds exactly as with a published version. A `link:` would leave
  * brimjs outside the project, where Astro and Vite treat its files as the site's own source and the build
  * breaks. Run the install again after changing brimjs.
@@ -154,8 +151,7 @@ const PACKAGE = "@brimsites/brimjs";
 function brimDependency(value, target) {
   const path = value.startsWith("file:") || value.startsWith("link:") ? value.slice(5) : value;
   const isPath = /^(\.{1,2}\/|\/|~\/)/.test(path) || value.startsWith("file:") || value.startsWith("link:");
-  // brim.js is published privately, as @brimsites/brimjs; a version installs it under its usual name.
-  if (!isPath) return /^[\^~<>=\d*]|^latest$/.test(value) ? `npm:${PACKAGE}@${value}` : value;
+  if (!isPath) return value;
   if (value.startsWith("link:")) console.warn("brimjs is installed with file: instead of link: (see --help).");
   const absolute = resolve(path.replace(/^~(?=\/)/, homedir()));
   return `file:${relative(target, absolute) || "."}`;

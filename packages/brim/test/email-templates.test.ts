@@ -4,26 +4,26 @@ import type { MailMessage } from "../src/mail/mailer.ts";
 
 const email: FormEmail = {
   form: "Comandă produs",
-  site: "codeso.ro",
-  siteUrl: "https://codeso.ro",
-  page: "https://codeso.ro/produse/marazzi-art",
+  site: "studionord.ro",
+  siteUrl: "https://studionord.ro",
+  page: "https://studionord.ro/produse/marazzi-art",
   answers: [
     { label: "Nume", value: "Ana <script>alert(1)</script>" },
     { label: "Mesaj", value: "40 m² & plintă" },
   ],
   replyTo: "ana@example.com",
-  responsesUrl: "https://codeso.ro/admin/edit",
-  responseUrl: "https://codeso.ro/admin/edit?response=r1",
+  responsesUrl: "https://studionord.ro/admin/edit",
+  responseUrl: "https://studionord.ro/admin/edit?response=r1",
   sentAt: new Date("2026-11-20T10:00:00Z"),
 };
 
 const brims: MailMessage = {
-  to: ["owner@codeso.ro"],
-  subject: "New message from Comandă produs on codeso.ro",
+  to: ["owner@studionord.ro"],
+  subject: "New message from Comandă produs on studionord.ro",
   text: "Brim's text",
   html: "<p>Brim's html</p>",
   replyTo: "ana@example.com",
-  fromName: "codeso.ro",
+  fromName: "studionord.ro",
 };
 
 describe("html for emails", () => {

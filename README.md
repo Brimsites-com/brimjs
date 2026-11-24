@@ -27,35 +27,23 @@ export default defineConfig({ integrations: [brim()] });
 
 ## Install
 
-Brim.js is published privately, as `@brimsites/brimjs` on GitHub Packages, for the Brimsites organization. A site
-installs it under its usual name, so its code keeps importing `brimjs`:
+Brim.js is the npm package `brimjs`, and a new site starts with `npm create brim@latest` (`create-brim`). A site
+depends on it under its name:
 
 ```json
-"dependencies": { "brimjs": "npm:@brimsites/brimjs@^0.1.0" }
+"dependencies": { "brimjs": "^0.1.80" }
 ```
 
-The package manager needs to know where `@brimsites` packages live and a GitHub token that can read them
-(`read:packages`). Put both in your user-level `~/.npmrc`, not the project's: pnpm reads the token only from there,
-and a token never belongs in a site's repository.
-
-```ini
-@brimsites:registry=https://npm.pkg.github.com
-//npm.pkg.github.com/:_authToken=${GITHUB_PACKAGES_TOKEN}
-```
-
-and set `GITHUB_PACKAGES_TOKEN` in your shell. `gh auth token` prints one when the GitHub CLI is signed in with
-`read:packages` (`gh auth refresh -s read:packages`). Brimsites installs the package on its own servers with its own token; it is
-never put into a site.
+Versions up to 0.1.79 were published privately as `@brimsites/brimjs`. A site that depends on
+`npm:@brimsites/brimjs@…` changes that to a version of `brimjs`; its imports stay the same.
 
 ## Start a site
 
-From a checkout of this repository:
-
 ```bash
-node packages/create-brim/index.js ../my-site
+npm create brim@latest my-site
 ```
 
-`create-brim` makes an Astro project that depends on `brimjs` (`npm:@brimsites/brimjs@^<version>`): a layout with
+`create-brim` makes an Astro project that depends on `brimjs` (`^<version>`): a layout with
 header and footer, sections in `src/components`, home, about, blog and contact pages, an `article` content type in
 `src/content-types`, theme colors in `src/styles/global.css`, and a `components` page that shows every primitive,
 block and icon. The site is its own project, outside this repository. `--brim ^0.2.0` picks another version.
@@ -1201,6 +1189,17 @@ your markup.
 
 Footer links stay plain `{ label, href }`.
 
+**A menu on phones** is `MobileMenu`: a button, and a panel that opens over the whole page with the links your
+markup puts inside. It is the browser's own popover, so nothing the header does (`backdrop-filter`, `transform`,
+`z-index`) can cut it or put it behind the page; Escape, the button, a click outside and following a link close it.
+Its look, and the width from which it shows, are the site's CSS.
+
+```astro
+<MobileMenu label="Menu" closeLabel="Close menu" class="site-header__menu">
+  <ul>{items.map((item) => <li><a href={item.href}>{item.label}</a></li>)}</ul>
+</MobileMenu>
+```
+
 **A menu built from content.** `from: "<content type>"` on a navbar link makes its sub-links that type's items, and
 on a footer group its links: each item's title, its page and (in the navbar) the first picture it has, in the
 owner's order for an `ordered` type. A category the owner adds, renames or moves is in the menu at once, without
@@ -1859,7 +1858,7 @@ Working:
 
 - Integration, SQLite content store, per-page `private`/`published`, per-language site content.
 - Primitives: `Text` (with the text block's drop cap, quote and oversized options), `RichText`, `Link`,
-  `Navbar`, `Footer`, `Seo`.
+  `Navbar`, `Footer`, `MobileMenu`, `Seo`.
 - `Gallery` and `Carousel`, drawn by the site or plainly by Brim (see "Galleries and carousels"), and `Accordion`.
 - `SocialMedia`, `Form` and `Video` with their content only, their look the site's (see "Social links, forms and
   videos").

@@ -18,6 +18,7 @@ export { default as Blocks } from "./Blocks.astro";
 export { default as Field } from "./Field.astro";
 export { default as Footer } from "./Footer.astro";
 export { default as Link } from "./Link.astro";
+export { default as MobileMenu } from "./MobileMenu.astro";
 export { default as Navbar } from "./Navbar.astro";
 export { default as RichText } from "./RichText.astro";
 export { default as Seo } from "./Seo.astro";

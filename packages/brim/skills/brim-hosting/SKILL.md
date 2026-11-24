@@ -69,9 +69,9 @@ brimsites sites create "My site" --link  # --link remembers the site in .brimsit
 brimsites deploy --wait
 ```
 
-The CLI is installed once on the computer (it is published privately, like `brimjs`, with the same access):
+The CLI is installed once on the computer (it is published privately, on GitHub Packages):
 `npm install -g @brimsites/brimsites`. Keep it out of the site's dependencies: the site's server installs those and
-cannot read the private package, so the deploy would stop.
+cannot read that private package, so the deploy would stop.
 
 Every command takes `--json` and prints one JSON document, so an agent can read the answer. Tokens for CI and remote
 agents are made in the dashboard under **CLI & agents** (or set `BRIMSITES_TOKEN`). Useful next steps:

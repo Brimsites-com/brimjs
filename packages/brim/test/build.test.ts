@@ -241,6 +241,19 @@ describe("static build", () => {
     expect(html).toContain('<a href="/products/tables">Tables</a>');
   });
 
+  it("draws the mobile menu as a popover inside the navbar markup, with its script", () => {
+    const html = page("quote/index.html");
+    const menu = html.slice(html.indexOf('<div class="brim-mobile-menu"'), html.indexOf("</header>"));
+
+    expect(menu).toContain('popovertarget="brim-mobile-menu" aria-label="Menu"');
+    expect(menu).toMatch(/<nav id="brim-mobile-menu" popover[^>]* aria-label="Menu"/);
+    expect(menu).toContain('popovertargetaction="hide" aria-label="Close menu"');
+    expect(menu).toContain('<a href="/contact">Contact</a>');
+    expect(html).toContain("hidePopover");
+    // A page without one gets neither the menu nor its script.
+    expect(page("index.html")).not.toContain("brim-mobile-menu");
+  });
+
   it("leaves no trace of the editor on the public site", () => {
     const html = page("index.html");
 

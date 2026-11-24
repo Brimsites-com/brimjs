@@ -50,7 +50,7 @@ export function rawHtml(trusted: string): Html {
 export interface FormEmail {
   /** The form's title, e.g. "Comandă produs". */
   form: string;
-  /** The site's host, e.g. `codeso.ro`, and its address. */
+  /** The site's host, e.g. `studionord.ro`, and its address. */
   site: string;
   siteUrl: string;
   /** The page it was sent from, when the form is on one (a product's order form says which product). */
@@ -79,7 +79,7 @@ export interface FormEmail {
  */
 export interface AccountEmail {
   kind: "added" | "role" | "reset";
-  /** The site's host, e.g. `cozyhomes.ro`, and its address. */
+  /** The site's host, e.g. `studionord.ro`, and its address. */
   site: string;
   siteUrl: string;
   /** Whose access it is: the email goes to them. */

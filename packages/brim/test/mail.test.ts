@@ -198,12 +198,12 @@ describe("a form message", () => {
     expect(JSON.stringify(body)).not.toContain("localhost");
 
     // The address its host gives it (BRIM_SITE_URL, its own domain) wins.
-    process.env.BRIM_SITE_URL = "https://www.codeso.test/";
+    process.env.BRIM_SITE_URL = "https://www.studionord.test/";
     try {
       serviceCalls = [];
       await sendForm(forms(), order, { server: "http://localhost:43967", forwardedHost: "acme.example" });
-      expect(serviceCalls[0]?.body.subject).toBe("New message from Comandă produs on www.codeso.test");
-      expect(serviceCalls[0]?.body.text).toContain("Sent from: https://www.codeso.test/produse/marazzi-art");
+      expect(serviceCalls[0]?.body.subject).toBe("New message from Comandă produs on www.studionord.test");
+      expect(serviceCalls[0]?.body.text).toContain("Sent from: https://www.studionord.test/produse/marazzi-art");
     } finally {
       delete process.env.BRIM_SITE_URL;
     }

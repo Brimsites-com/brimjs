@@ -85,8 +85,7 @@ export async function init(directory: string, options: InitOptions = {}): Promis
 
   let changed = false;
   if (!manifest.dependencies?.brimjs && !manifest.devDependencies?.brimjs) {
-    // brim.js is published privately, as @brimsites/brimjs; the alias keeps `import … from "brimjs"` working.
-    manifest.dependencies = { ...manifest.dependencies, brimjs: options.brim ?? `npm:@brimsites/brimjs@^${VERSION}` };
+    manifest.dependencies = { ...manifest.dependencies, brimjs: options.brim ?? `^${VERSION}` };
     changed = true;
     result.done.push(`Added brimjs ${manifest.dependencies.brimjs} to package.json.`);
   }

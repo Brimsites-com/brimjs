@@ -30,6 +30,8 @@ This is an Astro site made editable with Brim.js. Read `README.md` for the layou
 - Items the owner puts in order (categories, a team) are a type with `ordered: true`, never an "order" number
   field; a menu or footer group listing them uses `from: "<type>"` in `Navbar`/`Footer`, never a copy of their
   titles and links.
+- The menu on phones is `MobileMenu` (see `SiteHeader.astro`), which opens over the page. Never build one with
+  `position: fixed`: a header with a `backdrop-filter`, `filter` or `transform` cuts it to the header's height.
 - An item's picture is drawn with `<Image bare nodeId="…" item={item} field="…" src="" alt="" class="…" />`, in
   templates and in `Listing` cards alike, never `<img src={mediaUrl(…)}>`: it gets a `srcset` (a copy the size of
   the layout, not the full upload) and the owner replaces it from the page.

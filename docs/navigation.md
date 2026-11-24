@@ -34,6 +34,39 @@ import { Navbar } from "brimjs/components";
 </Navbar>
 ```
 
+## Menu on phones
+
+`MobileMenu` is a menu that opens over the whole page from a button. Brim keeps how it opens and closes; the links inside, their look and the width from which it shows are the site's.
+
+```astro
+---
+import { MobileMenu, Navbar } from "brimjs/components";
+---
+<Navbar nodeId="navbar" items={pages} class="site-header">
+  {({ items }) => (
+    <MobileMenu label="Menu" closeLabel="Close menu" class="site-header__menu">
+      <ul>{items.map((item) => <li><a href={item.href}>{item.label}</a></li>)}</ul>
+    </MobileMenu>
+  )}
+</Navbar>
+
+<style>
+  .site-header__menu { display: none; }
+  @media (max-width: 48rem) { .site-header__menu { display: block; } }
+</style>
+```
+
+It is the browser's own popover, so it is drawn above the page and fills the screen whatever the header around it does. A menu built by hand with `position: fixed` inside a header that has a `backdrop-filter`, `filter` or `transform` is measured from the header instead, and is cut to its height. Escape, the button, a click outside and following one of its links close it, and the page does not scroll behind it.
+
+| Prop or slot | What it is |
+| --- | --- |
+| `label` | What the button and the menu are called for a screen reader, in the page's language |
+| `closeLabel` | The same for the button that closes it |
+| `id` | Needed when a page has more than one (default `brim-mobile-menu`) |
+| `toggle`, `close` slots | Your own icons in the two buttons |
+
+Style its parts with `:global()`: `.brim-mobile-menu__toggle`, `.brim-mobile-menu__close`, and `.brim-mobile-menu__panel`, which is `:popover-open` while it shows. To keep the header in view, start the panel under it (`inset-block-start: var(--header-height)`); its button then stays there to close it, and the close button can be hidden.
+
 ## Footer
 
 ```astro

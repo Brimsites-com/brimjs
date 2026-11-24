@@ -491,8 +491,8 @@ describe("brim check: contact details in the code", () => {
   it("warns about real contacts, and leaves alone examples shown to visitors and links built from settings", () => {
     const report = check({
       "src/components/Footer.astro": [
-        '<a href="tel:+40728432882">Sună</a>',
-        '<a href="https://www.instagram.com/madalinaplugaru.ro/">Instagram</a>',
+        '<a href="tel:+40722518304">Sună</a>',
+        '<a href="https://www.instagram.com/studionord/">Instagram</a>',
       ].join("\n"),
       "src/data/form.ts": [
         "export const fields = [",

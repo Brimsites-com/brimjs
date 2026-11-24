@@ -1,0 +1,52 @@
+/* How a mobile menu opens over the page. What is inside it, and from which width it shows, is the site's CSS. */
+/* In the `brim` layer: any CSS of the site wins over it, whatever its selectors. */
+@layer brim {
+  .brim-mobile-menu__toggle,
+  .brim-mobile-menu__close {
+    display: grid;
+    place-items: center;
+    width: 2.75rem;
+    height: 2.75rem;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: inherit;
+    cursor: pointer;
+  }
+
+  .brim-mobile-menu__close {
+    margin-inline-start: auto;
+  }
+
+  @supports selector(:popover-open) {
+    .brim-mobile-menu__panel {
+      inset: 0;
+      width: auto;
+      height: auto;
+      margin: 0;
+      padding: 1rem;
+      border: 0;
+      background: var(--brim-theme-background, Canvas);
+      color: inherit;
+      overflow-y: auto;
+      overscroll-behavior: contain;
+    }
+
+    /* Important, so a `display` the site gives the open panel does not show the closed one. */
+    .brim-mobile-menu__panel:not(:popover-open) {
+      display: none !important;
+    }
+
+    html:has(.brim-mobile-menu__panel:popover-open) {
+      overflow: hidden;
+    }
+  }
+
+  /* A browser without popovers shows the links in place, with nothing to open. */
+  @supports not selector(:popover-open) {
+    .brim-mobile-menu__toggle,
+    .brim-mobile-menu__close {
+      display: none;
+    }
+  }
+}

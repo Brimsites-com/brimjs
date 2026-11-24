@@ -215,7 +215,7 @@ describe("the site's account emails", () => {
         seen.push(email);
         return {
           subject: `Bun venit pe ${email.site}`,
-          fromName: "Cozy Homes",
+          fromName: "Studio Nord",
           html: html`<a href="${email.passwordUrl}">Alege parola</a>`,
           text: `Alege parola: ${email.passwordUrl}`,
         };
@@ -239,7 +239,7 @@ describe("the site's account emails", () => {
     expect(sent[0]).toMatchObject({
       to: ["ana@example.test"],
       subject: "Bun venit pe cozy.example",
-      fromName: "Cozy Homes",
+      fromName: "Studio Nord",
     });
     expect(sent[0]!.html).toMatch(/^<a href="https:\/\/cozy\.example\/admin\/edit#reset=[\w-]+">Alege parola<\/a>$/);
 

@@ -1,9 +1,11 @@
 ---
 import type { NavbarValue } from "brimjs";
-import { Navbar } from "brimjs/components";
+import { MobileMenu, Navbar } from "brimjs/components";
 import { SITE_NAME, pages } from "./navigation.ts";
 
-// The Navbar primitive holds only the logo, the name and the links; the markup below is the site's own.
+// The Navbar primitive holds only the logo, the name and the links; the markup below is the site's own. On phones the
+// links are in MobileMenu, which opens over the page whatever the header's CSS does.
+const current = (href: string) => (href === Astro.url.pathname ? "page" : undefined);
 ---
 
 <Navbar nodeId="navbar" logoText={SITE_NAME} items={pages} class="site-header">
@@ -13,17 +15,28 @@ import { SITE_NAME, pages } from "./navigation.ts";
         {logo && <img src={logo.src} alt={logo.alt} height="32" />}
         {logoText}
       </a>
-      <nav aria-label="Main">
+      <nav class="site-header__nav" aria-label="Main">
         <ul class="site-header__links">
           {items.map((item) => (
             <li>
-              <a href={item.href} aria-current={item.href === Astro.url.pathname ? "page" : undefined}>
+              <a href={item.href} aria-current={current(item.href)}>
                 {item.label}
               </a>
             </li>
           ))}
         </ul>
       </nav>
+      <MobileMenu label="Menu" closeLabel="Close menu" class="site-header__menu">
+        <ul class="site-header__menu-links">
+          {items.map((item) => (
+            <li>
+              <a href={item.href} aria-current={current(item.href)}>
+                {item.label}
+              </a>
+            </li>
+          ))}
+        </ul>
+      </MobileMenu>
     </div>
   )}
 </Navbar>
@@ -36,7 +49,6 @@ import { SITE_NAME, pages } from "./navigation.ts";
 
   .site-header__inner {
     display: flex;
-    flex-wrap: wrap;
     align-items: center;
     justify-content: space-between;
     gap: 1rem;
@@ -69,5 +81,36 @@ import { SITE_NAME, pages } from "./navigation.ts";
   .site-header__links a:hover,
   .site-header__links a[aria-current="page"] {
     color: var(--brim-theme-primary);
+  }
+
+  .site-header__menu {
+    display: none;
+  }
+
+  .site-header__menu-links {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .site-header__menu-links a {
+    display: block;
+    padding-block: 0.75rem;
+    font-size: 1.25rem;
+    text-decoration: none;
+  }
+
+  .site-header__menu-links a[aria-current="page"] {
+    font-weight: 700;
+  }
+
+  @media (max-width: 48rem) {
+    .site-header__nav {
+      display: none;
+    }
+
+    .site-header__menu {
+      display: block;
+    }
   }
 </style>

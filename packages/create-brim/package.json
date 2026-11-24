@@ -3,6 +3,17 @@
   "version": "0.0.0",
   "description": "Starts a new Brim.js site: an Astro project with brimjs, a layout, pages, components and a content type.",
   "license": "FSL-1.1-MIT",
+  "author": "Brimsites",
+  "homepage": "https://brimjs.com",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Brimsites-com/brimjs.git",
+    "directory": "packages/create-brim"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
   "type": "module",
   "bin": {
     "create-brim": "./index.js"

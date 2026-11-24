@@ -1,0 +1,77 @@
+---
+import "./mobile-menu.css";
+
+/**
+ * A menu that opens over the whole page from a button. Brim keeps how it opens and closes; what is inside and how
+ * it looks is the site's:
+ *
+ *   <MobileMenu label="Menu" closeLabel="Close" class="mobile-menu">
+ *     <ul>{items.map((item) => <li><a href={item.href}>{item.label}</a></li>)}</ul>
+ *   </MobileMenu>
+ *
+ * It is the browser's own popover, which is drawn above the page and measured from the screen whatever the header
+ * around it does: a `backdrop-filter`, `transform`, `overflow` or `z-index` on an ancestor cannot cut it or put it
+ * behind the page. Escape, the button and a click outside close it; so does following one of its links, or a screen
+ * turned wide enough for the site to hide the button.
+ *
+ * The site's CSS says from which width it shows. The `toggle` and `close` slots replace the icons. Two on one page
+ * need an `id` each.
+ */
+interface Props {
+  /** What the button is called for a screen reader, in the page's language. */
+  label: string;
+  /** The same for the button that closes it. */
+  closeLabel: string;
+  id?: string;
+  class?: string;
+  [attribute: string]: unknown;
+}
+
+const { label, closeLabel, id = "brim-mobile-menu", class: className, ...attributes } = Astro.props;
+---
+
+<div class:list={["brim-mobile-menu", className]} {...attributes}>
+  <button type="button" class="brim-mobile-menu__toggle" popovertarget={id} aria-label={label}>
+    <slot name="toggle">
+      <svg
+        viewBox="0 0 24 24"
+        width="24"
+        height="24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        aria-hidden="true"
+      >
+        <path d="M4 7h16M4 12h16M4 17h16"></path>
+      </svg>
+    </slot>
+  </button>
+  <nav id={id} popover class="brim-mobile-menu__panel" aria-label={label}>
+    <button
+      type="button"
+      class="brim-mobile-menu__close"
+      popovertarget={id}
+      popovertargetaction="hide"
+      aria-label={closeLabel}
+    >
+      <slot name="close">
+        <svg
+          viewBox="0 0 24 24"
+          width="24"
+          height="24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          aria-hidden="true"
+        >
+          <path d="M6 6l12 12M18 6L6 18"></path>
+        </svg>
+      </slot>
+    </button>
+    <slot />
+  </nav>
+</div>
+
+<script>
+  import "./mobile-menu.client.ts";
+</script>

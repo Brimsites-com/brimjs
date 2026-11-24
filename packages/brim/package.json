@@ -3,6 +3,17 @@
   "version": "0.0.0",
   "description": "Makes Astro sites editable: primitives with stable node ids, content in SQLite, static output.",
   "license": "FSL-1.1-MIT",
+  "author": "Brimsites",
+  "homepage": "https://brimjs.com",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Brimsites-com/brimjs.git",
+    "directory": "packages/brim"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
   "type": "module",
   "engines": {
     "node": ">=22.23.4"
