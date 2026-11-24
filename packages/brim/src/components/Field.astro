@@ -1,0 +1,61 @@
+---
+import config from "virtual:brim/config";
+import { FIELD_KIND, type ItemBinding, METADATA_FIELDS, fieldText } from "../content/item-fields.ts";
+import type { Item } from "../content/items.ts";
+
+/**
+ * One of an item's picked values on its page: a date, a number, a choice, yes or no, a link or an email. The owner
+ * clicks it and sets it in the side panel with the same widget as in the item form; the page shows the new value.
+ *
+ * By default a date and a number are written in the item's language, a yes as the field's label, and a link or an
+ * email is a link. Children that are a function write it themselves: `{(value, text) => …}`, `value` as saved
+ * (`undefined` when empty) and `text` as it would be written by default.
+ */
+interface Props {
+  nodeId: string;
+  item: Item;
+  field: string;
+  /** The element; by default `time` for a date, `a` for a link or an email that is set, else `span`. */
+  as?: string;
+  [attribute: string]: unknown;
+}
+
+const { nodeId, item, field, as, ...attributes } = Astro.props;
+const declared = config.contentTypes
+  .find((type) => type.key === item.type)
+  ?.fields.find((candidate) => candidate.name === field);
+if (!declared || !METADATA_FIELDS.includes(declared.type)) {
+  throw new Error(
+    `<Field nodeId="${nodeId}"> shows a ${METADATA_FIELDS.join(", ")} field, and "${item.type}" has no such field "${field}". ` +
+      "Text, rich text and images have <Text>, <RichText> and <Image>.",
+  );
+}
+
+const binding: ItemBinding = { item, field };
+const value = item.data[field];
+const locale = item.locale || config.locales?.defaultLocale || Astro.currentLocale;
+const text = fieldText(declared, value, locale);
+// What the site's code writes is markup; the default text is the owner's words, escaped like any text.
+const custom = Astro.slots.has("default") ? await Astro.slots.render("default", [value, text]) : undefined;
+
+const href =
+  typeof value === "string" && value !== ""
+    ? declared.type === "url"
+      ? value
+      : declared.type === "email"
+        ? `mailto:${value}`
+        : undefined
+    : undefined;
+const Tag = as ?? (declared.type === "date" ? "time" : href ? "a" : "span");
+const { editing } = Astro.locals.brim;
+---
+
+<Tag
+  {...(Tag === "time" && typeof value === "string" && value !== "" && { datetime: value })}
+  {...(Tag === "a" && href && { href })}
+  {...attributes}
+  {...Astro.locals.brim.marker(FIELD_KIND, nodeId, "page", value === undefined ? undefined : { value }, binding)}
+  data-brim-label={editing ? declared.label : undefined}
+>
+  {custom === undefined ? text : <Fragment set:html={custom} />}
+</Tag>

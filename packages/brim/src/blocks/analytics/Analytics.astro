@@ -1,0 +1,45 @@
+---
+import ConsentBanner from "./ConsentBanner.astro";
+import { measurementId } from "./consent.ts";
+
+/**
+ * Visitor statistics with Google Analytics 4, for a site whose server has `BRIM_GOOGLE_ANALYTICS_ID`. Put it once in
+ * the layout, at the end of `<body>`; without the variable it draws nothing. Nothing is asked of Google before the
+ * visitor accepts, and whoever is signed in to the editor is never counted.
+ *
+ * The texts are the site's, in its language. An element with `data-cookie-settings` (written `hidden`, shown once there is
+ * something to choose) opens the choice again: `<button type="button" data-cookie-settings hidden>Cookie settings</button>`.
+ */
+interface Props {
+  text?: string;
+  acceptText?: string;
+  rejectText?: string;
+  /** The page about cookies and privacy, linked after the text. */
+  policyHref?: string;
+  policyText?: string;
+}
+
+const {
+  text = "We use cookies to count visits and see which pages help. They start only if you accept.",
+  acceptText = "Accept",
+  rejectText = "Reject",
+  policyHref,
+  policyText = "Privacy policy",
+} = Astro.props;
+
+/** Read when the page is drawn, so the same build runs with or without it. A wrong id is said once, in the log. */
+function configuredId(): string | undefined {
+  try {
+    return measurementId(process.env.BRIM_GOOGLE_ANALYTICS_ID);
+  } catch (error) {
+    const said = globalThis as { brimAnalyticsWarned?: boolean };
+    if (!said.brimAnalyticsWarned) console.warn(`[brim] ${(error as Error).message} Statistics are off.`);
+    said.brimAnalyticsWarned = true;
+    return undefined;
+  }
+}
+
+const id = Astro.locals.brim.editing ? undefined : configuredId();
+---
+
+{id && <ConsentBanner {...{ id, text, acceptText, rejectText, policyHref, policyText }} />}

@@ -1,0 +1,19 @@
+{
+  "name": "{{packageName}}",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22.23.4"
+  },
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "start": "brim start",
+    "build:static": "BRIM_OUTPUT=static astro build",
+    "brim": "brim"
+  },
+  "dependencies": {
+    "astro": "^7.4.11",
+    "brimjs": "{{brimVersion}}"
+  }
+}

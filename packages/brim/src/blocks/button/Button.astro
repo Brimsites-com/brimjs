@@ -1,0 +1,64 @@
+---
+import { defaultScope } from "../../runtime/request-state.ts";
+import "./button.css";
+import type { NodeScope } from "../../runtime/context.ts";
+import { icons } from "../../runtime/icons.ts";
+import { button } from "../schemas/button.ts";
+
+/**
+ * A button or link styled as one of the site's button styles (`variant`, `size`), with an optional icon after its
+ * words. Every prop is a starting value the owner can change. Where it sits is the site's layout (or, in a `blocks`
+ * field, the block's position); `class` goes on the button.
+ */
+interface Props {
+  nodeId: string;
+  scope?: NodeScope;
+  text?: string;
+  url?: string;
+  openInNewTab?: boolean;
+  variant?: "light-1" | "light-2" | "light-3" | "accent" | "block" | "dark-1" | "dark-2" | "ghost";
+  size?: "sm" | "md" | "lg";
+  showIcon?: boolean;
+  icon?: string;
+  class?: string;
+}
+
+const { nodeId, scope = defaultScope(), class: className, ...source } = Astro.props;
+const settings = Astro.locals.brim.settings(button, nodeId, scope, source);
+const { text, url, openInNewTab, variant, size, showIcon, icon } = settings;
+
+const drawn = showIcon ? icons.find(icon) : undefined;
+const iconPaths = drawn?.body;
+// A pack's icon carries its own look; only Brim's outlines are drawn by the button.
+const outline = drawn?.outline && {
+  fill: "none",
+  stroke: "currentColor",
+  "stroke-width": "2",
+  "stroke-linecap": "round",
+  "stroke-linejoin": "round",
+};
+const classes = ["brim-btn", `brim-btn--${variant}`, `brim-btn--${size}`, className];
+const href = typeof url === "string" && url !== "" ? url : undefined;
+const Element = href ? "a" : "button";
+---
+
+<Element
+  class:list={classes}
+  href={href}
+  type={href ? undefined : "button"}
+  target={href && openInNewTab ? "_blank" : undefined}
+  rel={href && openInNewTab ? "noopener noreferrer" : undefined}
+  {...Astro.locals.brim.marker("button", nodeId, scope, settings)}
+>
+  <span class="brim-btn__label">{text}</span>
+  {iconPaths && (
+    <svg
+      class="brim-btn__icon"
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox={drawn?.viewBox}
+      {...outline}
+      aria-hidden="true"
+      set:html={iconPaths}
+    />
+  )}
+</Element>

@@ -1,0 +1,39 @@
+---
+/**
+ * The route Brim adds when a site declares page templates or content types: one page per page the owner added,
+ * drawn by its template, and one per item of a content type that has a template (`component`), in every language.
+ * Visitors get published pages and items only; while editing, private ones too.
+ * The server looks the page up on each request; a static build uses `TemplatePageStatic.astro`, which lists them.
+ */
+import config from "virtual:brim/config";
+import { itemPageOf } from "../content/content-types.ts";
+import { normalizePagePath } from "../content/ids.ts";
+import type { PageComponent } from "../content/page-templates.ts";
+import { connect } from "./connect.ts";
+import { getItem } from "./content.ts";
+import { isEditing } from "./request-state.ts";
+
+let pageProps: Record<string, unknown>;
+let Template: PageComponent;
+{
+  const path = normalizePagePath(`/${Astro.params.page ?? ""}`);
+  const itemPage = itemPageOf(config.contentTypes, path, config.locales);
+  if (itemPage) {
+    const item = await getItem(itemPage.type.key, itemPage.slug, { locale: itemPage.locale });
+    if (!item) return new Response(null, { status: 404 });
+    // With a `path` like `/produse/[category]/[slug]` the item has one address: an old or mistyped category leads on.
+    if (item.url !== path) return Astro.redirect(`${item.url}${Astro.url.search}`, 301);
+    pageProps = { item };
+    Template = itemPage.type.component;
+  } else {
+    const { content } = await connect(config.databaseUrl, config.authToken);
+    const record = await content.page(path);
+    const template = config.pageTemplates.find((candidate) => candidate.key === record.template);
+    if (!template || (record.visibility !== "published" && !isEditing())) return new Response(null, { status: 404 });
+    pageProps = { page: { path: record.path, title: record.title ?? "", template: template.key } };
+    Template = template.component;
+  }
+}
+---
+
+<Template {...pageProps} />

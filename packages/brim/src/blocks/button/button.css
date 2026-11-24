@@ -1,0 +1,100 @@
+/*
+ * Button block. Deliberately small: shape, sizes and the named variants.
+ * Colors follow the site's theme tokens (--brim-theme-*), with neutral fallbacks.
+ */
+/* In the `brim` layer: any CSS of the site wins over it, whatever its selectors. */
+@layer brim {
+  .brim-btn {
+    --brim-btn-bg: var(--brim-theme-primary, #1e1e1d);
+    --brim-btn-text: var(--brim-theme-background, #ffffff);
+    --brim-btn-border: transparent;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5em;
+    padding: var(--brim-btn-padding-y) var(--brim-btn-padding-x);
+    border: 1px solid var(--brim-btn-border);
+    border-radius: var(--brim-theme-radius, 0.5rem);
+    background: var(--brim-btn-bg);
+    color: var(--brim-btn-text);
+    font: inherit;
+    font-weight: 600;
+    line-height: 1.2;
+    text-decoration: none;
+    cursor: pointer;
+    transition:
+      filter 0.15s,
+      background-color 0.15s;
+  }
+
+  .brim-btn:hover {
+    filter: brightness(0.92);
+  }
+
+  .brim-btn:focus-visible {
+    outline: 2px solid currentColor;
+    outline-offset: 2px;
+  }
+
+  .brim-btn--sm {
+    --brim-btn-padding-y: 0.4rem;
+    --brim-btn-padding-x: 0.85rem;
+    font-size: 0.875rem;
+  }
+
+  .brim-btn--md {
+    --brim-btn-padding-y: 0.65rem;
+    --brim-btn-padding-x: 1.25rem;
+    font-size: 1rem;
+  }
+
+  .brim-btn--lg {
+    --brim-btn-padding-y: 0.9rem;
+    --brim-btn-padding-x: 1.75rem;
+    font-size: 1.125rem;
+  }
+
+  .brim-btn--light-1 {
+    --brim-btn-bg: var(--brim-theme-background, #ffffff);
+    --brim-btn-text: var(--brim-theme-dark2, #0a0a0a);
+    --brim-btn-border: var(--brim-theme-light2, #e4e4e7);
+  }
+
+  .brim-btn--light-2 {
+    --brim-btn-bg: var(--brim-theme-light1, #f4f4f5);
+    --brim-btn-text: var(--brim-theme-dark2, #0a0a0a);
+  }
+
+  .brim-btn--light-3 {
+    --brim-btn-bg: var(--brim-theme-light2, #e4e4e7);
+    --brim-btn-text: var(--brim-theme-dark2, #0a0a0a);
+  }
+
+  .brim-btn--accent {
+    --brim-btn-bg: var(--brim-theme-accent, #2563eb);
+    --brim-btn-text: var(--brim-theme-accent-contrast, #ffffff);
+  }
+
+  .brim-btn--dark-1 {
+    --brim-btn-bg: var(--brim-theme-dark1, #3f3f46);
+    --brim-btn-text: var(--brim-theme-background, #ffffff);
+  }
+
+  .brim-btn--dark-2 {
+    --brim-btn-bg: var(--brim-theme-dark2, #0a0a0a);
+    --brim-btn-text: var(--brim-theme-background, #ffffff);
+  }
+
+  .brim-btn--ghost {
+    --brim-btn-bg: transparent;
+    --brim-btn-text: currentColor;
+    --brim-btn-border: currentColor;
+  }
+
+  .brim-btn__icon {
+    flex: none;
+    width: 1em;
+    height: 1em;
+  }
+}

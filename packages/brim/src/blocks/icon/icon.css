@@ -1,0 +1,16 @@
+/* An icon in the text's colour; --brim-icon-size, or the site's CSS on `.brim-icon`, sets how big. */
+/* In the `brim` layer: any CSS of the site wins over it, whatever its selectors. */
+@layer brim {
+  .brim-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: var(--brim-icon-size, 2.5rem);
+    height: var(--brim-icon-size, 2.5rem);
+  }
+
+  .brim-icon svg {
+    width: 100%;
+    height: 100%;
+  }
+}

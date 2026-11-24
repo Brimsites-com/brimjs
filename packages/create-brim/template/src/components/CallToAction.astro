@@ -1,0 +1,33 @@
+---
+import { Button, Text } from "brimjs/components";
+
+interface Props {
+  id: string;
+  title: string;
+  text: string;
+  cta: { text: string; url: string };
+}
+
+const { id, title, text, cta } = Astro.props;
+---
+
+<section class="section">
+  <div class="container call-to-action">
+    <Text nodeId={`${id}-title`} as="h2">
+      {title}
+    </Text>
+    <Text nodeId={`${id}-text`} class="lead">
+      {text}
+    </Text>
+    <Button nodeId={`${id}-button`} text={cta.text} url={cta.url} variant="dark-2" size="lg" />
+  </div>
+</section>
+
+<style>
+  .call-to-action {
+    display: grid;
+    justify-items: center;
+    gap: 1rem;
+    text-align: center;
+  }
+</style>

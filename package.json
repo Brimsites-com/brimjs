@@ -1,0 +1,20 @@
+{
+  "name": "brimjs-monorepo",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@10.18.0",
+  "engines": {
+    "node": ">=22.23.4"
+  },
+  "scripts": {
+    "dev": "pnpm --filter brimjs build:editor && pnpm --filter example-basic dev",
+    "build": "pnpm --filter example-basic build",
+    "test": "pnpm --filter brimjs test",
+    "check-types": "pnpm --filter brimjs check-types",
+    "format": "prettier --write ."
+  },
+  "devDependencies": {
+    "prettier": "^3.10.1",
+    "prettier-plugin-astro": "^1.1.2"
+  }
+}

@@ -1,0 +1,27 @@
+---
+import config from "virtual:brim/config";
+import { CAPTCHA_PROVIDERS } from "../../forms/captcha.ts";
+
+/**
+ * The challenge a form asks for, when the config sets one: the provider's widget, which fills a hidden field the
+ * form sends. Its script is added once, however many forms the page has. Nothing at all without `forms.captcha`.
+ */
+const captcha = config.captcha;
+const provider = captcha ? CAPTCHA_PROVIDERS[captcha.provider] : undefined;
+---
+
+{captcha && provider && (
+  <>
+    <div class:list={["brim-form__captcha", provider.widgetClass]} data-sitekey={captcha.siteKey} data-last-step />
+    <script is:inline define:vars={{ src: provider.script }}>
+      if (!document.querySelector("script[data-brim-captcha]")) {
+        const script = document.createElement("script");
+        script.src = src;
+        script.async = true;
+        script.defer = true;
+        script.dataset.brimCaptcha = "";
+        document.head.append(script);
+      }
+    </script>
+  </>
+)}

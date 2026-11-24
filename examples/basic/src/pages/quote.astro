@@ -1,0 +1,24 @@
+---
+import { Form, Search } from "brimjs/components";
+import Site from "../layouts/Site.astro";
+
+// A long form asked in steps: an entry of type "step" starts one. Half-width fields share a row on a wide screen.
+const fields = [
+  { type: "step", label: "Your garden", help: "Start with the place." },
+  { name: "size", label: "Size (m²)", type: "number", width: "half" },
+  { name: "city", label: "City", type: "text", width: "half" },
+  { name: "wish", label: "What would you change?", type: "textarea", help: "A sentence is enough." },
+  // A file from the visitor: kept privately, downloaded only by who may read form responses.
+  { name: "plan", label: "A plan or a photo", type: "file", accept: ["pdf", "jpg", "png"], multiple: true },
+  { type: "step", label: "About you" },
+  { name: "name", label: "Name", type: "name", required: true, width: "half" },
+  { name: "email", label: "Email", type: "email", required: true, width: "half" },
+];
+---
+
+<Site title="Ask for a quote">
+  <h1>Ask for a quote</h1>
+  <Form nodeId="quote-form" formName="Quote" fields={fields} buttonText="Send" showConsent={false} />
+  <h2>Search the site</h2>
+  <Search types={["project"]} labels={{ search: "Search projects" }} />
+</Site>

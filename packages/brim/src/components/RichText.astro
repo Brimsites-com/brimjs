@@ -1,0 +1,32 @@
+---
+import { defaultScope } from "../runtime/request-state.ts";
+import { type ItemBinding, boundValue } from "../content/item-fields.ts";
+import type { Item } from "../content/items.ts";
+import { renderBlocks } from "../content/rich-text.ts";
+import type { RichTextValue } from "../content/types.ts";
+import type { NodeScope } from "../runtime/context.ts";
+
+/**
+ * Flowing content the owner writes freely: paragraphs, headings and lists.
+ * What you put inside is the starting content. With `item` and `field` it shows a rich text field of a content
+ * item, what you put inside shows while the field is empty, and writing on the page saves the item.
+ */
+interface Props {
+  nodeId: string;
+  as?: "div" | "section" | "article";
+  scope?: NodeScope;
+  item?: Item;
+  field?: string;
+  [attribute: string]: unknown;
+}
+
+const { nodeId, as: Tag = "div", scope = defaultScope(), item, field, ...attributes } = Astro.props;
+const binding: ItemBinding | undefined = item && field ? { item, field } : undefined;
+const stored = binding
+  ? (boundValue(binding) as RichTextValue | undefined)
+  : Astro.locals.brim.read("richtext", nodeId, scope);
+---
+
+<Tag {...attributes} {...Astro.locals.brim.marker("richtext", nodeId, scope, undefined, binding)}>
+  {stored ? <Fragment set:html={renderBlocks(stored.blocks)} /> : <slot />}
+</Tag>

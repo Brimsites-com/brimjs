@@ -1,0 +1,140 @@
+---
+import { defaultScope } from "../../runtime/request-state.ts";
+import { imageSources } from "../../runtime/media.ts";
+import "./carousel.css";
+import type { Item } from "../../content/items.ts";
+import { type ItemBinding, boundValue } from "../../content/item-fields.ts";
+import type { NodeScope } from "../../runtime/context.ts";
+import { type CarouselValue, type StartingImage, readImages, toSaved } from "../images.ts";
+import { carousel } from "../schemas/carousel.ts";
+
+/**
+ * Slides the owner adds, orders and describes in the side panel, and how they move: the carousel keeps the images,
+ * the sizes visitors download, and a small script for arrows, dots, autoplay and the slide it opens on. Its look is
+ * the site's: draw it with a function, marking the parts the script works with:
+ *
+ *   <Carousel nodeId="product-photos" item={product} field="gallery" sizes="(max-width: 860px) 100vw, 50vw">
+ *     {({ slides }) => <>
+ *       <div class="photos" data-track>{slides.map((slide) => <img {...slide.img} />)}</div>
+ *       <div class="thumbs">{slides.map((slide, index) => <button data-go={index}><img {...slide.img} sizes="120px" /></button>)}</div>
+ *       <button data-previous aria-label="Previous">‹</button> <button data-next aria-label="Next">›</button>
+ *     </>}
+ *   </Carousel>
+ *
+ * `data-track` holds the slides (it scrolls); `data-previous` and `data-next` step; `data-go="2"` (or `data-dot`)
+ * goes to a slide and is marked `data-current` while it is shown, as the slide is `data-active`. `variant="continuous"`
+ * rolls the track by itself, for a strip of logos at their own widths. Slides the site's CSS lays one over the other
+ * (a hero whose picture changes) are marked `data-active` in turn, and the site's CSS draws the change, a fade or
+ * anything else: Brim keeps the slides, which one shows and when. With `item` and `field` it shows an item's
+ * `gallery` field and saves into it. Without a function, Brim draws a plain slider.
+ */
+interface Props {
+  nodeId: string;
+  scope?: NodeScope;
+  /** Starting slides: `{ src, alt, caption?, link? }`. */
+  images?: StartingImage[];
+  item?: Item;
+  field?: string;
+  /** How wide a slide is drawn, for the browser's choice of copy; by default from the variant. */
+  sizes?: string;
+  /** `slider` snaps slide by slide, `center-peek` shows the neighbours, `continuous` rolls by itself. */
+  variant?: "slider" | "center-peek" | "continuous";
+  slidesPerView?: number;
+  gap?: number;
+  showArrows?: boolean;
+  showDots?: boolean;
+  /** The slide it opens on, from 1. */
+  start?: number;
+  autoplay?: boolean;
+  autoplaySpeed?: number;
+  /** Autoplay stops while the pointer is on the carousel; off for a backdrop the pointer rests on. */
+  pauseOnHover?: boolean;
+  loop?: boolean;
+  /** Seconds the rolling strip takes to go round once. */
+  continuousSpeed?: number;
+  [attribute: string]: unknown;
+}
+
+const { nodeId, scope = defaultScope(), images: starting, item, field, sizes, ...rest } = Astro.props;
+const SETTINGS = new Set(Object.keys(carousel.schema.properties));
+const source = Object.fromEntries(Object.entries(rest).filter(([name]) => SETTINGS.has(name)));
+// `class` is given once, through class:list: spread with the other attributes it would be written twice.
+const { class: className, ...attributes } = Object.fromEntries(
+  Object.entries(rest).filter(([name]) => !SETTINGS.has(name)),
+);
+const binding: ItemBinding | undefined = item && field ? { item, field } : undefined;
+const settings = Astro.locals.brim.settings(carousel, nodeId, scope, {
+  ...source,
+  ...(starting && { images: toSaved(starting) }),
+});
+if (binding) settings.images = toSaved((boundValue(binding) as StartingImage[] | undefined) ?? []);
+
+const variant = settings.variant === "center-peek" || settings.variant === "continuous" ? settings.variant : "slider";
+const continuous = variant === "continuous";
+const perView = Math.max(1, Math.min(6, Number(settings.slidesPerView) || 1));
+const drawnAt =
+  sizes ??
+  (continuous
+    ? "320px"
+    : variant === "center-peek"
+      ? "80vw"
+      : `(max-width: 480px) 100vw, ${Math.round(100 / perView)}vw`);
+const slides = readImages(settings.images, (src) => imageSources(src, drawnAt));
+const drawn = Astro.slots.has("default");
+const content = drawn ? await Astro.slots.render("default", [{ slides } satisfies CarouselValue]) : undefined;
+const style = [
+  `--brim-carousel-per-view:${perView}`,
+  `--brim-carousel-gap:${Number(settings.gap) || 0}px`,
+  `--brim-carousel-duration:${Number(settings.continuousSpeed) || 24}s`,
+].join(";");
+const start = Math.max(0, (Number(settings.start) || 1) - 1);
+---
+
+<brim-carousel
+  {...attributes}
+  class:list={[!drawn && "brim-carousel", className as string | undefined]}
+  data-variant={variant}
+  data-start={start > 0 ? start : undefined}
+  data-autoplay={!continuous && settings.autoplay ? Number(settings.autoplaySpeed) || 4000 : undefined}
+  data-pause-on-hover={settings.pauseOnHover !== false ? "" : undefined}
+  data-loop={settings.loop !== false ? "" : undefined}
+  style={style}
+  data-brim-drawn={drawn && Astro.locals.brim.editing ? "" : undefined}
+  {...Astro.locals.brim.marker("carousel", nodeId, scope, settings, binding)}
+>
+  {drawn ? (
+    <Fragment set:html={content} />
+  ) : (
+    <>
+      <div class="brim-carousel__track" data-track tabindex={continuous ? undefined : 0}>
+        {slides.map((slide, index) => {
+          const Slide = slide.link ? "a" : "div";
+          return (
+            <Slide class="brim-carousel__slide" href={slide.link}>
+              <img {...slide.img} loading={index === start ? "eager" : "lazy"} decoding="async" />
+              {slide.caption && <span class="brim-carousel__caption">{slide.caption}</span>}
+            </Slide>
+          );
+        })}
+      </div>
+      {!continuous && settings.showArrows !== false && slides.length > 1 && (
+        <>
+          <button type="button" class="brim-carousel__arrow" data-previous aria-label="Previous slide" />
+          <button type="button" class="brim-carousel__arrow" data-next aria-label="Next slide" />
+        </>
+      )}
+      {!continuous && settings.showDots && slides.length > 1 && (
+        <div class="brim-carousel__dots">
+          {slides.map((_, index) => (
+            <button type="button" data-go={index} aria-label={`Go to slide ${index + 1}`} />
+          ))}
+        </div>
+      )}
+    </>
+  )}
+  {slides.length === 0 && Astro.locals.brim.editing && <p>No slides yet. Select the carousel to add some.</p>}
+</brim-carousel>
+
+<script>
+  import "./carousel.client.ts";
+</script>

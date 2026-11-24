@@ -1,0 +1,27 @@
+---
+import { defaultScope } from "../../runtime/request-state.ts";
+import "./divider.css";
+import type { NodeScope } from "../../runtime/context.ts";
+import { divider } from "../schemas/divider.ts";
+
+/**
+ * A line between two parts of a page. Its line is the site's CSS on `.brim-divider` (`border-color`, thickness,
+ * style); the owner chooses which way it runs. `class` goes on it.
+ */
+interface Props {
+  nodeId: string;
+  scope?: NodeScope;
+  orientation?: "horizontal" | "vertical";
+  class?: string;
+}
+
+const { nodeId, scope = defaultScope(), class: className, ...source } = Astro.props;
+const settings = Astro.locals.brim.settings(divider, nodeId, scope, source);
+---
+
+<div
+  class:list={["brim-divider", className]}
+  role="separator"
+  aria-orientation={settings.orientation === "vertical" ? "vertical" : "horizontal"}
+  {...Astro.locals.brim.marker("divider", nodeId, scope, settings)}
+></div>

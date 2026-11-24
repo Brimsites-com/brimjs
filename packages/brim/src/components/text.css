@@ -1,0 +1,48 @@
+/* Presentation choices of a text: drop cap, quotes, oversized. Applied only when the owner turns one on. */
+/* In the `brim` layer: any CSS of the site wins over it, whatever its selectors. */
+@layer brim {
+  [data-brim-text][data-drop-cap]::first-letter {
+    float: left;
+    margin: 0.05em 0.08em 0 0;
+    color: var(--brim-text-drop-cap-color, currentColor);
+    font-size: 3.4em;
+    font-weight: 700;
+    line-height: 0.8;
+  }
+
+  [data-brim-text][data-oversized] {
+    font-size: clamp(2.5rem, 8vw, 7rem);
+    line-height: 1.05;
+  }
+
+  [data-brim-text][data-quote="classic"] {
+    padding-inline-start: 1em;
+    border-inline-start: 4px solid var(--brim-text-quote-color, currentColor);
+    font-style: italic;
+  }
+
+  [data-brim-text][data-quote="pull"] {
+    padding-block: 0.6em;
+    border-block: 2px solid var(--brim-text-quote-color, currentColor);
+    font-size: 1.5em;
+    font-weight: 600;
+    line-height: 1.3;
+    text-align: left;
+  }
+
+  [data-brim-text][data-quote="pull"][data-quote-size="small"] {
+    font-size: 1.25em;
+  }
+
+  [data-brim-text][data-quote="pull"][data-quote-size="large"] {
+    font-size: 2em;
+  }
+
+  [data-brim-text][data-quote="pull"][data-quote-align="center"] {
+    text-align: center;
+  }
+
+  [data-brim-text][data-quote="pull"][data-quote-align="right"] {
+    text-align: right;
+  }
+}

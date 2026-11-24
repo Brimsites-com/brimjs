@@ -1,0 +1,51 @@
+/* The banner's place and a plain look; the site's own CSS on these classes wins. */
+/* In the `brim` layer: any CSS of the site wins over it, whatever its selectors. */
+@layer brim {
+  .brim-consent {
+    position: fixed;
+    z-index: 1000;
+    right: 1rem;
+    bottom: 1rem;
+    left: 1rem;
+    max-width: 26rem;
+    padding: 1.25rem;
+    border: 1px solid color-mix(in srgb, currentColor 15%, transparent);
+    border-radius: 0.75rem;
+    background: Canvas;
+    color: CanvasText;
+    font-size: 0.9375rem;
+    line-height: 1.5;
+  }
+
+  .brim-consent[hidden] {
+    display: none;
+  }
+
+  .brim-consent__text {
+    margin: 0;
+  }
+
+  .brim-consent__actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+    margin-top: 1rem;
+  }
+
+  /* Accepting and refusing look the same: neither is the easier one. */
+  .brim-consent__button {
+    min-height: 2.75rem;
+    padding: 0.5rem 1rem;
+    border: 1px solid currentColor;
+    border-radius: 0.5rem;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    cursor: pointer;
+  }
+
+  .brim-consent__button:focus-visible {
+    outline: 2px solid currentColor;
+    outline-offset: 2px;
+  }
+}

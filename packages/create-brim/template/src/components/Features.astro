@@ -1,0 +1,62 @@
+---
+import { Icon, Text } from "brimjs/components";
+
+/** A row of short points, each with an icon the owner can change. */
+interface Props {
+  id: string;
+  title: string;
+  features: { icon: string; title: string; text: string }[];
+}
+
+const { id, title, features } = Astro.props;
+---
+
+<section class="section section--tinted">
+  <div class="container">
+    <Text nodeId={`${id}-title`} as="h2">
+      {title}
+    </Text>
+    <div class="features">
+      {features.map((feature, index) => (
+        <article class="feature">
+          <Icon nodeId={`${id}-${index + 1}-icon`} icon={feature.icon} class="feature__icon" />
+          <Text nodeId={`${id}-${index + 1}-title`} as="h3">
+            {feature.title}
+          </Text>
+          <Text nodeId={`${id}-${index + 1}-text`}>{feature.text}</Text>
+        </article>
+      ))}
+    </div>
+  </div>
+</section>
+
+<style>
+  .features {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr));
+    gap: 1.5rem;
+    margin-top: 2rem;
+  }
+
+  .feature {
+    padding: 1.75rem;
+    border-radius: var(--site-radius);
+    background: var(--brim-theme-background);
+  }
+
+  .feature :global(.feature__icon) {
+    padding: 0.6rem;
+    border-radius: var(--site-radius);
+    background: var(--brim-theme-light1);
+  }
+
+  .feature h3 {
+    margin-top: 1rem;
+    font-size: 1.25rem;
+  }
+
+  .feature p {
+    margin: 0;
+    color: var(--brim-theme-dark1);
+  }
+</style>

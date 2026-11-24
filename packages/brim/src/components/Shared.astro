@@ -1,0 +1,17 @@
+---
+import { withSharedScope } from "../runtime/request-state.ts";
+
+/**
+ * A section whose content is the same on every page that shows it: everything inside (texts, links, images, forms,
+ * blocks) is saved once for the whole site, so the owner changes a FAQ, a call to action or the quote form in one
+ * place. An element that names its own `scope` keeps it. Use the same node ids on every page: a section that
+ * prefixes them with an `id` gets one shared copy per id.
+ *
+ *   <Shared>
+ *     <FaqSection id="faq" />
+ *   </Shared>
+ */
+const html = await withSharedScope(() => Astro.slots.render("default"));
+---
+
+<Fragment set:html={html} />

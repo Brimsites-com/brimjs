@@ -1,0 +1,29 @@
+/* The frame Brim draws for a video the site does not style itself: 16:9, as wide as it is given. */
+/* In the `brim` layer: any CSS of the site wins over it, whatever its selectors. */
+@layer brim {
+  .brim-video {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    overflow: hidden;
+    border-radius: var(--brim-theme-radius, 0.5rem);
+    background: var(--brim-theme-dark2, #0a0a0a);
+  }
+
+  .brim-video :is(iframe, video) {
+    display: block;
+    width: 100%;
+    height: 100%;
+    border: 0;
+    object-fit: cover;
+  }
+
+  .brim-video__empty {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    margin: 0;
+    color: var(--brim-theme-background, #ffffff);
+  }
+}

@@ -1,0 +1,162 @@
+---
+import { sharedImageUrl } from "../runtime/media.ts";
+import config from "virtual:brim/config";
+import routes from "virtual:brim/routes";
+import { faviconType, pageTitleOf, profileAddresses } from "../config.ts";
+import { feedAddresses, feedTitle } from "../content/feed.ts";
+import { normalizePagePath } from "../content/ids.ts";
+import { connect } from "../runtime/connect.ts";
+import { itemPagePath, pathInLocale, readItemPath, storedLocale } from "../server/locales.ts";
+
+/**
+ * The page's title and the tags search engines and link previews read. Put it in <head>.
+ * Props are the starting values; the owner can replace them per page in the editor.
+ */
+interface Props {
+  /** The page's own title; the site's `identity.titleTemplate` is applied to it. Without one: the site's name. */
+  title?: string;
+  description?: string;
+  /** Image shown when the page is shared. */
+  image?: string;
+  /** Who wrote the page, for `<meta name="author">`. On an item's page: the item's author, unless given here. */
+  author?: string;
+  /**
+   * The site's other addresses (social profiles, its maps listing), for search engines: `sameAs={[facebook, instagram]}`
+   * from Site Settings. Written on the home page only; empty ones are left out.
+   */
+  sameAs?: readonly (string | null | undefined)[];
+}
+
+const { seo, editing } = Astro.locals.brim;
+// Who the site is, from the integration's `identity`: name, title template, fallbacks, theme color, favicon.
+const identity = config.identity ?? {};
+const favicon = identity.favicon;
+const title = pageTitleOf(seo.title ?? Astro.props.title, identity);
+const description = seo.description ?? Astro.props.description ?? identity.description;
+// The owner's choice, then the page's code, then the item's own picture on an item's page, then the site's.
+const { itemImage } = Astro.locals.brim;
+const image = seo.image ?? Astro.props.image ?? itemImage ?? identity.image;
+const author = Astro.props.author ?? Astro.locals.brim.itemAuthor;
+// Shared links can say something else than search results; by default they say the same.
+const shareTitle = seo.shareTitle ?? title;
+const shareDescription = seo.shareDescription ?? description;
+const path = normalizePagePath(Astro.url.pathname);
+// Absolute addresses need `site` in the Astro config; without it these tags are left out.
+const absolute = (address: string): string | undefined =>
+  /^https?:\/\//.test(address) ? address : Astro.site ? new URL(address, Astro.site).href : undefined;
+const canonical = absolute(seo.canonical ?? path);
+// A card's worth of the picture where the CDN makes copies, not the photo as it was uploaded.
+const sharedImage = image ? sharedImageUrl(image) : undefined;
+const imageUrl = sharedImage ? (absolute(sharedImage) ?? sharedImage) : undefined;
+const robots = [seo.noindex && "noindex", seo.nofollow && "nofollow"].filter(Boolean).join(", ");
+const alternates = await languageVersions(path);
+// The feeds of the page's language, so browsers and feed readers find them from any page.
+const pageLocale = storedLocale(Astro.currentLocale, config.locales) ?? "";
+const feeds = config.feeds
+  ? feedAddresses(config.contentTypes, config.locales)
+      .filter((feed) => feed.locale === pageLocale)
+      .map((feed) => ({
+        title: feedTitle(feed.type, identity.name),
+        href: absolute(feed.path) ?? feed.path,
+      }))
+  : [];
+const home = path === "/" || (config.locales?.locales.some((code) => path === `/${code}`) ?? false);
+const sameAs = profileAddresses(Astro.props.sameAs);
+const names = { name: identity.name, ...(identity.alternateName && { alternateName: identity.alternateName }) };
+// What the site is, for search engines' knowledge panels: on the home page only, and only once it has a name.
+const structuredData =
+  home && identity.name && Astro.site
+    ? [
+        {
+          "@context": "https://schema.org",
+          "@type": "WebSite",
+          ...names,
+          url: new URL("/", Astro.site).href,
+        },
+        {
+          "@context": "https://schema.org",
+          "@type": "Organization",
+          ...names,
+          url: new URL("/", Astro.site).href,
+          ...(identity.favicon && { logo: absolute(identity.favicon) }),
+          ...(sameAs.length > 0 && { sameAs }),
+        },
+      ]
+    : [];
+
+/**
+ * The page in each of the site's languages, for `hreflang`: the addresses the code has and the published pages
+ * added from templates. Left out on a site with one language, or when the page exists in one language only.
+ */
+async function languageVersions(page: string): Promise<{ locale: string; href: string }[]> {
+  const locales = config.locales;
+  if (!locales || locales.locales.length < 2 || !Astro.site) return [];
+  const coded = new Set(routes.pages.map(normalizePagePath));
+  const { content, items } = await connect(config.databaseUrl, config.authToken);
+  // An item's page: its translations have their own slugs (spring, primavara), so the versions are the published
+  // translations of the item, each at its own address.
+  const ofItem = readItemPath(config.contentTypes, page, locales);
+  if (ofItem) {
+    const item = await items.bySlug(ofItem.type.key, ofItem.slug, { publishedOnly: true, locale: ofItem.locale });
+    if (item && normalizePagePath(itemPagePath(ofItem.type, item, locales)) === page) {
+      const versions = (await items.translations(item))
+        .filter((translation) => translation.visibility === "published")
+        .map((translation) => ({
+          locale: translation.locale || locales.defaultLocale,
+          href: new URL(itemPagePath(ofItem.type, translation, locales), Astro.site).href,
+        }));
+      return versions.length > 1 ? versions : [];
+    }
+  }
+  const versions: { locale: string; href: string }[] = [];
+  for (const locale of locales.locales) {
+    const target = pathInLocale(page, locale, locales);
+    const exists =
+      coded.has(target) ||
+      (await content.page(target).then((record) => record.template !== undefined && record.visibility === "published"));
+    if (exists) versions.push({ locale, href: new URL(target, Astro.site).href });
+  }
+  return versions.length > 1 ? versions : [];
+}
+---
+
+<title>{title}</title>
+{favicon && <link rel="icon" href={favicon} type={faviconType(favicon)} />}
+{description && <meta name="description" content={description} />}
+{author && <meta name="author" content={author} />}
+{robots && <meta name="robots" content={robots} />}
+{canonical && <link rel="canonical" href={canonical} />}
+{alternates.map(({ locale, href }) => (
+  <link rel="alternate" hreflang={locale} href={href} />
+))}
+{alternates.length > 0 && (
+  <link
+    rel="alternate"
+    hreflang="x-default"
+    href={alternates.find(({ locale }) => locale === config.locales?.defaultLocale)?.href ?? alternates[0]?.href}
+  />
+)}
+{feeds.map(({ title: feedTitle, href }) => (
+  <link rel="alternate" type="application/rss+xml" title={feedTitle} href={href} />
+))}
+<meta property="og:title" content={shareTitle} />
+{shareDescription && <meta property="og:description" content={shareDescription} />}
+{canonical && <meta property="og:url" content={canonical} />}
+{imageUrl && <meta property="og:image" content={imageUrl} />}
+<meta property="og:type" content="website" />
+{identity.name && <meta property="og:site_name" content={identity.name} />}
+{identity.themeColor && <meta name="theme-color" content={identity.themeColor} />}
+<meta name="twitter:card" content={imageUrl ? "summary_large_image" : "summary"} />
+<meta name="twitter:title" content={shareTitle} />
+{shareDescription && <meta name="twitter:description" content={shareDescription} />}
+{imageUrl && <meta name="twitter:image" content={imageUrl} />}
+{structuredData.map((data) => (
+  <script type="application/ld+json" set:html={JSON.stringify(data).replace(/</g, "\\u003c")} />
+))}
+{/* For the editor only: what the owner set for this page, so its SEO panel can tell it from the page's own values. */}
+{editing && (
+  <meta
+    name="brim-seo"
+    content={JSON.stringify({ seo, own: { ...Astro.props, image: Astro.props.image ?? itemImage } })}
+  />
+)}

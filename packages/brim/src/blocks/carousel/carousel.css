@@ -1,0 +1,181 @@
+/* What every carousel needs to move, whoever draws it: the track scrolls sideways, slide by slide. */
+/* In the `brim` layer: any CSS of the site wins over it, whatever its selectors. */
+@layer brim {
+  /* isolation: a z-index the site gives a slide (a fade raises the shown one) stays inside the carousel and never
+     covers what the page lays over it, such as a hero's shade and title. */
+  brim-carousel {
+    position: relative;
+    display: block;
+    isolation: isolate;
+  }
+
+  brim-carousel [data-track] {
+    display: flex;
+    gap: var(--brim-carousel-gap, 0px);
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+  }
+
+  brim-carousel [data-track]::-webkit-scrollbar {
+    display: none;
+  }
+
+  brim-carousel [data-track] > * {
+    flex: none;
+    scroll-snap-align: start;
+  }
+
+  brim-carousel[data-variant="center-peek"] [data-track] > * {
+    scroll-snap-align: center;
+  }
+
+  /* Rolling: the track (and the copy of its slides the script adds) moves by itself, at the slides' own widths. */
+  brim-carousel[data-variant="continuous"] {
+    overflow: hidden;
+  }
+
+  brim-carousel[data-variant="continuous"] [data-track] {
+    width: max-content;
+    overflow: visible;
+    animation: brim-carousel-roll var(--brim-carousel-duration, 24s) linear infinite;
+  }
+
+  brim-carousel[data-variant="continuous"]:hover [data-track] {
+    animation-play-state: paused;
+  }
+
+  @keyframes brim-carousel-roll {
+    to {
+      transform: translateX(calc(-50% - var(--brim-carousel-gap, 0px) / 2));
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    brim-carousel[data-variant="continuous"] [data-track] {
+      animation: none;
+    }
+  }
+
+  /* The slider Brim draws when the site draws none. */
+  .brim-carousel {
+    --brim-carousel-current-per-view: var(--brim-carousel-per-view, 1);
+  }
+
+  .brim-carousel__slide {
+    position: relative;
+    display: flex;
+    flex-basis: calc(
+      (100% - var(--brim-carousel-gap, 0px) * (var(--brim-carousel-current-per-view) - 1)) /
+        var(--brim-carousel-current-per-view)
+    );
+    flex-direction: column;
+    gap: 0.5rem;
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .brim-carousel__slide img {
+    display: block;
+    width: 100%;
+    /* The image's width and height attributes would fix its height; the slide's shape decides it. */
+    height: auto;
+    aspect-ratio: 16 / 9;
+    border-radius: var(--brim-theme-radius, 0.5rem);
+    object-fit: cover;
+  }
+
+  /* How wide the slide in the middle is: --brim-carousel-peek, set by the site. */
+  .brim-carousel[data-variant="center-peek"] .brim-carousel__slide {
+    flex-basis: var(--brim-carousel-peek, 78%);
+  }
+
+  .brim-carousel[data-variant="continuous"] .brim-carousel__slide {
+    flex-basis: auto;
+  }
+
+  /* Logos keep their own widths, at one height. */
+  .brim-carousel[data-variant="continuous"] .brim-carousel__slide img {
+    width: auto;
+    height: var(--brim-carousel-height, 4rem);
+    aspect-ratio: auto;
+    border-radius: 0;
+    object-fit: contain;
+  }
+
+  .brim-carousel__caption {
+    font-size: 0.875em;
+  }
+
+  .brim-carousel__arrow {
+    position: absolute;
+    top: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.5rem;
+    height: 2.5rem;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: var(--brim-theme-background, #ffffff);
+    color: var(--brim-theme-dark2, #0a0a0a);
+    box-shadow: 0 1px 4px rgb(0 0 0 / 0.25);
+    transform: translateY(-50%);
+    cursor: pointer;
+  }
+
+  .brim-carousel__arrow::before {
+    content: "";
+    width: 0.55rem;
+    height: 0.55rem;
+    border-top: 2px solid currentColor;
+    border-right: 2px solid currentColor;
+  }
+
+  .brim-carousel__arrow[data-previous] {
+    left: 0.75rem;
+  }
+
+  .brim-carousel__arrow[data-previous]::before {
+    margin-left: 0.2rem;
+    transform: rotate(-135deg);
+  }
+
+  .brim-carousel__arrow[data-next] {
+    right: 0.75rem;
+  }
+
+  .brim-carousel__arrow[data-next]::before {
+    margin-right: 0.2rem;
+    transform: rotate(45deg);
+  }
+
+  .brim-carousel__dots {
+    display: flex;
+    justify-content: center;
+    gap: 0.5rem;
+    margin-top: 0.75rem;
+  }
+
+  .brim-carousel__dots button {
+    width: 0.5rem;
+    height: 0.5rem;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: currentColor;
+    opacity: 0.3;
+    cursor: pointer;
+  }
+
+  .brim-carousel__dots button[data-current] {
+    opacity: 1;
+  }
+
+  @media (max-width: 480px) {
+    .brim-carousel {
+      --brim-carousel-current-per-view: 1;
+    }
+  }
+}

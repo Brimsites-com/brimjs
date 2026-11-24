@@ -1,0 +1,19 @@
+---
+import type { TemplatePageProps } from "brimjs";
+import { Button, Text } from "brimjs/components";
+import Site from "../layouts/Site.astro";
+
+interface Props {
+  page: TemplatePageProps;
+}
+
+const { page } = Astro.props;
+---
+
+<Site title={`${page.title} — Acme Studio`}>
+  <Text nodeId="service-title" as="h1">
+    {page.title}
+  </Text>
+  <Text nodeId="service-lead">What this service is and who it is for.</Text>
+  <Button nodeId="service-cta" text="Ask about it" url="/about" />
+</Site>

@@ -1,0 +1,91 @@
+---
+import { defaultScope } from "../runtime/request-state.ts";
+import "./text.css";
+import config from "virtual:brim/config";
+import { text as textBlock } from "../blocks/schemas/text.ts";
+import { resolveSettings } from "../blocks/settings.ts";
+import { themeColor } from "../blocks/theme.ts";
+import { alignStyle, renderInline } from "../content/rich-text.ts";
+import { type ItemBinding, boundValue } from "../content/item-fields.ts";
+import { textDefaultError } from "../content/text-default.ts";
+import type { Item } from "../content/items.ts";
+import type { TextTag } from "../content/types.ts";
+import type { NodeScope } from "../runtime/context.ts";
+
+/**
+ * One element of text. The owner can retype it, format it, align it, change the element and style it as a quote.
+ * With `item` and `field` it shows a text field of a content item (or its title) and retyping it saves the item.
+ */
+interface Props {
+  nodeId: string;
+  as?: TextTag;
+  scope?: NodeScope;
+  item?: Item;
+  field?: string;
+  [attribute: string]: unknown;
+}
+
+const { nodeId, as = "p", scope = defaultScope(), style, item, field, ...attributes } = Astro.props;
+const binding: ItemBinding | undefined = item && field ? { item, field } : undefined;
+const saved = Astro.locals.brim.read("text", nodeId, scope);
+// A bound element takes its words from the item; the node keeps only how they are presented.
+const stored = binding && saved ? { ...saved, rich: undefined, text: "" } : saved;
+const boundText = binding ? String(boundValue(binding) ?? "") : undefined;
+const Tag = stored?.as ?? as;
+const options = resolveSettings(textBlock, {}, stored?.options);
+
+const quote = options.quotedText ? (options.quoteStyle === "pull" ? "pull" : "classic") : undefined;
+const styles = [
+  style,
+  alignStyle(stored?.align),
+  options.rotation ? `rotate:${Number(options.rotation)}deg` : undefined,
+  options.dropCap && options.dropCapColor
+    ? `--brim-text-drop-cap-color:${themeColor(options.dropCapColor)}`
+    : undefined,
+  quote ? `--brim-text-quote-color:${themeColor(options.quoteColor)}` : undefined,
+]
+  .filter(Boolean)
+  .join(";");
+// The editor needs what the owner chose, to show it and to keep it when the text is retyped.
+const chosen = stored?.as || stored?.options ? { as: stored.as, options: stored.options } : undefined;
+
+// While someone can edit, the code's content is checked before the owner's first edit could lose part of it. Content
+// that passes holds only inline formatting and is shown as rendered here; content that fails is drawn by the slot as
+// before, so islands and nested elements in it behave as they always did. The public site never runs the check, so a
+// page that showed before still shows. A bound element is left out: its field holds plain words, whatever the code
+// shows while it is empty.
+const defaultHtml =
+  Astro.locals.brim.editing && !binding && !stored && Astro.slots.has("default")
+    ? await Astro.slots.render("default")
+    : undefined;
+const unkept = defaultHtml === undefined ? undefined : textDefaultError(nodeId, defaultHtml);
+// In dev the author is at the code: the error stops the page and says what to change. On the live site a signed-in
+// owner gets the page as the code draws it, and the editor will not let them type into this element.
+if (unkept && config.mode === "dev") throw new Error(unkept);
+if (unkept) console.warn(unkept);
+---
+
+<Tag
+  {...attributes}
+  {...Astro.locals.brim.marker("text", nodeId, scope, chosen, binding)}
+  data-brim-text={options.dropCap || quote || options.scaleText ? "" : undefined}
+  data-drop-cap={options.dropCap ? "" : undefined}
+  data-oversized={options.scaleText ? "" : undefined}
+  data-quote={quote}
+  data-quote-size={quote === "pull" ? options.pullQuoteSize : undefined}
+  data-quote-align={quote === "pull" ? options.pullQuoteAlign : undefined}
+  style={styles || undefined}
+  data-brim-unkept={unkept ? "" : undefined}
+>
+  {binding ? (
+    boundText || <slot />
+  ) : stored?.rich ? (
+    <Fragment set:html={renderInline(stored.rich)} />
+  ) : stored ? (
+    stored.text
+  ) : defaultHtml !== undefined && !unkept ? (
+    <Fragment set:html={defaultHtml} />
+  ) : (
+    <slot />
+  )}
+</Tag>

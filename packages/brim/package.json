@@ -1,0 +1,64 @@
+{
+  "name": "brimjs",
+  "version": "0.0.0",
+  "description": "Makes Astro sites editable: primitives with stable node ids, content in SQLite, static output.",
+  "license": "FSL-1.1-MIT",
+  "type": "module",
+  "engines": {
+    "node": ">=22.23.4"
+  },
+  "exports": {
+    ".": "./src/index.ts",
+    "./components": "./src/components/index.ts",
+    "./middleware": "./src/runtime/middleware.ts",
+    "./content": "./src/runtime/content.ts",
+    "./server": "./src/runtime/server.ts",
+    "./template-page": "./src/runtime/TemplatePage.astro",
+    "./template-page-static": "./src/runtime/TemplatePageStatic.astro",
+    "./rss-static": "./src/runtime/rss-static.ts",
+    "./sitemap": "./src/runtime/sitemap.ts",
+    "./robots": "./src/runtime/robots.ts",
+    "./rss": "./src/runtime/rss.ts",
+    "./admin-route": "./src/runtime/admin-route.ts",
+    "./forms-route": "./src/runtime/forms-route.ts",
+    "./uploads-route": "./src/runtime/uploads-route.ts"
+  },
+  "files": [
+    "src",
+    "bin",
+    "dist",
+    "editor-dist",
+    "skills"
+  ],
+  "scripts": {
+    "build:editor": "node scripts/build-editor.mjs",
+    "build:cli": "node scripts/build-cli.mjs",
+    "prepack": "node scripts/build-editor.mjs && node scripts/build-cli.mjs",
+    "test": "vitest run --no-file-parallelism",
+    "check-types": "tsc --noEmit && tsc --noEmit -p src/editor/client"
+  },
+  "peerDependencies": {
+    "astro": "^7.0.0"
+  },
+  "dependencies": {
+    "@astrojs/node": "^11.1.13",
+    "@libsql/client": "^0.18.0",
+    "hls.js": "^1.7.4",
+    "nodemailer": "^10.3.1"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "@types/nodemailer": "^8.0.2",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "astro": "^7.4.11",
+    "esbuild": "^0.25.12",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "typescript": "^7.0.2",
+    "vitest": "^5.1.0"
+  },
+  "bin": {
+    "brim": "./bin/brim.js"
+  }
+}

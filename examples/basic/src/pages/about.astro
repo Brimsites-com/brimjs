@@ -1,0 +1,65 @@
+---
+import {
+  Accordion,
+  Carousel,
+  Divider,
+  Form,
+  Icon,
+  ImageGallery,
+  Map,
+  Newsletter,
+  RichText,
+  SocialMedia,
+  Text,
+  Video,
+} from "brimjs/components";
+import { Shared } from "brimjs/components";
+import Promo from "../components/Promo.astro";
+import Site from "../layouts/Site.astro";
+
+const photos = [
+  { url: "/hero.svg", alt: "Abstract shapes", title: "Studio" },
+  { url: "/hero.svg", alt: "Abstract shapes", title: "Workshop" },
+  { url: "/hero.svg", alt: "Abstract shapes", title: "Garden" },
+];
+const questions = [
+  { title: "How long does a site take?", content: "Most sites are live in two to four weeks." },
+  { title: "Can I edit it myself?", content: "Yes. Every text and image can be changed in the browser." },
+];
+---
+
+<Site title="About — Acme Studio" description="A small team that builds fast websites.">
+  <Text nodeId="about-title" as="h1">
+    About the studio
+  </Text>
+  <RichText nodeId="about-body">
+    <p>We are a small team that builds fast websites.</p>
+    <h2>How we work</h2>
+    <ul>
+      <li>We write the site in Astro.</li>
+      <li>You edit it in the browser.</li>
+    </ul>
+  </RichText>
+  <Divider nodeId="about-divider" />
+  <Icon nodeId="about-icon" icon="heart" />
+  <ImageGallery nodeId="about-gallery" images={photos} columns={3} class="about-gallery" />
+  <Text nodeId="about-faq-title" as="h2">Questions</Text>
+  <Accordion nodeId="about-faq" items={questions} allowMultiple={false} />
+  <Carousel
+    nodeId="about-carousel"
+    class="about-carousel"
+    images={photos.map((photo) => ({ url: photo.url, alt: photo.alt, caption: photo.title }))}
+    slidesPerView={2}
+    gap={16}
+    showDots
+  />
+  <Video nodeId="about-video" url="https://www.youtube.com/watch?v=aqz-KE-bpKQ" />
+  <Map nodeId="about-map" points={[{ lat: 46.7712, lng: 23.6236, title: "Studio", address: "Cluj-Napoca" }]} />
+  <SocialMedia nodeId="about-share" scope="page" mode="share" shareText="Meet Acme Studio" />
+  <Form nodeId="about-form" formName="Write to us" />
+  <Newsletter nodeId="newsletter" />
+  {/* The same on every page: edited once for the whole site. */}
+  <Shared>
+    <Promo />
+  </Shared>
+</Site>

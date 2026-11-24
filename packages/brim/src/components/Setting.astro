@@ -1,0 +1,46 @@
+---
+import config from "virtual:brim/config";
+import { SITE_SETTINGS_NODE, settingsValues } from "../content/site-settings.ts";
+
+/**
+ * One of the site's own settings, shown on the page: `<Setting name="phone" />`, or the visible text of a link
+ * built from it (`<a href={`tel:${phone}`}><Setting name="phone" /></a>`). Clicking it in the editor opens Site
+ * Settings at that field, so the owner changes it there, for every page that shows it. Nothing is drawn while the
+ * setting is empty, unless the code gives a fallback as its content.
+ */
+interface Props {
+  name: string;
+  as?: "span" | "p" | "strong" | "em" | "small" | "div";
+  [attribute: string]: unknown;
+}
+
+const { name, as: Tag = "span", ...attributes } = Astro.props;
+const declared = config.siteSettings?.fields.find((field) => field.name === name);
+if (!declared) {
+  throw new Error(`<Setting name="${name}">: the site declares no such setting in src/site-settings.ts.`);
+}
+const saved = Astro.locals.brim.read("site-settings" as never, SITE_SETTINGS_NODE, "site");
+const value = settingsValues(config.siteSettings, saved)[name];
+// What a setting reads as: text as it is, a list or key–value rows as one line, a choice by its value.
+const text = Array.isArray(value)
+  ? value
+      .map((entry) => (typeof entry === "object" && entry ? Object.values(entry).join(": ") : String(entry)))
+      .join(", ")
+  : value === undefined || value === null
+    ? ""
+    : typeof value === "object"
+      ? ""
+      : String(value);
+const editing = Astro.locals.brim.editing;
+const fallback = Astro.slots.has("default") ? await Astro.slots.render("default") : "";
+---
+
+{(text || fallback || editing) && (
+  <Tag
+    {...attributes}
+    data-brim-setting={editing ? name : undefined}
+    data-brim-setting-label={editing ? declared.label : undefined}
+  >
+    {text || <Fragment set:html={fallback} />}
+  </Tag>
+)}

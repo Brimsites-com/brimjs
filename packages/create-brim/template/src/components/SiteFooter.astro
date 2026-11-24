@@ -1,0 +1,88 @@
+---
+import type { FooterValue } from "brimjs";
+import { Footer, Setting, SocialMedia } from "brimjs/components";
+import { getSiteSettings } from "brimjs/content";
+import { siteSettings } from "../site-settings.ts";
+import { SITE_NAME, pages } from "./navigation.ts";
+
+// From Site Settings (src/site-settings.ts), typed by its fields: the owner changes them once, for every page.
+const { email, phone } = await getSiteSettings(siteSettings);
+
+const groups = [
+  { title: "Pages", items: pages.slice(0, 3) },
+  { title: "More", items: pages.slice(3) },
+];
+---
+
+<Footer nodeId="footer" logoText={SITE_NAME} groups={groups} class="site-footer">
+  {({ logoText, groups }: FooterValue) => (
+    <div class="container site-footer__inner">
+      <div class="stack">
+        <strong class="site-footer__brand">{logoText}</strong>
+        {email && (
+          <a href={`mailto:${email}`}>
+            <Setting name="email" />
+          </a>
+        )}
+        {phone && (
+          <a href={`tel:${phone.replace(/[^+\d]/g, "")}`}>
+            <Setting name="phone" />
+          </a>
+        )}
+        <SocialMedia
+          nodeId="footer-social"
+          mode="profile"
+          profiles={{ instagram: "https://instagram.com", linkedin: "https://linkedin.com" }}
+        />
+      </div>
+      {groups.map((group) => (
+        <section>
+          <h2 class="site-footer__title">{group.title}</h2>
+          <ul class="site-footer__links">
+            {group.items.map((item) => (
+              <li>
+                <a href={item.href}>{item.label}</a>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ))}
+    </div>
+  )}
+</Footer>
+
+<style>
+  .site-footer {
+    background: var(--brim-theme-dark2);
+    color: var(--brim-theme-light2);
+    padding-block: 3.5rem;
+  }
+
+  .site-footer__inner {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+    gap: 2rem;
+  }
+
+  .site-footer__brand {
+    font-size: 1.125rem;
+    color: var(--brim-theme-background);
+  }
+
+  .site-footer__title {
+    font-size: 0.8125rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--brim-theme-background);
+  }
+
+  .site-footer__links {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .site-footer__links a {
+    text-decoration: none;
+  }
+</style>

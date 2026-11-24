@@ -1,0 +1,86 @@
+/*
+ * The blocks of a `blocks` field: each as wide as the owner chose, on the side chosen when narrower than its place,
+ * with the site's rhythm between them. The site says what the widths are (--brim-block-narrow, --brim-block-content,
+ * --brim-block-wide) and the rhythm (--brim-block-gap); the owner may tighten or widen the space above a block.
+ */
+/* In the `brim` layer: any CSS of the site wins over it, whatever its selectors. */
+@layer brim {
+  .brim-blocks {
+    display: flex;
+    flex-direction: column;
+    gap: var(--brim-block-gap, 1.5rem);
+  }
+
+  /* The space above a block, in steps of the rhythm: none, half, the rhythm itself, twice it. */
+  .brim-block[data-space="none"] {
+    margin-top: calc(var(--brim-block-gap, 1.5rem) * -1);
+  }
+
+  .brim-block[data-space="small"] {
+    margin-top: calc(var(--brim-block-gap, 1.5rem) * -0.5);
+  }
+
+  .brim-block[data-space="large"] {
+    margin-top: var(--brim-block-gap, 1.5rem);
+  }
+
+  .brim-block:first-child {
+    margin-top: 0;
+  }
+
+  /* The rhythm is the only space between blocks: a text block's first and last paragraphs add none of their own. */
+  .brim-block > * > :first-child {
+    margin-top: 0;
+  }
+
+  .brim-block > * > :last-child {
+    margin-bottom: 0;
+  }
+
+  .brim-block {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    max-width: var(--brim-block-content, 46rem);
+    margin-inline: auto;
+  }
+
+  .brim-block[data-width="narrow"] {
+    max-width: var(--brim-block-narrow, 30rem);
+  }
+
+  .brim-block[data-width="wide"] {
+    max-width: var(--brim-block-wide, 72rem);
+  }
+
+  .brim-block[data-width="full"] {
+    max-width: none;
+  }
+
+  .brim-block[data-align="left"] {
+    margin-inline: 0 auto;
+  }
+
+  .brim-block[data-align="right"] {
+    margin-inline: auto 0;
+  }
+
+  /* A picture fills its block; a button sits on the block's side. */
+  .brim-block > .brim-image,
+  .brim-block > .brim-image .brim-image__frame,
+  .brim-block > .brim-image img {
+    width: 100%;
+  }
+
+  .brim-block > .brim-btn {
+    align-self: center;
+  }
+
+  .brim-block[data-align="left"] > .brim-btn {
+    align-self: flex-start;
+  }
+
+  .brim-block[data-align="right"] > .brim-btn {
+    align-self: flex-end;
+  }
+}

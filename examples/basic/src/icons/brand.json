@@ -1,0 +1,15 @@
+{
+  "prefix": "brand",
+  "info": { "name": "Acme" },
+  "width": 32,
+  "height": 32,
+  "icons": {
+    "spark": {
+      "body": "<path fill=\"currentColor\" d=\"M16 2l3.5 10.5L30 16l-10.5 3.5L16 30l-3.5-10.5L2 16l10.5-3.5z\"/>"
+    },
+    "dot": { "body": "<circle fill=\"currentColor\" cx=\"16\" cy=\"16\" r=\"10\"/>" }
+  },
+  "aliases": {
+    "sparkle": { "parent": "spark" }
+  }
+}

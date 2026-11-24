@@ -1,0 +1,26 @@
+---
+import { Listing } from "brimjs/components";
+import Site from "../layouts/Site.astro";
+
+// Visitors narrow the products by category, search them, and turn pages, all through the address.
+---
+
+<Site title="Shop — Acme Studio">
+  <h1>Shop</h1>
+  <Listing nodeId="shop-products" type="product" sort="title" facets={["category"]} search pageSize={1} />
+  {/* The same browsing drawn in the site's own markup, with its own address parameters. */}
+  <Listing
+    nodeId="shop-own"
+    type="product"
+    sort="title"
+    facets={["category"]}
+    paramPrefix="own-"
+    controls={(state) => (
+      <p class="own-controls">
+        {state.total} products: {state.facets[0]?.options.map((option) => `${option.label} (${option.count})`).join(", ")}
+      </p>
+    )}
+  >
+    {(item: { title: string }) => <span class="own-item">{item.title}</span>}
+  </Listing>
+</Site>

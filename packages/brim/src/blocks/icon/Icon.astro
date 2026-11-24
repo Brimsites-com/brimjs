@@ -1,0 +1,41 @@
+---
+import { defaultScope } from "../../runtime/request-state.ts";
+import "./icon.css";
+import type { NodeScope } from "../../runtime/context.ts";
+import { icons } from "../../runtime/icons.ts";
+import { icon as iconBlock } from "../schemas/icon.ts";
+
+/**
+ * One icon, from Brim's own set or a pack the site added; the owner can pick another in the editor. It is drawn in
+ * the text's colour, `1em` wide; its size, colour and any shape behind it are the site's CSS. `class` goes on it.
+ */
+interface Props {
+  nodeId: string;
+  scope?: NodeScope;
+  icon?: string;
+  class?: string;
+}
+
+const { nodeId, scope = defaultScope(), class: className, ...source } = Astro.props;
+const settings = Astro.locals.brim.settings(iconBlock, nodeId, scope, source);
+// An icon whose pack was taken out of the config falls back to the star, so the place is not left empty.
+const drawn = icons.find(settings.icon) ?? icons.find("star")!;
+// A pack's icon carries its own look; only Brim's outlines are drawn and tinted by the block.
+const outline = drawn.outline && {
+  fill: "none",
+  stroke: "currentColor",
+  "stroke-width": "2",
+  "stroke-linecap": "round",
+  "stroke-linejoin": "round",
+};
+---
+
+<span class:list={["brim-icon", className]} {...Astro.locals.brim.marker("icon", nodeId, scope, settings)}>
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    viewBox={drawn.viewBox}
+    {...outline}
+    aria-hidden="true"
+    set:html={drawn.body}
+  />
+</span>

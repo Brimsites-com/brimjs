@@ -1,0 +1,43 @@
+/* The grid Brim draws for a gallery the site does not draw itself: `columns` wide, fewer on smaller screens. */
+/* In the `brim` layer: any CSS of the site wins over it, whatever its selectors. */
+@layer brim {
+  .brim-gallery {
+    --brim-gallery-current-columns: var(--brim-gallery-columns, 3);
+
+    display: grid;
+    grid-template-columns: repeat(var(--brim-gallery-current-columns), minmax(0, 1fr));
+    gap: var(--brim-gallery-gap, 16px);
+  }
+
+  .brim-gallery__item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin: 0;
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .brim-gallery__item img {
+    display: block;
+    width: 100%;
+    height: auto;
+    border-radius: var(--brim-theme-radius, 0.5rem);
+  }
+
+  .brim-gallery__caption {
+    font-size: 0.875em;
+  }
+
+  @media (max-width: 768px) {
+    .brim-gallery {
+      --brim-gallery-current-columns: min(var(--brim-gallery-columns, 3), 2);
+    }
+  }
+
+  @media (max-width: 480px) {
+    .brim-gallery {
+      --brim-gallery-current-columns: 1;
+    }
+  }
+}

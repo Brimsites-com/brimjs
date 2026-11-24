@@ -1,0 +1,17 @@
+{
+  "name": "example-basic",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "start": "brim start",
+    "build:static": "BRIM_OUTPUT=static astro build",
+    "brim": "brim",
+    "seed": "printf 'example-owner-password' | brim user add owner@example.test"
+  },
+  "dependencies": {
+    "astro": "^7.4.11",
+    "brimjs": "workspace:*"
+  }
+}

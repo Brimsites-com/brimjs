@@ -1,0 +1,102 @@
+---
+import "./social.css";
+import type { NodeScope } from "../../runtime/context.ts";
+import { SOCIAL_ICONS } from "../data/social-icons.ts";
+import { SOCIAL_NETWORKS, normalizeSocialNetworkProfileUrl, orderSocialNetworks } from "../data/social-networks.ts";
+import { socialMedia } from "../schemas/social-media.ts";
+import type { SocialLink, SocialMediaValue } from "./social-links.ts";
+
+/**
+ * Icons that share the current page (`mode="share"`) or link to the site's own profiles (`mode="profile"`). The
+ * owner turns networks on and off, orders them and types the profile links; their look is the site's. Start the
+ * profiles with `profiles={{ instagram: "https://instagram.com/acme", email: "hello@acme.ro" }}`, and draw them
+ * with a function if Brim's plain row of icons does not suit:
+ *
+ *   <SocialMedia nodeId="footer-social" mode="profile" profiles={profiles}>
+ *     {({ links }) => links.map((link) => <a href={link.href} aria-label={link.label}>{link.label}</a>)}
+ *   </SocialMedia>
+ */
+interface Props {
+  nodeId: string;
+  scope?: NodeScope;
+  mode?: "share" | "profile";
+  shareText?: string;
+  openInNewTab?: boolean;
+  /** Starting profile links by network, in the order they are shown. */
+  profiles?: Partial<Record<string, string>>;
+  [setting: string]: unknown;
+}
+
+const { nodeId, scope = "site", profiles, ...source } = Astro.props;
+/** An email address or phone number given as it is written becomes a `mailto:` or `tel:` link. */
+const plainAddress = (network: string, value: string): string =>
+  network === "email" && !value.includes(":")
+    ? `mailto:${value}`
+    : network === "phone" && !value.includes(":")
+      ? `tel:${value.replace(/\s+/g, "")}`
+      : value;
+// The profiles given in code start as networks turned on, first and in their order; the others stay as they were.
+const starting = profiles
+  ? {
+      networkOrder: [...Object.keys(profiles), ...SOCIAL_NETWORKS.map((network) => network.key)].filter(
+        (key, index, keys) => keys.indexOf(key) === index,
+      ),
+      ...Object.fromEntries(
+        Object.entries(profiles).flatMap(([key, url]) => [
+          [`${key}Url`, plainAddress(key, url ?? "")],
+          [`${key}Enabled`, true],
+        ]),
+      ),
+    }
+  : {};
+const settings = Astro.locals.brim.settings(socialMedia, nodeId, scope, { ...starting, ...source });
+
+// Sharing needs the page's public address, which only exists once `site` is set in the Astro config.
+const pageUrl = Astro.site ? new URL(Astro.url.pathname, Astro.site).href : Astro.url.href;
+const shareText = String(settings.shareText ?? "");
+const sharing = settings.mode !== "profile";
+const newTab = sharing || settings.openInNewTab !== false;
+
+const links: SocialLink[] = orderSocialNetworks(SOCIAL_NETWORKS, settings.networkOrder)
+  .filter((network) => settings[`${network.key}Enabled`] !== false)
+  .flatMap((network) => {
+    const href = sharing
+      ? network.share?.({ url: pageUrl, title: shareText, text: shareText })
+      : normalizeSocialNetworkProfileUrl(network.key, settings[network.profileField]);
+    if (!href) return [];
+    return [
+      {
+        network: network.key,
+        label: sharing ? `Share on ${network.label}` : network.label,
+        href,
+        icon: SOCIAL_ICONS[network.icon],
+        newTab: newTab && !/^(mailto|tel):/i.test(href),
+      },
+    ];
+  });
+const drawn = Astro.slots.has("default");
+const content = drawn ? await Astro.slots.render("default", [{ links } satisfies SocialMediaValue]) : undefined;
+const Tag = drawn ? "div" : "ul";
+---
+
+<Tag class={drawn ? undefined : "brim-social"} {...Astro.locals.brim.marker("social-media", nodeId, scope, settings)}>
+  {drawn ? (
+    <Fragment set:html={content} />
+  ) : (
+    links.map((link) => (
+      <li>
+        <a
+          href={link.href}
+          target={link.newTab ? "_blank" : undefined}
+          rel={link.newTab ? "noopener noreferrer" : undefined}
+          aria-label={link.label}
+        >
+          <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" set:html={link.icon} />
+        </a>
+      </li>
+    ))
+  )}
+  {links.length === 0 && Astro.locals.brim.editing && (
+    <span>No networks to show yet. Select this block to add them.</span>
+  )}
+</Tag>

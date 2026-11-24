@@ -1,0 +1,48 @@
+---
+/**
+ * The items of a listing, as the site's own markup (`rendered`) or as Brim's plain cards. Split from `Listing` so
+ * the same cards are drawn whether or not visitors can narrow the list.
+ */
+import type { ContentItem } from "../../runtime/content.ts";
+import { imageSources } from "../../runtime/media.ts";
+
+interface Props {
+  items: ContentItem[];
+  rendered: string[];
+  custom: boolean;
+  links: boolean;
+  image: (item: ContentItem) => { src: string; alt: string } | undefined;
+  text: (item: ContentItem) => string | undefined;
+  labels: (item: ContentItem) => string[];
+}
+
+const { items, rendered, custom, links, image, text, labels } = Astro.props;
+---
+
+{custom
+  ? rendered.map((html) => <Fragment set:html={html} />)
+  : items.map((item) => {
+      const Card = links ? "a" : "div";
+      return (
+        <Card class="brim-listing__item" href={links ? item.url : undefined}>
+          {image(item)?.src && (
+            <img
+              class="brim-listing__image"
+              {...imageSources(image(item)?.src ?? "", "(max-width: 479px) 100vw, (max-width: 991px) 50vw, 33vw")}
+              alt={image(item)?.alt ?? ""}
+              loading="lazy"
+              decoding="async"
+            />
+          )}
+          <span class="brim-listing__title">{item.title}</span>
+          {text(item) && <span class="brim-listing__text">{text(item)}</span>}
+          {labels(item).length > 0 && (
+            <span class="brim-listing__tags">
+              {labels(item).map((tag) => (
+                <span class="brim-listing__tag">{tag}</span>
+              ))}
+            </span>
+          )}
+        </Card>
+      );
+    })}

@@ -1,0 +1,17 @@
+/* A plain line in the text's colour, with room around it. The site restyles `.brim-divider` as it likes. */
+/* In the `brim` layer: any CSS of the site wins over it, whatever its selectors. */
+@layer brim {
+  .brim-divider {
+    margin-block: var(--brim-divider-space, 1.5rem);
+    border-top: 1px solid currentColor;
+    opacity: 0.25;
+  }
+
+  .brim-divider[aria-orientation="vertical"] {
+    align-self: stretch;
+    min-height: 2rem;
+    margin: 0 var(--brim-divider-space, 1.5rem);
+    border-top: 0;
+    border-left: 1px solid currentColor;
+  }
+}

@@ -1,0 +1,138 @@
+---
+import type { FormField } from "../../forms/fields.ts";
+import { MAX_FILES, MAX_FILE_BYTES, acceptAttribute, fileTypes } from "../../forms/file-types.ts";
+
+/**
+ * One question of a Form: its label, its input and the line under it. A Form draws its fields with it, and a site
+ * that draws a form its own way places it wherever each field goes: `<Field field={field} />`.
+ */
+interface Props {
+  /** A field as a Form's function child gets it, with the `id` its input takes. */
+  field: FormField & { id: string };
+  class?: string;
+}
+
+const { field, class: className } = Astro.props;
+const helpId = field.help ? `${field.id}-help` : undefined;
+// An icon is a picture when it is an address; otherwise it is shown as text (an emoji, a letter).
+const picture = (icon: string): boolean => /^(\/(?!\/)|https?:\/\/|data:image\/)/i.test(icon);
+// A field of several choices is a group of checkboxes under one name; its "required" is checked by the form's script.
+const inputType = field.type === "checkboxes" ? "checkbox" : "radio";
+const autocomplete =
+  field.type === "name" ? "name" : field.type === "email" ? "email" : field.type === "tel" ? "tel" : undefined;
+---
+
+<div
+  class:list={["brim-form__field", className]}
+  data-type={field.type}
+  data-width={field.width ?? "full"}
+  data-name={field.name}
+  data-show-when={field.showWhen ? JSON.stringify(field.showWhen) : undefined}
+>
+  {field.type === "checkbox" ? (
+    <label class="brim-form__check">
+      <input type="checkbox" name={field.name} required={field.required} aria-describedby={helpId} />
+      <span>{field.label}</span>
+    </label>
+  ) : (
+    <>
+      <label for={field.id} id={`${field.id}-label`}>
+        {field.label}
+        {field.required && <span aria-hidden="true"> *</span>}
+      </label>
+      {field.type === "textarea" && (
+        <textarea
+          id={field.id}
+          name={field.name}
+          rows="5"
+          placeholder={field.placeholder}
+          required={field.required}
+          aria-describedby={helpId}
+        />
+      )}
+      {field.type === "select" && (
+        <select id={field.id} name={field.name} required={field.required} aria-describedby={helpId}>
+          <option value="">{field.placeholder ?? "Choose…"}</option>
+          {field.options?.map((option) => (
+            <option value={option}>{option}</option>
+          ))}
+        </select>
+      )}
+      {(field.type === "radio" || field.type === "checkboxes") && (
+        <div
+          class="brim-form__choices"
+          role={field.type === "radio" ? "radiogroup" : "group"}
+          data-display={field.display ?? "list"}
+          data-required={field.type === "checkboxes" && field.required ? "" : undefined}
+          aria-labelledby={`${field.id}-label`}
+          aria-describedby={helpId}
+        >
+          {(field.choices ?? field.options?.map((label) => ({ label })) ?? []).map((choice) =>
+            field.display === "cards" ? (
+              <label class="brim-form__choice" data-image={choice.image ? "" : undefined}>
+                <input
+                  type={inputType}
+                  name={field.name}
+                  value={choice.label}
+                  required={field.type === "radio" && field.required}
+                />
+                {choice.image && (
+                  <span class="brim-form__choice-image">
+                    <img src={choice.image} alt="" loading="lazy" decoding="async" />
+                  </span>
+                )}
+                {choice.icon && (
+                  <span class="brim-form__choice-icon" aria-hidden="true">
+                    {picture(choice.icon) ? <img src={choice.icon} alt="" loading="lazy" /> : choice.icon}
+                  </span>
+                )}
+                <span class="brim-form__choice-label">{choice.label}</span>
+                {choice.description && <span class="brim-form__choice-description">{choice.description}</span>}
+              </label>
+            ) : (
+              <label class="brim-form__check">
+                <input
+                  type={inputType}
+                  name={field.name}
+                  value={choice.label}
+                  required={field.type === "radio" && field.required}
+                />
+                <span>{choice.label}</span>
+              </label>
+            ),
+          )}
+        </div>
+      )}
+      {field.type === "file" && (
+        // `accept` only guides the visitor's file picker; the server reads what each file really is.
+        <input
+          id={field.id}
+          name={field.name}
+          type="file"
+          accept={acceptAttribute(fileTypes(field.accept))}
+          multiple={field.multiple}
+          required={field.required}
+          data-max-bytes={MAX_FILE_BYTES}
+          data-max-files={field.multiple ? MAX_FILES : 1}
+          aria-describedby={helpId}
+        />
+      )}
+      {!["textarea", "select", "radio", "checkboxes", "file"].includes(field.type) && (
+        <input
+          id={field.id}
+          name={field.name}
+          type={field.type === "name" ? "text" : field.type}
+          autocomplete={autocomplete}
+          placeholder={field.placeholder}
+          required={field.required}
+          aria-describedby={helpId}
+        />
+      )}
+    </>
+  )}
+  {field.help && (
+    <p class="brim-form__help" id={helpId}>
+      {field.help}
+    </p>
+  )}
+</div>

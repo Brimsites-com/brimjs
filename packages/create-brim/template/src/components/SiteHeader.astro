@@ -1,0 +1,73 @@
+---
+import type { NavbarValue } from "brimjs";
+import { Navbar } from "brimjs/components";
+import { SITE_NAME, pages } from "./navigation.ts";
+
+// The Navbar primitive holds only the logo, the name and the links; the markup below is the site's own.
+---
+
+<Navbar nodeId="navbar" logoText={SITE_NAME} items={pages} class="site-header">
+  {({ logo, logoText, items }: NavbarValue) => (
+    <div class="container site-header__inner">
+      <a class="site-header__brand" href="/">
+        {logo && <img src={logo.src} alt={logo.alt} height="32" />}
+        {logoText}
+      </a>
+      <nav aria-label="Main">
+        <ul class="site-header__links">
+          {items.map((item) => (
+            <li>
+              <a href={item.href} aria-current={item.href === Astro.url.pathname ? "page" : undefined}>
+                {item.label}
+              </a>
+            </li>
+          ))}
+        </ul>
+      </nav>
+    </div>
+  )}
+</Navbar>
+
+<style>
+  .site-header {
+    border-bottom: 1px solid var(--brim-theme-light2);
+    background: var(--brim-theme-background);
+  }
+
+  .site-header__inner {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    min-height: 4.5rem;
+  }
+
+  .site-header__brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.625rem;
+    font-weight: 700;
+    font-size: 1.125rem;
+    text-decoration: none;
+  }
+
+  .site-header__links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem 1.5rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .site-header__links a {
+    color: var(--brim-theme-dark1);
+    text-decoration: none;
+  }
+
+  .site-header__links a:hover,
+  .site-header__links a[aria-current="page"] {
+    color: var(--brim-theme-primary);
+  }
+</style>

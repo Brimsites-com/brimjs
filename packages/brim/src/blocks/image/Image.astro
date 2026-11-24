@@ -1,0 +1,158 @@
+---
+import { defaultScope } from "../../runtime/request-state.ts";
+import "./image.css";
+import { type ItemBinding, boundValue } from "../../content/item-fields.ts";
+import type { Item } from "../../content/items.ts";
+import type { ImageValue } from "../../content/types.ts";
+import type { NodeScope } from "../../runtime/context.ts";
+import { image } from "../schemas/image.ts";
+import { imageSources } from "../../runtime/media.ts";
+
+/**
+ * A picture the owner replaces, describes, captions and links, with the part that stays in sight when the site's
+ * CSS crops it (its focal point). Every prop is a starting value; `src` is the image's address. With `item` and
+ * `field` it shows an image field of a content item (`src` and `alt` are then used while the field is empty) and
+ * replacing it saves the item.
+ *
+ * Brim draws it in a `<figure>` as wide as it is given. `bare` draws the `<img>` alone, with every attribute the code
+ * gives it (`class`, `loading`, `sizes`…), for a site whose markup and CSS expect a plain image.
+ *
+ * A starting picture in public/ can come with smaller copies of its own: `srcset="/hero-1024.webp 1024w, …"` with
+ * `sizes`. They are drawn while that picture is shown; once the owner chose another, Brim gives the new one its own.
+ */
+interface Props {
+  nodeId: string;
+  src: string;
+  alt: string;
+  item?: Item;
+  field?: string;
+  scope?: NodeScope;
+  width?: number | string;
+  height?: number | string;
+  showCaption?: boolean;
+  caption?: string;
+  link?: string;
+  openInNewTab?: boolean;
+  /** Only the `<img>`, with the attributes below, and no frame: see above. */
+  bare?: boolean;
+  /**
+   * The picture a visitor sees first (a hero): loaded at once and ahead of the page's other pictures, where every
+   * other image waits until it is scrolled near. One per page at most.
+   */
+  priority?: boolean;
+  /** Where the picture is drawn narrower than the page, how wide: `"(max-width: 768px) 100vw, 50vw"`. */
+  sizes?: string;
+  /** With `bare`, any other attribute goes on the `<img>` as it is. */
+  [attribute: string]: unknown;
+}
+
+/** The props that are the image's settings; with `bare`, every other prop is an attribute of the `<img>`. */
+const SETTINGS = new Set([...Object.keys(image.schema.properties), "openInNewTab"]);
+/** Settings an image had before its look became the site's: still accepted from older code, and left out. */
+const FORMER = new Set([
+  "size",
+  "customWidth",
+  "rotation",
+  "objectFit",
+  "objectPosition",
+  "shape",
+  "stretchShape",
+  "opacity",
+  "overlay",
+]);
+
+const {
+  nodeId,
+  scope = defaultScope(),
+  src,
+  width,
+  height,
+  item,
+  field,
+  bare = false,
+  priority = false,
+  ...rest
+} = Astro.props;
+const source = Object.fromEntries(Object.entries(rest).filter(([name]) => SETTINGS.has(name)));
+const attributes = Object.fromEntries(
+  Object.entries(rest).filter(([name]) => !SETTINGS.has(name) && !FORMER.has(name)),
+);
+const binding: ItemBinding | undefined = item && field ? { item, field } : undefined;
+const bound = binding ? (boundValue(binding) as ImageValue | undefined) : undefined;
+const settings = Astro.locals.brim.settings(image, nodeId, scope, { ...source, url: src });
+// The item's image wins over anything stored with the element: the item is where it is saved.
+if (bound) Object.assign(settings, { url: bound.src, alt: bound.alt });
+
+// The focal point only shows where the site crops the image (`object-fit: cover`); elsewhere it changes nothing.
+const x = Number(settings.focalPointX ?? 50);
+const y = Number(settings.focalPointY ?? 50);
+const focus = x === 50 && y === 50 ? undefined : `object-position:${x}% ${y}%`;
+const style = [typeof attributes.style === "string" ? attributes.style : undefined, focus].filter(Boolean).join(";");
+const sizes = typeof attributes.sizes === "string" ? attributes.sizes : undefined;
+// A `srcset` from the code lists copies of its starting picture (smaller files in public/): it goes with that picture
+// only. Once the owner chose another one, it would make browsers load the old picture, so it is left out.
+const startingSrcset = typeof attributes.srcset === "string" && settings.url === src ? attributes.srcset : undefined;
+delete attributes.srcset;
+// `sizes` goes with a srcset (in `sources` below), once: Astro writes an attribute of two spreads twice.
+delete attributes.sizes;
+const href = typeof settings.link === "string" && settings.link !== "" ? settings.link : undefined;
+const Frame = href ? "a" : "span";
+const marker = Astro.locals.brim.marker("image", nodeId, scope, settings, binding);
+// Astro writes a spread attribute and the same one written after it both; the size is set once, below.
+const { width: measuredWidth, height: measuredHeight, ...measured } = imageSources(String(settings.url ?? ""), sizes);
+const sources =
+  measured.srcset || !startingSrcset ? measured : { ...measured, srcset: startingSrcset, ...(sizes && { sizes }) };
+// A picture seen first is asked for at once and before the others; any other waits until it is scrolled near.
+const loading = priority ? { loading: "eager", fetchpriority: "high" } : { loading: "lazy" };
+// With `bare` the code's own attributes win; Astro writes an attribute of two spreads twice, so each goes in once.
+const bareLoading = priority
+  ? Object.fromEntries(Object.entries(loading).filter(([name]) => !(name in attributes)))
+  : {};
+// The code's width and height, when it gives either, are the image's; otherwise the size the media library measured,
+// so the browser keeps its place. Both come from one or the other, so the shape stays the picture's.
+const given = width !== undefined || height !== undefined;
+const drawnWidth = given ? width : measuredWidth;
+const drawnHeight = given ? height : measuredHeight;
+---
+
+{bare ? (
+  settings.url || Astro.locals.brim.editing ? (
+    <img
+      {...bareLoading}
+      {...attributes}
+      {...sources}
+      alt={String(settings.alt ?? "")}
+      width={drawnWidth}
+      height={drawnHeight}
+      style={style || undefined}
+      data-brim-bare={Astro.locals.brim.editing ? "" : undefined}
+      {...marker}
+    />
+  ) : null
+) : (
+  <figure class:list={["brim-image", attributes.class as string | undefined]} {...marker}>
+    <Frame
+      class="brim-image__frame"
+      href={href}
+      target={href && settings.openInNewTab ? "_blank" : undefined}
+      rel={href && settings.openInNewTab ? "noopener noreferrer" : undefined}
+    >
+      {settings.url ? (
+        <img
+          {...sources}
+          alt={String(settings.alt ?? "")}
+          width={drawnWidth}
+          height={drawnHeight}
+          style={focus}
+          {...loading}
+          decoding="async"
+        />
+      ) : (
+        Astro.locals.brim.editing && <span class="brim-image__empty">No image yet. Select this block to add one.</span>
+      )}
+    </Frame>
+    {settings.showCaption && settings.caption && (
+      <figcaption class="brim-image__caption">{settings.caption}</figcaption>
+    )}
+  </figure>
+)}

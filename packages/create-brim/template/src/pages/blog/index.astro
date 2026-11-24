@@ -1,0 +1,20 @@
+---
+import { Listing, Text } from "brimjs/components";
+import Site from "../../layouts/Site.astro";
+
+// Articles are added in the editor's content browser; published ones appear here.
+---
+
+<Site title="Blog" description="Notes, news and articles.">
+  <section class="section">
+    <div class="container">
+      <Text nodeId="blog-title" as="h1">
+        Blog
+      </Text>
+      <Text nodeId="blog-lead" class="lead">
+        Notes, news and things we learned.
+      </Text>
+      <Listing nodeId="blog-articles" type="article" columns={3} />
+    </div>
+  </section>
+</Site>

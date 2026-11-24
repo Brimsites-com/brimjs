@@ -1,0 +1,68 @@
+---
+import Accordion from "../blocks/accordion/Accordion.astro";
+import Button from "../blocks/button/Button.astro";
+import Carousel from "../blocks/carousel/Carousel.astro";
+import Divider from "../blocks/divider/Divider.astro";
+import ImageGallery from "../blocks/gallery/ImageGallery.astro";
+import Image from "../blocks/image/Image.astro";
+import Map from "../blocks/map/Map.astro";
+import Video from "../blocks/video/Video.astro";
+import { blockSizes } from "../content/block-layout.ts";
+import type { BlockType } from "../content/content-types.ts";
+import "./blocks.css";
+import type { Item } from "../content/items.ts";
+import RichText from "./RichText.astro";
+
+/**
+ * The blocks the owner stacked in a `blocks` field of an item (text, images, galleries, videos…), in their order.
+ * On the item's page the owner adds, moves, changes and removes them, and chooses how wide each is and to which side
+ * (`.brim-block`, `data-width`, `data-align`; the site sets the widths, see blocks.css).
+ */
+interface Props {
+  nodeId: string;
+  item: Item;
+  field: string;
+  [attribute: string]: unknown;
+}
+
+const COMPONENTS: Record<BlockType, (props: Record<string, unknown>) => unknown> = {
+  richtext: RichText,
+  image: Image,
+  "image-gallery": ImageGallery,
+  carousel: Carousel,
+  video: Video,
+  button: Button,
+  accordion: Accordion,
+  divider: Divider,
+  map: Map,
+};
+
+// `class` is given once, through class:list: spread with the other attributes it would be written twice.
+const { nodeId, item, field, class: className, ...attributes } = Astro.props;
+const blocks = Astro.locals.brim.blocks(item, field);
+---
+
+<div
+  {...attributes}
+  class:list={["brim-blocks", className as string | undefined]}
+  {...Astro.locals.brim.marker("blocks", nodeId, "page", undefined, { item, field })}
+>
+  {blocks.map(({ nodeId: id, kind, scope, layout }) => {
+    // A block the field no longer knows is left out.
+    const Block = COMPONENTS[kind as BlockType];
+    // Pictures are downloaded at the width their block is drawn at.
+    const sized = kind === "image" || kind === "image-gallery" || kind === "carousel";
+    return (
+      Block && (
+        <div
+          class="brim-block"
+          data-width={layout.width}
+          data-align={layout.align}
+          data-space={layout.space === "normal" ? undefined : layout.space}
+        >
+          <Block nodeId={id} scope={scope} {...(sized && { sizes: blockSizes(layout.width) })} />
+        </div>
+      )
+    );
+  })}
+</div>

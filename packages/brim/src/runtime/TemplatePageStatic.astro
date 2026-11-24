@@ -1,0 +1,13 @@
+---
+/**
+ * The route Brim adds in a static build when a site declares page templates or content types: the pages are known
+ * at build time (`templateStaticPaths`), each drawn by its template. The server's route is `TemplatePage.astro`.
+ */
+import { templateStaticPaths } from "./template-paths.ts";
+
+export const getStaticPaths = templateStaticPaths;
+
+const { pageProps, component: Template } = Astro.props;
+---
+
+<Template {...pageProps} />

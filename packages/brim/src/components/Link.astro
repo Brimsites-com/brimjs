@@ -1,0 +1,18 @@
+---
+import { defaultScope } from "../runtime/request-state.ts";
+import type { NodeScope } from "../runtime/context.ts";
+
+interface Props {
+  nodeId: string;
+  href: string;
+  scope?: NodeScope;
+  [attribute: string]: unknown;
+}
+
+const { nodeId, href, scope = defaultScope(), ...attributes } = Astro.props;
+const stored = Astro.locals.brim.read("link", nodeId, scope);
+---
+
+<a {...attributes} {...Astro.locals.brim.marker("link", nodeId, scope)} href={stored?.href ?? href}>
+  {stored?.label ?? <slot />}
+</a>

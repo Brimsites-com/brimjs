@@ -1,0 +1,4668 @@
+/*
+ * Editor styles. Colors come only from the tokens below (light by default,
+ * dark via `.dark` on <html>); text uses --brim-editor-text and active states
+ * --brim-dark-theme-accent. The token names and values follow the BrimCMS editor.
+ */
+:root {
+  --background: #ffffff;
+  --foreground: #0a0a0a;
+  --card: #ffffff;
+  --accent: #f4f4f5;
+  --ring: #a1a1aa;
+  --primary-foreground: #fafafa;
+  --destructive: #ef4444;
+  --destructive-foreground: #fafafa;
+  --muted-foreground: #71717a;
+  --border: #e4e4e7;
+  --brim-dark-theme-accent: #1e1e1e;
+  --brim-dark-theme-accent-hover: #333333;
+  --brim-editor-text: #0a0a0a;
+  --brim-editor-surface: #f8f8f7;
+  --brim-editor-control-bg: #ffffff;
+  --brim-toolbar-bg: var(--brim-editor-surface);
+  --toolbar-hover: var(--border);
+  --brim-canvas-selection: #1d4ed8;
+  --brim-page-bg: #ffffff;
+  --brim-shadow: rgb(0 0 0 / 0.12);
+  --brim-btn-bg: #1e1e1d;
+  --brim-btn-bg-hover: #2e2c28;
+  --brim-btn-text: #ffffff;
+  --brim-pill-bg: #efefef;
+  --brim-success: #34d399;
+  --brim-sidebar-bg: var(--background);
+  --brim-dark-theme-accent-text: #ffffff;
+  --cb-status-published-bg: #dcfce7;
+  --cb-status-published-text: #16a34a;
+  --cb-status-private-bg: #fef3c7;
+  --cb-status-private-text: #d97706;
+  --cb-type-folder: #f59e0b;
+  --cb-type-page: #3b82f6;
+  --cb-type-custom: #22c55e;
+  --brim-form-action-bg: #f97316;
+  --brim-form-action-bg-hover: #ea580c;
+  --brim-form-action-text: #ffffff;
+
+  --brim-widget-margin-bottom: 1.25rem;
+  --brim-widget-label-margin-bottom: 4px;
+  --brim-widget-label-font-size: 0.875rem;
+  --brim-widget-label-font-weight: 500;
+  --brim-widget-label-color: var(--brim-editor-text, var(--foreground));
+  --brim-widget-select-padding: 0.625rem 2rem 0.625rem 0.625rem;
+  --brim-widget-select-radius: 0.375rem;
+  --brim-widget-select-font-size: 0.875rem;
+}
+
+.dark {
+  --background: #141414;
+  --foreground: #f0f0f0;
+  --card: #1e1e1e;
+  --accent: #2e2e2e;
+  --ring: #9a9a9a;
+  --primary-foreground: #141414;
+  --destructive: #991b1b;
+  --destructive-foreground: #fef2f2;
+  --muted-foreground: #9a9a9a;
+  --border: #2e2e2e;
+  --brim-dark-theme-accent: #d4d4d8;
+  --brim-dark-theme-accent-hover: #e4e4e7;
+  --brim-editor-text: #b0b0b0;
+  --brim-editor-surface: #1e1e1e;
+  --brim-editor-control-bg: #141414;
+  --toolbar-hover: var(--accent);
+  --brim-shadow: rgb(0 0 0 / 0.4);
+  --brim-btn-bg: #3a3a3a;
+  --brim-btn-bg-hover: #4a4a4a;
+  --brim-pill-bg: #2a2a2a;
+  --brim-dark-theme-accent-text: #1a1a1a;
+  --cb-status-published-bg: #14532d;
+  --cb-status-published-text: #4ade80;
+  --cb-status-private-bg: #451a03;
+  --cb-status-private-text: #fbbf24;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
+  background: var(--background);
+  color: var(--brim-editor-text, var(--foreground));
+  font:
+    13px/1.5 system-ui,
+    -apple-system,
+    "Segoe UI",
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  accent-color: var(--brim-dark-theme-accent);
+}
+
+#brim-editor {
+  height: 100%;
+}
+
+.brim-editor {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+/* ------------------------------------------------------------- toolbar */
+.brim-editor-toolbar {
+  position: relative;
+  z-index: 2000;
+  display: grid;
+  flex: none;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: clamp(0.5rem, 1vw, 1rem);
+  height: 3.5rem;
+  padding: 0 1rem;
+  border-bottom: 1px solid var(--border);
+  background: var(--brim-toolbar-bg);
+  font-size: 0.875rem;
+}
+
+.toolbar-zone {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.toolbar-zone-center {
+  justify-content: center;
+}
+
+.toolbar-zone-right {
+  justify-content: flex-end;
+}
+
+.brim-toolbar-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.375rem;
+  padding: 0.375rem 0.75rem;
+  border: 1px solid transparent;
+  border-radius: 0.375rem;
+  background: transparent;
+  color: var(--brim-editor-text, var(--foreground));
+  font: inherit;
+  font-weight: 500;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.brim-toolbar-btn--icon {
+  padding: 0.375rem;
+}
+
+.brim-toolbar-btn:hover,
+.brim-toolbar-btn[aria-expanded="true"] {
+  background: var(--toolbar-hover, var(--border));
+}
+
+.brim-toolbar-btn[aria-pressed="true"] {
+  background: color-mix(in srgb, var(--brim-dark-theme-accent) 14%, transparent);
+  color: var(--brim-dark-theme-accent);
+}
+
+.brim-toolbar-btn--action {
+  background: var(--brim-btn-bg);
+  color: var(--brim-btn-text);
+}
+
+.brim-toolbar-btn--action:hover {
+  background: var(--brim-btn-bg-hover);
+}
+
+.brim-toolbar-btn--outline {
+  border-color: var(--border);
+  background: var(--card);
+}
+
+.brim-toolbar-btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+  pointer-events: none;
+}
+
+.brim-editor :focus-visible,
+.cb-container :focus-visible,
+.brim-login :focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+.breadcrumb-page-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+  padding: 0.25rem 0.5rem 0.25rem 0.25rem;
+  border: 0;
+  border-radius: 0.375rem;
+  background: transparent;
+  color: var(--brim-editor-text, var(--foreground));
+  font: inherit;
+  cursor: pointer;
+}
+
+.breadcrumb-page-trigger:hover,
+.breadcrumb-page-trigger[aria-expanded="true"] {
+  background: var(--toolbar-hover, var(--border));
+}
+
+.breadcrumb-page-icon {
+  display: inline-flex;
+  color: var(--brim-dark-theme-accent);
+}
+
+.breadcrumb-page-icon svg {
+  width: 1.55rem;
+  height: 1.55rem;
+}
+
+.breadcrumb-page-title {
+  max-width: clamp(8rem, 22vw, 22rem);
+  overflow: hidden;
+  font-weight: 650;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.toolbar-zone-divider {
+  flex: none;
+  align-self: stretch;
+  width: 1px;
+  margin: -0.5rem 0.25rem;
+  background: var(--border);
+}
+
+.toolbar-separator {
+  flex: none;
+  width: 1px;
+  height: 1.5rem;
+  background: var(--border);
+}
+
+/* Names the template being edited and says how far a change reaches. */
+.toolbar-template {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  color: var(--muted-foreground);
+  font-size: 0.8125rem;
+  white-space: nowrap;
+}
+
+.toolbar-template strong {
+  color: var(--brim-editor-text, var(--foreground));
+  font-weight: 650;
+}
+
+.toolbar-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  min-height: 2rem;
+  padding: 0.375rem 0.625rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--brim-editor-text, var(--foreground));
+  font: inherit;
+  font-size: 0.75rem;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.toolbar-status-pill:hover,
+.toolbar-status-pill[aria-expanded="true"] {
+  background: var(--toolbar-hover, var(--border));
+}
+
+.toolbar-status-dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: var(--destructive);
+}
+
+.toolbar-status-dot[data-state="published"] {
+  background: var(--brim-success);
+}
+
+.brim-editor-autosave {
+  overflow: hidden;
+  color: var(--muted-foreground);
+  font-size: 0.75rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.brim-editor-autosave[data-state="error"] {
+  color: var(--destructive);
+}
+
+.device-preview-pill {
+  display: inline-flex;
+  gap: 2px;
+  padding: 0.25rem;
+  border-radius: 0.5rem;
+  background: var(--brim-pill-bg);
+}
+
+.device-preview-pill .brim-toolbar-btn[aria-pressed="true"] {
+  background: transparent;
+  color: var(--brim-editor-text, var(--foreground));
+  outline: 1.7px solid var(--brim-dark-theme-accent);
+  outline-offset: -1.7px;
+}
+
+/* ------------------------------------------------------------- site map */
+.breadcrumb-navigation-layer {
+  position: fixed;
+  inset: 3.5rem 0 0 0;
+  z-index: 2100;
+}
+
+.breadcrumb-navigation-drawer {
+  display: flex;
+  flex-direction: column;
+  width: min(560px, 100vw);
+  height: 100%;
+  border-inline-end: 1px solid var(--border);
+  background: var(--brim-sidebar-bg);
+  box-shadow: 8px 0 24px var(--brim-shadow);
+}
+
+.breadcrumb-navigation-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1rem 0.75rem 1.5rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.breadcrumb-navigation-header small {
+  color: var(--muted-foreground);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.breadcrumb-navigation-header h2 {
+  margin: 0;
+  font-size: 1.125rem;
+}
+
+.breadcrumb-navigation-list {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+  overflow: auto;
+  padding: 0.75rem;
+}
+
+.breadcrumb-navigation-item {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  padding: 0.625rem 0.75rem;
+  border: 0;
+  border-radius: 0.375rem;
+  background: transparent;
+  color: var(--brim-editor-text, var(--foreground));
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.breadcrumb-navigation-item:hover {
+  background: var(--accent);
+}
+
+.breadcrumb-navigation-item[aria-current="page"] {
+  background: color-mix(in srgb, var(--brim-dark-theme-accent) 12%, transparent);
+  color: var(--brim-dark-theme-accent);
+  font-weight: 600;
+}
+
+.breadcrumb-navigation-item__title {
+  font-weight: 500;
+}
+
+.breadcrumb-navigation-item code {
+  flex: 1;
+  color: var(--muted-foreground);
+  font: inherit;
+  font-size: 0.75rem;
+}
+
+.breadcrumb-navigation-row {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.breadcrumb-navigation-row .breadcrumb-navigation-item {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Opens and closes a branch of the tree: the products of a page, the items of a category. */
+.breadcrumb-navigation-chevron {
+  display: inline-flex;
+  margin-inline-start: -0.25rem;
+  color: var(--muted-foreground);
+}
+
+.breadcrumb-navigation-chevron svg {
+  width: 0.875rem;
+  height: 0.875rem;
+}
+
+/* "Show all 69 products" and "New category", under a branch. */
+.breadcrumb-navigation-more {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.375rem 0.75rem;
+  border: 0;
+  border-radius: 0.375rem;
+  background: transparent;
+  color: var(--muted-foreground);
+  font: inherit;
+  font-size: 0.8125rem;
+  text-align: left;
+  cursor: pointer;
+}
+
+.breadcrumb-navigation-more:hover {
+  background: var(--accent);
+  color: var(--brim-editor-text, var(--foreground));
+}
+
+.breadcrumb-navigation-more svg {
+  width: 0.875rem;
+  height: 0.875rem;
+}
+
+.breadcrumb-navigation-search {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem 0;
+  color: var(--muted-foreground);
+}
+
+.breadcrumb-navigation-search .field-input {
+  flex: 1;
+}
+
+/* Where a new page is described, above the list. */
+.breadcrumb-navigation-new {
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid var(--border);
+}
+
+/* Above the content types, under the pages. */
+.breadcrumb-navigation-heading {
+  margin: 1rem 0 0.25rem;
+  padding: 0 0.75rem;
+  color: var(--muted-foreground);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.breadcrumb-navigation-footer {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  border-top: 1px solid var(--border);
+}
+
+/* ---------------------------------------------------------------- menus */
+.brim-editor-menu-anchor {
+  position: relative;
+  display: flex;
+  min-width: 0;
+}
+
+.brim-editor-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  min-width: 220px;
+  max-height: min(60vh, 480px);
+  overflow: auto;
+  padding: 4px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--card);
+  color: var(--brim-editor-text, var(--foreground));
+  box-shadow: 0 8px 24px color-mix(in srgb, var(--foreground) 14%, transparent);
+  font-size: 13px;
+  line-height: 1.3;
+}
+
+.brim-editor-menu[data-align="end"] {
+  left: auto;
+  right: 0;
+}
+
+.brim-editor-menu[data-side="above"] {
+  top: auto;
+  bottom: calc(100% + 6px);
+}
+
+.brim-editor-menu__item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.brim-editor-menu__item:hover {
+  background: color-mix(in srgb, var(--brim-dark-theme-accent) 10%, transparent);
+}
+
+.brim-editor-menu__item[aria-current="page"] {
+  color: var(--brim-dark-theme-accent);
+  font-weight: 600;
+}
+
+.brim-editor-menu__item code {
+  color: var(--muted-foreground);
+  font: inherit;
+  font-size: 11px;
+  font-weight: 400;
+}
+
+.brim-editor-menu__note {
+  margin: 0;
+  padding: 8px 10px;
+  color: var(--muted-foreground);
+}
+
+.brim-editor-menu__separator {
+  height: 1px;
+  margin: 4px 0;
+  background: var(--border);
+}
+
+/* System, Light or Dark, in the ⋯ menu. */
+.brim-editor-menu__theme {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+  padding: 0.375rem 0.625rem;
+}
+
+.brim-editor-menu__theme-label {
+  color: var(--muted-foreground);
+  font-size: 0.75rem;
+}
+
+.brim-editor-menu__theme-options {
+  display: flex;
+  gap: 2px;
+  padding: 2px;
+  border-radius: 0.375rem;
+  background: var(--accent);
+}
+
+.brim-editor-menu__theme-option {
+  flex: 1;
+  padding: 0.25rem 0.5rem;
+  border: 0;
+  border-radius: 0.25rem;
+  background: transparent;
+  color: var(--muted-foreground);
+  font: inherit;
+  font-size: 0.8125rem;
+  cursor: pointer;
+}
+
+.brim-editor-menu__theme-option[aria-checked="true"] {
+  background: var(--brim-sidebar-bg);
+  color: var(--brim-editor-text, var(--foreground));
+  box-shadow: 0 1px 2px var(--brim-shadow);
+}
+
+/* --------------------------------------------------------------- canvas */
+.brim-editor[hidden] {
+  display: none;
+}
+
+.brim-editor-workspace {
+  position: relative;
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+
+.brim-editor-canvas {
+  display: flex;
+  flex: 1;
+  justify-content: center;
+  min-width: 0;
+  overflow: auto;
+  /* Room on both sides for the handles that make the page narrower or wider. */
+  padding: 24px 20px 24px 40px;
+  background: var(--accent);
+}
+
+.brim-editor-frame {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  background: var(--brim-page-bg);
+  outline: 1px solid var(--border);
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--foreground) 8%, transparent);
+}
+
+.brim-editor-canvas[data-viewport="tablet"] .brim-editor-frame {
+  flex: none;
+  width: 768px;
+}
+
+.brim-editor-canvas[data-viewport="mobile"] .brim-editor-frame {
+  flex: none;
+  width: 390px;
+}
+
+.brim-editor-frame iframe {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+
+/* While a handle is dragged the page in the frame must not take the pointer, and nothing gets selected. */
+html[data-brim-resizing] {
+  cursor: col-resize;
+  user-select: none;
+}
+
+html[data-brim-resizing] .brim-editor-frame iframe {
+  pointer-events: none;
+}
+
+/* Handles just outside both sides of the page: dragged, the page gets narrower or wider around its middle. */
+.brim-frame-handle {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  z-index: 900;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  cursor: col-resize;
+  touch-action: none;
+}
+
+.brim-frame-handle[data-side="left"] {
+  left: -17px;
+}
+
+.brim-frame-handle[data-side="right"] {
+  right: -17px;
+}
+
+.brim-frame-handle__grip {
+  width: 4px;
+  height: 48px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--foreground) 22%, transparent);
+  transition:
+    background 0.15s,
+    height 0.15s;
+}
+
+.brim-frame-handle:hover .brim-frame-handle__grip,
+.brim-frame-handle:focus-visible .brim-frame-handle__grip,
+html[data-brim-resizing] .brim-frame-handle .brim-frame-handle__grip {
+  height: 72px;
+  background: var(--brim-editor-selection, #1d4ed8);
+}
+
+.brim-frame-handle:focus-visible {
+  outline: none;
+}
+
+/* The page's width while it is dragged, and once chosen, with the way back to the device's own. */
+.brim-frame-size {
+  position: absolute;
+  top: -21px;
+  left: 50%;
+  z-index: 900;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transform: translateX(-50%);
+  color: var(--muted-foreground);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.brim-frame-size[data-dragging] {
+  color: var(--brim-editor-selection, #1d4ed8);
+  font-weight: 600;
+}
+
+.brim-frame-size button {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--brim-editor-selection, #1d4ed8);
+  font: inherit;
+  cursor: pointer;
+}
+
+.brim-frame-size button:hover {
+  text-decoration: underline;
+}
+
+/* The page drawn again out of sight: laid out at the same size, so it can be scrolled before it is shown. */
+.brim-editor-frame iframe[data-hidden] {
+  visibility: hidden;
+}
+
+/* ------------------------------------------- outlines and element toolbar */
+.brim-chrome {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+/* The outlines themselves are drawn on the page (PAGE_STYLE in Editor.tsx). */
+.brim-hover-label {
+  position: absolute;
+  z-index: 43;
+  padding: 3px 8px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--brim-toolbar-bg, var(--card));
+  color: var(--brim-editor-text);
+  font-size: 12px;
+  line-height: 1.3;
+  white-space: nowrap;
+}
+
+.brim-element__toolbar-cluster {
+  position: absolute;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  pointer-events: auto;
+}
+
+.brim-element__toolbar {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 4px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--brim-toolbar-bg);
+  box-shadow:
+    0 2px 8px var(--brim-shadow),
+    0 1px 3px var(--brim-shadow);
+}
+
+.brim-element__toolbar-scope {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  height: 30px;
+  padding: 0 10px 0 12px;
+  color: var(--brim-editor-text, var(--foreground));
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+}
+
+.brim-element__toolbar-scope::after {
+  content: "";
+  position: absolute;
+  top: 6px;
+  right: 0;
+  bottom: 6px;
+  width: 1px;
+  background: color-mix(in srgb, var(--brim-editor-text, var(--foreground)) 12%, transparent);
+}
+
+.brim-element__toolbar-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--brim-editor-text, var(--foreground));
+  font: inherit;
+  cursor: pointer;
+  transition:
+    background-color 0.15s,
+    color 0.15s;
+}
+
+/* A label such as "Heading 1" stays on one line and keeps its width when the bar is short of room. */
+.brim-element__toolbar-btn--label {
+  flex-shrink: 0;
+  gap: 4px;
+  width: auto;
+  padding: 0 8px 0 10px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+/* The + on the bottom edge of a stack of blocks, or of its selected block. */
+.brim-inserter {
+  position: absolute;
+  z-index: 999;
+  transform: translate(-50%, -50%);
+  pointer-events: auto;
+}
+
+.brim-inserter__button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: 2px solid #fff;
+  border-radius: 999px;
+  background: var(--brim-canvas-selection);
+  color: #fff;
+  box-shadow: 0 2px 8px rgb(0 0 0 / 0.25);
+  cursor: pointer;
+}
+
+.brim-inserter__button:hover {
+  transform: scale(1.1);
+}
+
+/* Says why the element cannot be changed in this mode, next to the button that switches modes. */
+/* The item field an element shows: a change here or in the page settings changes both. */
+.brim-element__toolbar-binding {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 22px;
+  margin: 0 4px 0 8px;
+  padding: 0 8px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--brim-editor-selection, #1d4ed8) 12%, transparent);
+  color: var(--brim-editor-selection, #1d4ed8);
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.brim-element__toolbar-binding svg {
+  width: 13px;
+  height: 13px;
+}
+
+.brim-element__toolbar-hint {
+  padding: 0 4px 0 10px;
+  color: var(--muted-foreground);
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.brim-element__toolbar-btn:hover {
+  background: var(--toolbar-hover, var(--border));
+}
+
+.brim-element__toolbar-btn--active,
+.brim-element__toolbar-btn--active:hover {
+  background: color-mix(in srgb, var(--brim-dark-theme-accent, var(--foreground)) 14%, transparent);
+  color: var(--brim-dark-theme-accent, var(--foreground));
+}
+
+.brim-element__toolbar-btn svg {
+  flex: none;
+}
+
+.brim-element__toolbar-divider {
+  flex: none;
+  width: 1px;
+  height: 18px;
+  margin: 0 3px;
+  background: color-mix(in srgb, var(--brim-editor-text, var(--foreground)) 12%, transparent);
+}
+
+.brim-toolbar-anchor {
+  position: relative;
+  display: flex;
+}
+
+.brim-toolbar-popover {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  z-index: 1001;
+  padding: 6px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--brim-toolbar-bg);
+  box-shadow: 0 4px 16px var(--brim-shadow);
+}
+
+.brim-toolbar-menu {
+  display: flex;
+  flex-direction: column;
+  min-width: 150px;
+}
+
+.brim-toolbar-menu [aria-checked="true"] {
+  font-weight: 600;
+}
+
+.brim-color-popover {
+  width: 172px;
+}
+
+.brim-color-group {
+  margin: 2px 2px 4px;
+  color: var(--muted-foreground);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.brim-color-swatches--brand {
+  margin-bottom: 8px;
+}
+
+.brim-color-swatches {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 4px;
+}
+
+.brim-color-swatch {
+  aspect-ratio: 1;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.brim-color-swatch:hover {
+  outline: 2px solid var(--ring);
+  outline-offset: 1px;
+}
+
+.brim-color-custom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 8px;
+  font-size: 12px;
+}
+
+.brim-color-custom input {
+  width: 32px;
+  height: 24px;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: transparent;
+  cursor: pointer;
+}
+
+/* The text toolbar's link: the editor's link widget, in a popover. */
+.toolbar-link-popover {
+  width: 340px;
+  padding: 12px;
+}
+
+.toolbar-link-popover .field-group {
+  margin-bottom: 0;
+}
+
+/* -------------------------------------------------------------- widgets */
+.field-group {
+  position: relative;
+  margin-bottom: var(--brim-widget-margin-bottom, 1.25rem);
+}
+
+.field-label {
+  display: block;
+  margin-bottom: var(--brim-widget-label-margin-bottom, 4px);
+  color: var(--brim-widget-label-color, var(--foreground));
+  font-size: var(--brim-widget-label-font-size, 0.875rem);
+  font-weight: var(--brim-widget-label-font-weight, 500);
+}
+
+.field-description {
+  margin: 0 0 var(--brim-widget-label-margin-bottom, 4px) 0;
+  color: var(--muted-foreground);
+  font-size: 0.75rem;
+}
+
+.field-input {
+  width: 100%;
+  padding: 0.625rem;
+  border: 1px solid var(--border);
+  border-radius: 0.375rem;
+  background: var(--brim-editor-control-bg, var(--background));
+  color: var(--brim-editor-text, var(--foreground));
+  font: inherit;
+  font-size: 0.875rem;
+  transition:
+    border-color 0.2s,
+    box-shadow 0.2s;
+}
+
+.field-input:focus {
+  outline: none;
+  border-color: var(--ring);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--ring) 10%, transparent);
+}
+
+/* Tags: chips in a box that looks like a text field, with room to type the next one after them. */
+.field-tags {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.375rem;
+  min-height: 2.5rem;
+  padding: 0.375rem;
+  border: 1px solid var(--border);
+  border-radius: 0.375rem;
+  background: var(--brim-editor-control-bg, var(--background));
+  cursor: text;
+  transition:
+    border-color 0.2s,
+    box-shadow 0.2s;
+}
+
+.field-tags:focus-within {
+  border-color: var(--ring);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--ring) 10%, transparent);
+}
+
+.field-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.125rem;
+  padding: 0.125rem 0.25rem 0.125rem 0.5rem;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--brim-editor-text, var(--foreground));
+  font-size: 0.8125rem;
+  line-height: 1.4;
+}
+
+.field-tag__remove {
+  display: inline-grid;
+  place-items: center;
+  width: 1.125rem;
+  height: 1.125rem;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--muted-foreground);
+  font: inherit;
+  font-size: 0.875rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.field-tag__remove:hover {
+  background: color-mix(in srgb, var(--foreground) 10%, transparent);
+  color: var(--brim-editor-text, var(--foreground));
+}
+
+.field-tags__input {
+  flex: 1 0 6rem;
+  min-width: 6rem;
+  padding: 0.25rem;
+  border: 0;
+  background: transparent;
+  color: var(--brim-editor-text, var(--foreground));
+  font: inherit;
+  font-size: 0.875rem;
+}
+
+.field-tags__input:focus {
+  outline: none;
+}
+
+.field-select {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: var(--brim-widget-select-padding, 0.625rem 2rem 0.625rem 0.625rem);
+  border: 1px solid var(--border);
+  border-radius: var(--brim-widget-select-radius, 0.375rem);
+  background: var(--brim-editor-control-bg, var(--background));
+  color: var(--brim-editor-text, var(--foreground));
+  font: inherit;
+  font-size: var(--brim-widget-select-font-size, 0.875rem);
+  line-height: 1.25rem;
+  text-align: left;
+  cursor: pointer;
+  user-select: none;
+  transition: border-color 0.15s;
+}
+
+.field-select:focus,
+.field-select[data-open="true"] {
+  outline: none;
+  border-color: var(--brim-dark-theme-accent);
+}
+
+.field-select-label {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.field-select-chevron {
+  position: absolute;
+  right: 0.5rem;
+  display: flex;
+  opacity: 0.5;
+  transition: transform 0.15s;
+}
+
+.field-select[data-open="true"] .field-select-chevron {
+  transform: rotate(180deg);
+}
+
+.field-select-dropdown {
+  position: fixed;
+  z-index: 9999;
+  max-height: 320px;
+  overflow-y: auto;
+  padding: 3px;
+  border: 1px solid var(--border);
+  border-radius: var(--brim-widget-select-radius, 0.375rem);
+  background: var(--brim-editor-control-bg, var(--background));
+  box-shadow: 0 4px 16px var(--brim-shadow);
+  scrollbar-width: thin;
+}
+
+.field-select-option {
+  display: block;
+  width: 100%;
+  padding: 6px 8px;
+  border: none;
+  border-radius: 4px;
+  background: none;
+  color: var(--brim-editor-text, var(--foreground));
+  font: inherit;
+  font-size: var(--brim-widget-select-font-size, 0.875rem);
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.1s;
+}
+
+.field-select-option:hover,
+.field-select-option:focus-visible {
+  background: color-mix(in srgb, var(--brim-dark-theme-accent) 18%, transparent);
+  outline: none;
+}
+
+.field-select-option--selected {
+  font-weight: 600;
+}
+
+.field-label-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--brim-widget-label-color, var(--foreground));
+  font-size: var(--brim-widget-label-font-size, 0.875rem);
+  font-weight: var(--brim-widget-label-font-weight, 500);
+  cursor: pointer;
+}
+
+.field-checkbox {
+  width: 1rem;
+  height: 1rem;
+  cursor: pointer;
+}
+
+.checkbox-label-text {
+  user-select: none;
+}
+
+textarea.field-input {
+  resize: vertical;
+}
+
+.brim-align {
+  display: inline-flex;
+  gap: 2px;
+  padding: 2px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.brim-align__option {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 34px;
+  height: 28px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.brim-align__option:hover {
+  background: var(--accent);
+}
+
+.brim-align__option[aria-pressed="true"] {
+  background: color-mix(in srgb, var(--brim-dark-theme-accent) 14%, transparent);
+  color: var(--brim-dark-theme-accent);
+}
+
+.brim-range {
+  width: 100%;
+}
+
+.brim-range-value {
+  float: right;
+  color: var(--muted-foreground);
+  font-weight: 400;
+}
+
+/* ------------------------------------------------------ widget controls */
+.field-error {
+  margin: 4px 0 0;
+  color: var(--destructive);
+  font-size: 0.75rem;
+}
+
+.field-range-control {
+  display: grid;
+  grid-template-columns: 1fr 3.75rem;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.field-range {
+  width: 100%;
+  height: 4px;
+  border-radius: 999px;
+  background: linear-gradient(
+    to right,
+    var(--brim-dark-theme-accent) var(--range-pct, 0%),
+    var(--border) var(--range-pct, 0%)
+  );
+  appearance: none;
+  cursor: pointer;
+}
+
+.field-range::-webkit-slider-thumb {
+  width: 14px;
+  height: 14px;
+  border: 2px solid var(--brim-dark-theme-accent);
+  border-radius: 50%;
+  background: var(--card);
+  appearance: none;
+}
+
+.field-range::-moz-range-thumb {
+  width: 12px;
+  height: 12px;
+  border: 2px solid var(--brim-dark-theme-accent);
+  border-radius: 50%;
+  background: var(--card);
+}
+
+.field-range-number {
+  padding: 0.375rem;
+  text-align: center;
+}
+
+.size-picker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.size-btn {
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: 0.375rem;
+  background: var(--brim-editor-control-bg, var(--background));
+  color: inherit;
+  font: inherit;
+  font-size: 0.8125rem;
+  cursor: pointer;
+}
+
+.size-btn:hover {
+  background: var(--accent);
+}
+
+.size-btn[aria-pressed="true"] {
+  border-color: var(--brim-dark-theme-accent);
+  background: color-mix(in srgb, var(--brim-dark-theme-accent) 14%, transparent);
+  color: var(--brim-dark-theme-accent);
+}
+
+.size-custom {
+  display: block;
+  margin-top: 0.5rem;
+}
+
+.rwcs-inline-colors {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.rwcs-swatch {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  background: var(--swatch, transparent);
+  color: var(--muted-foreground);
+  cursor: pointer;
+}
+
+/* "No color" is drawn as a checker pattern. */
+.rwcs-swatch[data-empty="true"] {
+  background: repeating-conic-gradient(var(--border) 0% 25%, var(--card) 0% 50%) 50% / 10px 10px;
+}
+
+.rwcs-swatch[aria-pressed="true"],
+.rwcs-swatch[data-active="true"] {
+  outline: 2px solid var(--brim-dark-theme-accent);
+  outline-offset: 2px;
+}
+
+.rwcs-inline-custom-btn {
+  position: relative;
+}
+
+.rwcs-inline-custom-btn input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.url-input-box {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 4px 4px 8px;
+  border: 1px dashed var(--border);
+  border-radius: 0.375rem;
+  background: var(--brim-editor-control-bg, var(--background));
+  color: var(--muted-foreground);
+}
+
+.url-input-box:focus-within {
+  border-color: var(--ring);
+}
+
+.url-input-box input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  color: var(--brim-editor-text, var(--foreground));
+  font: inherit;
+  font-size: 0.8125rem;
+}
+
+.url-input-box input:focus {
+  outline: none;
+}
+
+.url-browse-btn {
+  padding: 5px 10px;
+  border: 0;
+  border-radius: 0.25rem;
+  background: var(--brim-btn-bg);
+  color: var(--brim-btn-text);
+  font: inherit;
+  font-size: 0.75rem;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.url-page-list {
+  max-height: 200px;
+  margin-top: 4px;
+  overflow: auto;
+  padding: 3px;
+  border: 1px solid var(--border);
+  border-radius: 0.375rem;
+  background: var(--brim-editor-control-bg, var(--background));
+}
+
+.url-page-list code {
+  color: var(--muted-foreground);
+  font: inherit;
+  font-size: 0.75rem;
+}
+
+.url-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 6px;
+  font-size: 0.75rem;
+}
+
+/* Classed, so the sidebar's look for plain list buttons does not turn them into boxes. */
+.url-action {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--muted-foreground);
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.url-action:hover {
+  color: var(--brim-editor-text, var(--foreground));
+}
+
+.url-newtab-row {
+  margin-top: 0.625rem;
+}
+
+.ipw-trigger {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 0.5rem 0.625rem;
+  border: 1px solid var(--border);
+  border-radius: 0.375rem;
+  background: var(--brim-editor-control-bg, var(--background));
+  color: inherit;
+  font: inherit;
+  font-size: 0.875rem;
+  cursor: pointer;
+}
+
+.ipw-name {
+  flex: 1;
+  text-align: left;
+}
+
+.ipw-none {
+  display: inline-flex;
+  justify-content: center;
+  width: 18px;
+  color: var(--muted-foreground);
+}
+
+/* The icon panel covers the sidebar, as it did in the grid editor. */
+.ipw-panel {
+  position: fixed;
+  top: 3.5rem;
+  right: 0;
+  bottom: 0;
+  z-index: 2300;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: clamp(320px, 26vw, 384px);
+  padding: 1rem 1.5rem;
+  border-inline-start: 1px solid var(--border);
+  background: var(--brim-sidebar-bg);
+  color: var(--brim-editor-text, var(--foreground));
+}
+
+.ipw-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-inline-start: -0.5rem;
+}
+
+.ipw-header h2 {
+  margin: 0;
+  font-size: 1.125rem;
+}
+
+.ipw-sets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.ipw-set {
+  padding: 0.25rem 0.625rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--muted-foreground);
+  font: inherit;
+  font-size: 0.75rem;
+  cursor: pointer;
+}
+
+.ipw-set:hover {
+  background: var(--accent);
+}
+
+.ipw-set[aria-selected="true"] {
+  border-color: var(--brim-dark-theme-accent);
+  background: var(--brim-dark-theme-accent);
+  color: var(--brim-dark-theme-accent-text);
+}
+
+.ipw-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, 44px);
+  gap: 4px;
+  overflow: auto;
+}
+
+.ipw-cell {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border: 1px solid transparent;
+  border-radius: 0.375rem;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+
+.ipw-cell:hover {
+  background: var(--accent);
+}
+
+.ipw-cell[aria-pressed="true"] {
+  border-color: var(--brim-dark-theme-accent);
+  background: color-mix(in srgb, var(--brim-dark-theme-accent) 14%, transparent);
+}
+
+.breakpoint-number {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.breakpoint-number label {
+  display: grid;
+  gap: 4px;
+}
+
+.breakpoint-number span {
+  color: var(--muted-foreground);
+  font-size: 0.75rem;
+}
+
+.image-widget-container {
+  position: relative;
+}
+
+.image-widget-container .preview-img {
+  display: block;
+  width: 100%;
+  max-height: 180px;
+  margin-bottom: 10px;
+  border-radius: 6px;
+  background: var(--brim-editor-surface);
+  object-fit: contain;
+}
+
+.image-widget-empty {
+  margin: 0 0 8px;
+  padding: 20px 12px;
+  border-radius: 8px;
+  background: var(--brim-editor-surface);
+  color: var(--muted-foreground);
+  text-align: center;
+}
+
+.image-widget-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.image-widget-actions button,
+.image-destination button {
+  flex: 1;
+  padding: 6px 8px;
+  border: 1px solid var(--border);
+  border-radius: 0.375rem;
+  background: var(--card);
+  color: inherit;
+  font: inherit;
+  font-size: 0.8125rem;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.image-widget-actions button:hover,
+.image-destination button:hover {
+  background: var(--accent);
+}
+
+.image-widget-actions .btn-upload,
+.image-destination .btn-upload {
+  border-color: var(--brim-btn-bg);
+  background: var(--brim-btn-bg);
+  color: var(--brim-btn-text);
+}
+
+.image-widget-actions .btn-upload:hover,
+.image-destination .btn-upload:hover {
+  background: var(--brim-btn-bg-hover);
+}
+
+.image-widget-actions .btn-remove,
+.image-destination .btn-remove {
+  color: var(--destructive);
+}
+
+.external-url-panel {
+  display: flex;
+  gap: 4px;
+  margin: 10px 0 4px;
+}
+
+.btn-apply-url {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  border: 1px solid var(--border);
+  border-radius: 0.375rem;
+  background: var(--card);
+  color: inherit;
+  cursor: pointer;
+}
+
+.image-widget-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--background) 80%, transparent);
+}
+
+.media-picker {
+  display: flex;
+  flex-direction: column;
+  width: min(880px, calc(100vw - 48px));
+  height: min(640px, calc(100vh - 48px));
+  border-radius: 12px;
+  background: var(--card);
+  color: var(--foreground);
+}
+
+.media-picker header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+}
+
+.media-picker h3 {
+  margin: 0;
+  font-size: 16px;
+}
+
+.media-picker header .field-input {
+  flex: 1;
+}
+
+.media-picker-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 12px 20px 0;
+}
+
+.media-picker-tabs button {
+  padding: 6px 12px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--brim-editor-text, var(--foreground));
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.media-picker-tabs button[aria-pressed="true"] {
+  border-color: var(--brim-dark-theme-accent);
+  background: color-mix(in srgb, var(--brim-dark-theme-accent) 12%, transparent);
+}
+
+/* Asked in a content item before an upload: the type's folder or the gallery. */
+.image-destination {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-content: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 16px;
+  border-radius: inherit;
+  background: color-mix(in srgb, var(--card) 94%, transparent);
+  text-align: center;
+}
+
+/* The folder button carries the item's title, which can be long. */
+.image-destination button {
+  flex: 0 1 auto;
+  white-space: normal;
+}
+
+.image-destination p {
+  flex-basis: 100%;
+  margin: 0 0 4px;
+  color: var(--brim-editor-text, var(--foreground));
+  font-size: 13px;
+  font-weight: 500;
+}
+
+/* Rows as tall as their pictures and the grid scrolls: in the fixed-height dialog, rows that may shrink (a button
+   with overflow: hidden has no minimum height) were squeezed into strips, and every picture loaded at once. */
+.media-picker-grid {
+  display: grid;
+  flex: 1;
+  min-height: 0;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  grid-auto-rows: max-content;
+  align-content: start;
+  gap: 12px;
+  overflow: auto;
+  padding: 20px;
+}
+
+.media-picker-grid button {
+  aspect-ratio: 4 / 3;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--accent);
+  cursor: pointer;
+}
+
+/* The end of the grid: reaching it brings the next page of the library. */
+.media-picker-more {
+  grid-column: 1 / -1;
+  height: 1px;
+}
+
+.media-picker-grid button:hover {
+  border-color: var(--brim-dark-theme-accent);
+}
+
+.media-picker-grid img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.focus-frame {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--brim-editor-surface);
+  cursor: crosshair;
+  touch-action: none;
+}
+
+.focus-frame img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: var(--focus-x) var(--focus-y);
+  pointer-events: none;
+}
+
+.focus-point {
+  position: absolute;
+  top: var(--focus-y);
+  left: var(--focus-x);
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border: 2px solid var(--card);
+  border-radius: 50%;
+  background: var(--brim-canvas-selection);
+  box-shadow: 0 0 0 1px var(--brim-shadow);
+  transform: translate(-50%, -50%);
+  cursor: grab;
+}
+
+.focus-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 6px;
+}
+
+.focus-value {
+  color: var(--muted-foreground);
+  font-size: 0.75rem;
+}
+
+.shape-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+}
+
+.shape-option {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  aspect-ratio: 1;
+  padding: 5px;
+  border: 1px solid var(--border);
+  border-radius: 0.375rem;
+  background: var(--brim-editor-control-bg, var(--background));
+  color: var(--muted-foreground);
+  cursor: pointer;
+}
+
+.shape-option:hover {
+  background: var(--accent);
+}
+
+.shape-option[aria-pressed="true"] {
+  border-color: var(--brim-dark-theme-accent);
+  color: var(--brim-dark-theme-accent);
+}
+
+.shape-swatch {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: currentColor;
+}
+
+svg.shape-swatch {
+  background: none;
+}
+
+.card-list-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.card-list-count {
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--muted-foreground);
+  font-size: 0.75rem;
+}
+
+.card-list-item {
+  margin-bottom: 6px;
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  background: var(--brim-editor-control-bg, var(--background));
+}
+
+.card-list-row {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 4px;
+}
+
+.card-list-toggle {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  padding: 4px 6px;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  font-weight: 500;
+  text-align: left;
+  cursor: pointer;
+}
+
+.card-list-toggle span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.card-list-toggle img {
+  flex: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 4px;
+  object-fit: cover;
+}
+
+.card-list-btn {
+  flex: none;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border: 0;
+  border-radius: 0.25rem;
+  background: transparent;
+  color: var(--muted-foreground);
+  font: inherit;
+  cursor: pointer;
+}
+
+.card-list-btn:hover:not(:disabled) {
+  background: var(--accent);
+  color: var(--brim-editor-text, var(--foreground));
+}
+
+.card-list-btn:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.card-list-body {
+  padding: 10px;
+  border-top: 1px solid var(--border);
+}
+
+label.card-list-toggle {
+  cursor: pointer;
+}
+
+.location-search {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin: -0.5rem 0 1.25rem;
+}
+
+.card-list-add {
+  width: 100%;
+  padding: 8px;
+  border: 1px dashed var(--border);
+  border-radius: 0.5rem;
+  background: transparent;
+  color: var(--muted-foreground);
+  font: inherit;
+  cursor: pointer;
+}
+
+.card-list-add:hover {
+  background: var(--accent);
+  color: var(--brim-editor-text, var(--foreground));
+}
+
+/* -------------------------------------------------------------- sidebar */
+/* Site Settings › Forms: one row per form, opening its messages in the content browser. */
+.site-forms {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0 0 12px;
+  padding: 0;
+  list-style: none;
+}
+
+.site-forms__row {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: transparent;
+  color: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+
+.site-forms__row:hover {
+  background: var(--accent);
+}
+
+.site-forms__title {
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.site-forms__meta {
+  color: var(--muted-foreground);
+  font-size: 12px;
+}
+
+/* Holds whichever panel shows; the panel itself is laid out beside the page. */
+.brim-editor-panel {
+  display: contents;
+}
+
+/* The page's settings, shown when nothing else is, have nothing to close. */
+.brim-editor-panel:not([data-asked]) .brim-sidebar-close-btn {
+  display: none;
+}
+
+/* The edge between the page and the side panel: dragged, the panel gets wider or narrower. */
+.brim-sidebar-handle {
+  position: relative;
+  z-index: 950;
+  flex: none;
+  width: 9px;
+  margin-inline: -4px -5px;
+  cursor: col-resize;
+  touch-action: none;
+}
+
+.brim-sidebar-handle::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 3px;
+  width: 3px;
+  background: transparent;
+  transition: background 0.15s;
+}
+
+.brim-sidebar-handle:hover::after,
+.brim-sidebar-handle:focus-visible::after,
+html[data-brim-resizing] .brim-sidebar-handle:active::after {
+  background: var(--brim-editor-selection, #1d4ed8);
+}
+
+.brim-sidebar-handle:focus-visible {
+  outline: none;
+}
+
+.brim-sidebar {
+  display: flex;
+  /* The width the owner dragged it to; else as wide as the page can spare: narrower on a small window. */
+  --brim-sidebar-width: var(--brim-sidebar-chosen, clamp(320px, 26vw, 384px));
+  flex: 0 0 var(--brim-sidebar-width);
+  flex-direction: column;
+  width: var(--brim-sidebar-width);
+  min-height: 0;
+  border-inline-start: 1px solid var(--border);
+  background: var(--brim-sidebar-bg);
+  color: var(--brim-editor-text, var(--foreground));
+}
+
+.brim-sidebar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 1rem;
+  padding-inline-start: 1.5rem;
+}
+
+.brim-sidebar-title {
+  margin: 0;
+  overflow: hidden;
+  font-size: 1.125rem;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.brim-sidebar-close-btn {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border: 0;
+  border-radius: 0.375rem;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+
+.brim-sidebar-close-btn:hover {
+  background: var(--accent);
+}
+
+.brim-sidebar-close-btn svg {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+.brim-sidebar-content {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 0.75rem 1.5rem;
+  scrollbar-width: none;
+}
+
+.brim-sidebar-note {
+  margin: 0 0 0.75rem;
+  color: var(--muted-foreground);
+  font-size: 0.75rem;
+}
+
+/* A group of settings: only one is open at a time. */
+.schema-fieldset {
+  border-bottom: 1px solid var(--border);
+}
+
+.schema-fieldset[open] {
+  border-bottom-color: color-mix(in srgb, var(--brim-dark-theme-accent) 35%, var(--border));
+}
+
+.schema-fieldset:last-of-type {
+  border-bottom: 0;
+}
+
+.fieldset-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 0;
+  color: var(--muted-foreground);
+  list-style: none;
+  cursor: pointer;
+}
+
+.fieldset-title::-webkit-details-marker {
+  display: none;
+}
+
+.fieldset-title:hover,
+.schema-fieldset[open] > .fieldset-title {
+  color: var(--brim-editor-text, var(--foreground));
+}
+
+.fieldset-title-text {
+  display: inline-flex;
+  align-items: center;
+  min-height: 1.375rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.schema-fieldset[open] > .fieldset-title .fieldset-title-text {
+  padding: 0 0.375rem;
+  border-radius: 3px;
+  background: var(--brim-dark-theme-accent);
+  color: var(--brim-dark-theme-accent-text);
+}
+
+.fieldset-chevron {
+  display: flex;
+  transition: transform 0.2s;
+}
+
+.schema-fieldset[open] > .fieldset-title .fieldset-chevron {
+  transform: rotate(180deg);
+}
+
+.fieldset-fields-inner {
+  padding: 0 0 1rem;
+}
+
+/* Plain buttons inside settings: add, remove and move controls of lists. */
+:is(.brim-sidebar, .cb-item-form) button:not([class]) {
+  min-height: 36px;
+  max-width: 100%;
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--card);
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+:is(.brim-sidebar, .cb-item-form) button:not([class]):hover {
+  background: var(--accent);
+}
+
+:is(.brim-sidebar, .cb-item-form) button:not([class]):disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+/*
+ * Groups of settings (an image with its alt text, a list of links): a title and the fields under it. At most
+ * one level of lines in a panel, never a box inside a box.
+ */
+.brim-setting-group {
+  min-width: 0;
+  margin: 0 0 1.5rem;
+  padding: 0;
+  border: 0;
+}
+
+.brim-setting-group legend {
+  margin-bottom: 0.625rem;
+  padding: 0;
+  color: var(--brim-widget-label-color, var(--foreground));
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.brim-setting-group .field-group:last-child {
+  margin-bottom: 0;
+}
+
+/* A group inside a group or a list item: a thin line on its left instead of another box. */
+.brim-setting-group .brim-setting-group {
+  margin-bottom: 1rem;
+  padding-left: 12px;
+  border-left: 2px solid var(--border);
+}
+
+.brim-setting-group .brim-setting-group legend {
+  font-size: 0.8125rem;
+  font-weight: 500;
+}
+
+/* The items of a list, one under the other, separated by a line. */
+.brim-array-item {
+  padding: 10px 0 14px;
+  border-top: 1px solid var(--border);
+}
+
+.brim-array-item:last-of-type {
+  margin-bottom: 10px;
+  border-bottom: 1px solid var(--border);
+}
+
+.brim-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px;
+  margin: 0 0 8px;
+}
+
+.brim-actions span {
+  flex: 1;
+  color: var(--muted-foreground);
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+/* Move and remove: quiet until pointed at. */
+:is(.brim-sidebar, .cb-item-form) .brim-actions button:not([class]) {
+  min-height: 28px;
+  padding: 2px 8px;
+  border-color: transparent;
+  background: transparent;
+  color: var(--muted-foreground);
+  font-size: 0.8125rem;
+}
+
+:is(.brim-sidebar, .cb-item-form) .brim-actions button:not([class]):hover:not(:disabled) {
+  background: var(--accent);
+  color: var(--foreground);
+}
+
+/* "Add link", "Add image": the list's own button, full width and light. */
+:is(.brim-sidebar, .cb-item-form) .brim-setting-group > button:not([class]) {
+  width: 100%;
+  border-style: dashed;
+  background: transparent;
+  color: var(--muted-foreground);
+}
+
+:is(.brim-sidebar, .cb-item-form) .brim-setting-group > button:not([class]):hover {
+  background: var(--accent);
+  color: var(--foreground);
+}
+
+.brim-image-widget__preview {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 140px;
+  margin-bottom: 0.75rem;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--brim-editor-surface);
+  color: var(--muted-foreground);
+}
+
+.brim-image-widget__preview img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+/* ------------------------------------------------------ content browser */
+.cb-container {
+  --cb-header-height: 64px;
+  --cb-toolbar-height: 52px;
+  --cb-row-height: 56px;
+  --cb-max-width: 1400px;
+  --cb-transition: 150ms ease;
+
+  height: 100%;
+  overflow: auto;
+  background: var(--background);
+  color: var(--foreground);
+  font-size: 14px;
+}
+
+.cb-header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  height: var(--cb-header-height);
+  border-bottom: 1px solid var(--border);
+  background: var(--background);
+}
+
+.cb-header-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  max-width: var(--cb-max-width);
+  height: 100%;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+.cb-header-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.cb-header-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.cb-back-btn,
+.cb-toolbar-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border: 1px solid transparent;
+  border-radius: 0.375rem;
+  background: transparent;
+  color: var(--muted-foreground);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background var(--cb-transition);
+}
+
+.cb-back-btn:hover,
+.cb-toolbar-btn:hover:not(:disabled) {
+  border-color: var(--border);
+  background: var(--accent);
+  color: var(--foreground);
+}
+
+.cb-toolbar-btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.cb-toolbar-btn.danger {
+  color: var(--destructive);
+}
+
+.cb-toolbar-btn.danger:hover:not(:disabled) {
+  border-color: transparent;
+  background: color-mix(in srgb, var(--destructive) 10%, transparent);
+  color: var(--destructive);
+}
+
+.cb-breadcrumbs {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.cb-breadcrumb {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 6px;
+  border: 0;
+  border-radius: 0.375rem;
+  background: transparent;
+  color: var(--muted-foreground);
+  font: inherit;
+}
+
+button.cb-breadcrumb {
+  cursor: pointer;
+}
+
+button.cb-breadcrumb:hover {
+  background: var(--accent);
+  color: var(--foreground);
+}
+
+.cb-breadcrumb.current {
+  color: var(--foreground);
+  font-weight: 600;
+}
+
+.cb-breadcrumb-separator {
+  color: var(--muted-foreground);
+}
+
+.cb-search {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 8px;
+  max-width: 400px;
+  margin: 0 24px;
+  padding: 0 12px;
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  background: var(--brim-editor-control-bg, var(--background));
+  color: var(--muted-foreground);
+}
+
+.cb-search:focus-within {
+  border-color: var(--ring);
+}
+
+.cb-search input {
+  flex: 1;
+  min-width: 0;
+  height: 36px;
+  border: 0;
+  background: transparent;
+  color: var(--foreground);
+  font: inherit;
+}
+
+.cb-search input:focus {
+  outline: none;
+}
+
+.cb-item-count {
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--muted-foreground);
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.cb-new-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 16px;
+  border: 0;
+  border-radius: 0.375rem;
+  background: var(--brim-btn-bg);
+  color: var(--brim-btn-text);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.cb-new-btn:hover {
+  background: var(--brim-btn-bg-hover);
+}
+
+.cb-new-btn.danger {
+  background: var(--destructive);
+  color: var(--destructive-foreground);
+}
+
+.cb-toolbar {
+  position: sticky;
+  top: var(--cb-header-height);
+  z-index: 99;
+  min-height: var(--cb-toolbar-height);
+  border-bottom: 1px solid var(--border);
+  background: var(--background);
+}
+
+.cb-toolbar-inner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  max-width: var(--cb-max-width);
+  min-height: var(--cb-toolbar-height);
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+.cb-select-all {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted-foreground);
+  font-size: 13px;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.cb-container input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--brim-dark-theme-accent);
+  cursor: pointer;
+}
+
+.cb-toolbar-divider {
+  flex: none;
+  width: 1px;
+  height: 24px;
+  background: var(--border);
+}
+
+.cb-type-filters {
+  display: flex;
+  flex: 1;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.cb-type-filter {
+  --filter-color: var(--brim-dark-theme-accent);
+
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--muted-foreground);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.cb-type-filter[data-type="folder"] {
+  --filter-color: var(--cb-type-folder);
+}
+
+.cb-type-filter[data-type="page"] {
+  --filter-color: var(--cb-type-page);
+}
+
+.cb-type-filter[data-type="custom"] {
+  --filter-color: var(--cb-type-custom);
+}
+
+.cb-type-filter:hover {
+  background: var(--accent);
+}
+
+.cb-type-filter.active {
+  border-color: color-mix(in srgb, var(--filter-color) 30%, transparent);
+  background: color-mix(in srgb, var(--filter-color) 15%, transparent);
+  color: var(--filter-color);
+}
+
+/* A second row of the toolbar: the tags of what is listed, to list only what has one. */
+.cb-toolbar-inner.cb-tag-filters {
+  flex-wrap: wrap;
+  gap: 6px;
+  min-height: 0;
+  padding-block: 0 10px;
+}
+
+.cb-tag-filters__label {
+  margin-right: 4px;
+  color: var(--muted-foreground);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* An entry's tags, after its name: each one lists only what has it. */
+.cb-tags {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+}
+
+.cb-tag {
+  padding: 1px 8px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--muted-foreground);
+  font: inherit;
+  font-size: 11px;
+  line-height: 1.5;
+  cursor: pointer;
+}
+
+.cb-tag:hover,
+.cb-tag.active {
+  border-color: color-mix(in srgb, var(--brim-dark-theme-accent) 30%, transparent);
+  background: color-mix(in srgb, var(--brim-dark-theme-accent) 15%, transparent);
+  color: var(--brim-dark-theme-accent);
+}
+
+.cb-tags__more {
+  color: var(--muted-foreground);
+  font-size: 11px;
+}
+
+.cb-toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.cb-view-toggle {
+  display: inline-flex;
+  padding: 2px;
+  border-radius: 0.375rem;
+  background: var(--accent);
+}
+
+.cb-view-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: 0;
+  border-radius: 0.25rem;
+  background: transparent;
+  color: var(--muted-foreground);
+  cursor: pointer;
+}
+
+.cb-view-btn.active {
+  background: var(--background);
+  color: var(--foreground);
+  box-shadow: 0 1px 3px var(--brim-shadow);
+}
+
+.cb-table-container {
+  max-width: var(--cb-max-width);
+  margin: 0 auto;
+  padding: 0 24px 24px;
+}
+
+.cb-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.cb-table-header th {
+  padding: 12px 16px;
+  background: var(--accent);
+  color: var(--muted-foreground);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  text-align: left;
+  text-transform: uppercase;
+}
+
+.cb-col-check {
+  width: 48px;
+}
+
+.cb-col-type,
+.cb-col-status {
+  width: 110px;
+}
+
+.cb-col-modified {
+  width: 140px;
+  color: var(--muted-foreground);
+  font-size: 13px;
+}
+
+.cb-col-actions {
+  width: 120px;
+}
+
+.cb-row {
+  --row-color: var(--cb-type-custom);
+
+  border-bottom: 1px solid var(--border);
+  box-shadow: inset 3px 0 0 var(--row-color);
+  cursor: pointer;
+  transition: background var(--cb-transition);
+}
+
+.cb-row[data-type="folder"],
+.cb-card[data-type="folder"] {
+  --row-color: var(--cb-type-folder);
+}
+
+.cb-row[data-type="page"],
+.cb-card[data-type="page"] {
+  --row-color: var(--cb-type-page);
+}
+
+.cb-row td {
+  height: var(--cb-row-height);
+  padding: 0 16px;
+}
+
+.cb-row:hover {
+  background: var(--accent);
+}
+
+.cb-row.selected {
+  background: color-mix(in srgb, var(--brim-dark-theme-accent) 5%, transparent);
+}
+
+.cb-name {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.cb-drag-handle {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 24px;
+  margin-right: -6px;
+  padding: 0;
+  border: 0;
+  border-radius: 4px;
+  background: none;
+  color: var(--muted-foreground);
+  cursor: grab;
+}
+
+.cb-drag-handle:hover,
+.cb-drag-handle:focus-visible {
+  background: var(--accent);
+  color: var(--foreground);
+}
+
+.cb-drag-handle:disabled {
+  visibility: hidden;
+}
+
+.cb-drag-handle svg {
+  width: 16px;
+  height: 16px;
+}
+
+.cb-row-dragging {
+  opacity: 0.4;
+}
+
+.cb-row-drop td {
+  box-shadow: inset 0 2px 0 var(--primary);
+}
+
+.cb-name-title {
+  max-width: 400px;
+  overflow: hidden;
+  font-weight: 500;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cb-name code {
+  color: var(--muted-foreground);
+  font: inherit;
+  font-size: 12px;
+}
+
+.cb-type-icon {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 0.375rem;
+  background: color-mix(in srgb, var(--row-color) 15%, var(--card));
+  color: var(--row-color);
+}
+
+.cb-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--muted-foreground);
+  font: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+}
+
+.cb-badge-type {
+  background: color-mix(in srgb, var(--row-color) 15%, var(--card));
+  color: var(--row-color);
+}
+
+button.cb-badge {
+  cursor: pointer;
+}
+
+.cb-badge-status.published {
+  background: var(--cb-status-published-bg);
+  color: var(--cb-status-published-text);
+}
+
+.cb-badge-status.private {
+  background: var(--cb-status-private-bg);
+  color: var(--cb-status-private-text);
+}
+
+.cb-status-heading {
+  margin: 0;
+  padding: 8px 10px 4px;
+  color: var(--muted-foreground);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.cb-status-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 244px;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.cb-status-option:hover {
+  background: var(--accent);
+}
+
+.cb-status-option > span:nth-child(2) {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+}
+
+.cb-status-option small {
+  color: var(--muted-foreground);
+  font-size: 12px;
+}
+
+.cb-status-dot {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.cb-status-dot.published {
+  background: var(--cb-status-published-text);
+}
+
+.cb-status-dot.private {
+  background: var(--cb-status-private-text);
+}
+
+.cb-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 4px;
+}
+
+/* "New <item>" on the row of a content type. */
+.cb-folder-new,
+.cb-badge-type {
+  white-space: nowrap;
+}
+
+.cb-action-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: 0;
+  border-radius: 0.375rem;
+  background: transparent;
+  color: var(--muted-foreground);
+  cursor: pointer;
+}
+
+.cb-action-btn:hover {
+  background: var(--border);
+  color: var(--foreground);
+}
+
+.cb-action-btn.danger:hover {
+  background: color-mix(in srgb, var(--destructive) 10%, transparent);
+  color: var(--destructive);
+}
+
+.cb-grid-container {
+  max-width: var(--cb-max-width);
+  margin: 0 auto;
+  padding: 24px;
+}
+
+.cb-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 16px;
+}
+
+.cb-card {
+  --row-color: var(--cb-type-custom);
+
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-top: 3px solid var(--row-color);
+  border-radius: 0.5rem;
+  background: var(--card);
+  cursor: pointer;
+}
+
+.cb-card:hover,
+.cb-card.selected {
+  border-color: var(--brim-dark-theme-accent);
+  border-top-color: var(--row-color);
+}
+
+.cb-card-preview {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  background: var(--accent);
+}
+
+.cb-card-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.cb-card-preview .cb-type-icon {
+  width: 64px;
+  height: 64px;
+}
+
+.cb-card-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 12px;
+}
+
+.cb-card-title {
+  overflow: hidden;
+  font-size: 13px;
+  font-weight: 500;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cb-card-type {
+  color: var(--row-color);
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.cb-card-actions {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: none;
+  border-radius: 0.375rem;
+  background: var(--card);
+}
+
+.cb-card:hover .cb-card-actions {
+  display: block;
+}
+
+.cb-state {
+  padding: 64px 24px;
+  color: var(--muted-foreground);
+  text-align: center;
+}
+
+.cb-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 80px 24px;
+  color: var(--muted-foreground);
+  text-align: center;
+}
+
+.cb-empty svg {
+  width: 56px;
+  height: 56px;
+  color: var(--cb-type-folder);
+}
+
+.cb-empty h3 {
+  margin: 8px 0 0;
+  color: var(--foreground);
+  font-size: 18px;
+}
+
+.cb-empty p {
+  margin: 0 0 12px;
+}
+
+.cb-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 3000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgb(0 0 0 / 0.5);
+  backdrop-filter: blur(4px);
+}
+
+.cb-modal {
+  width: min(400px, calc(100vw - 32px));
+  padding: 24px;
+  border-radius: 12px;
+  background: var(--card);
+  color: var(--foreground);
+}
+
+.cb-modal h3 {
+  margin: 0 0 8px;
+  font-size: 18px;
+}
+
+.cb-modal p,
+.cb-modal ul {
+  margin: 0 0 16px;
+  color: var(--muted-foreground);
+}
+
+.cb-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.cb-item-form {
+  /* Full-contrast text in the item form: labels, values and help read clearly in both themes. */
+  --brim-editor-text: var(--foreground);
+  --brim-widget-label-color: var(--foreground);
+  --muted-foreground: color-mix(in srgb, var(--foreground) 75%, transparent);
+
+  max-width: 760px;
+  margin: 0 auto;
+  padding-top: 24px;
+  color: var(--foreground);
+}
+
+/* The form's buttons in orange: the main action filled, the others outlined. */
+.cb-item-form .cb-new-btn {
+  background: var(--brim-form-action-bg);
+  color: var(--brim-form-action-text);
+}
+
+.cb-item-form .cb-new-btn:hover {
+  background: var(--brim-form-action-bg-hover);
+}
+
+.cb-item-form .cb-toolbar-btn:not(.danger) {
+  border-color: var(--brim-form-action-bg);
+  color: var(--brim-form-action-bg);
+}
+
+.cb-item-form .cb-toolbar-btn:not(.danger):hover:not(:disabled) {
+  border-color: var(--brim-form-action-bg-hover);
+  background: color-mix(in srgb, var(--brim-form-action-bg) 12%, transparent);
+  color: var(--brim-form-action-bg-hover);
+}
+
+.cb-item-form__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.cb-item-form__header h2 {
+  margin: 0;
+  font-size: 20px;
+}
+
+/* Why the item was not saved, under the buttons that tried. */
+.cb-item-form__error {
+  margin: -8px 0 16px;
+  font-size: 0.875rem;
+}
+
+.cb-item-form__actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.cb-response {
+  display: grid;
+  gap: 16px;
+  margin: 24px 0 0;
+}
+
+.cb-response dt {
+  color: var(--muted-foreground);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+}
+
+.cb-response dd {
+  margin: 4px 0 0;
+  white-space: pre-line;
+}
+
+/* A question with choices, read back as the form asked it: every card, the picked ones standing out. */
+.cb-response-choices {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 8px;
+  margin-top: 8px !important;
+  white-space: normal !important;
+}
+
+.cb-response-choice {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  color: var(--muted-foreground);
+  font-size: 13px;
+  line-height: 1.3;
+  opacity: 0.55;
+}
+
+.cb-response-choice[data-picked] {
+  border-color: var(--foreground);
+  box-shadow: 0 0 0 1px var(--foreground);
+  color: var(--foreground);
+  font-weight: 600;
+  opacity: 1;
+}
+
+.cb-response-choice[data-image] {
+  padding: 0 0 10px;
+  overflow: hidden;
+}
+
+.cb-response-choice[data-image] > span {
+  padding: 0 10px;
+}
+
+.cb-response-choice[data-image] img {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+}
+
+.cb-response-choice-icon {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+}
+
+.cb-response-tick {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--foreground);
+  color: var(--background);
+  font-size: 11px;
+}
+
+.brim-richtext-field {
+  border: 1px solid var(--border);
+  border-radius: 0.375rem;
+  background: var(--brim-editor-control-bg, var(--background));
+}
+
+.brim-richtext-field__toolbar {
+  flex-wrap: wrap;
+  border: 0;
+  border-bottom: 1px solid var(--border);
+  border-radius: 0.375rem 0.375rem 0 0;
+  box-shadow: none;
+}
+
+.brim-richtext-field__content {
+  min-height: 160px;
+  padding: 12px 14px;
+  font-size: 0.875rem;
+  line-height: 1.6;
+}
+
+.brim-richtext-field__content:focus {
+  outline: none;
+}
+
+.brim-richtext-field__content > :first-child {
+  margin-top: 0;
+}
+
+/* ---------------------------------------------------------------- login */
+.brim-login {
+  width: min(380px, calc(100vw - 32px));
+  margin: 15vh auto 0;
+  padding: 24px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--card);
+}
+
+.brim-login h1 {
+  margin: 0 0 20px;
+  font-size: 18px;
+}
+
+.brim-login__error {
+  margin: 0 0 16px;
+  color: var(--destructive);
+}
+
+.brim-login .cb-new-btn {
+  justify-content: center;
+  width: 100%;
+}
+
+.brim-login__or {
+  margin: 14px 0;
+  color: var(--muted-foreground);
+  font-size: 12px;
+  text-align: center;
+}
+
+.brim-login__host {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  min-height: 34px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: inherit;
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.brim-login__host:hover {
+  background: var(--accent);
+}
+
+.brim-login__note {
+  margin: -8px 0 20px;
+  color: var(--muted-foreground);
+}
+
+.brim-login__done {
+  margin-top: 8px;
+  background: none;
+  font: inherit;
+  cursor: pointer;
+}
+
+/* "Forgot password?", "Back to sign in": a quiet text button under the form's main one. */
+.brim-login__link {
+  display: block;
+  margin: 12px auto 0;
+  padding: 4px 8px;
+  border: 0;
+  background: none;
+  color: var(--muted-foreground);
+  font: inherit;
+  font-size: 13px;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+
+.brim-login__link:hover {
+  color: var(--foreground);
+}
+
+.brim-login__hint {
+  margin: 6px 0 0;
+  color: var(--muted-foreground);
+  font-size: 12px;
+}
+
+.brim-login__success {
+  margin: 0 0 16px;
+  color: var(--foreground);
+}
+
+/* Over the editor when the session ran out: the editor stays open underneath, with everything typed in it. */
+.brim-signin-again {
+  position: fixed;
+  inset: 0;
+  z-index: 5000;
+  overflow: auto;
+  background: rgb(0 0 0 / 0.45);
+}
+
+/*
+ * Laptop-width windows: the preview sizes stop holding the middle of the bar, so the page, content and visibility
+ * controls get the room instead of running into each other; buttons with an icon keep only the icon.
+ */
+@media (max-width: 1280px) {
+  .brim-editor-toolbar {
+    grid-template-columns: minmax(0, 1fr) auto auto;
+  }
+
+  .toolbar-zone-left > * {
+    flex: none;
+  }
+
+  .toolbar-zone-left > .breadcrumb-page-trigger,
+  .toolbar-zone-left > .brim-editor-autosave {
+    flex: 0 1 auto;
+  }
+
+  .toolbar-zone-left .brim-toolbar-label {
+    display: none;
+  }
+
+  .toolbar-zone-left .brim-toolbar-btn--outline:has(svg:first-child) {
+    padding: 0.375rem;
+  }
+
+  .breadcrumb-page-title {
+    max-width: 14rem;
+  }
+}
+
+/* The editor is desktop software; narrow windows keep the essentials. */
+@media (max-width: 900px) {
+  .brim-editor-autosave:not([data-state="error"]),
+  .cb-col-type,
+  .cb-col-modified,
+  .cb-type-filters {
+    display: none;
+  }
+
+  .brim-sidebar {
+    --brim-sidebar-width: var(--brim-sidebar-chosen, 280px);
+  }
+
+  .brim-editor-toolbar {
+    gap: 0.5rem;
+    padding: 0 0.625rem;
+  }
+
+  .toolbar-separator {
+    display: none;
+  }
+
+  .breadcrumb-page-title {
+    max-width: 9rem;
+  }
+
+  .brim-editor-canvas {
+    /* Still room on both sides for the page's handles. */
+    padding: 22px 20px 16px;
+  }
+}
+
+/*
+ * Phones and very narrow windows: the page keeps the whole width. The bar keeps what is needed to edit (pages,
+ * content, who can see the page, preview, settings); panels cover the page instead of squeezing it.
+ */
+@media (max-width: 640px) {
+  .brim-editor-toolbar {
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 0.25rem;
+    height: 3rem;
+    padding: 0 0.375rem;
+  }
+
+  /* The preview is already as wide as a phone: the size buttons have nothing to show. */
+  .toolbar-zone-center,
+  .toolbar-zone-divider,
+  .toolbar-separator,
+  .brim-toolbar-label {
+    display: none;
+  }
+
+  .toolbar-zone {
+    gap: 0.125rem;
+  }
+
+  .brim-toolbar-btn--outline {
+    padding: 0.375rem;
+  }
+
+  .breadcrumb-page-trigger {
+    gap: 0.25rem;
+    padding: 0.25rem;
+  }
+
+  .breadcrumb-page-icon svg {
+    width: 1.25rem;
+    height: 1.25rem;
+  }
+
+  .breadcrumb-page-title {
+    max-width: 6.5rem;
+  }
+
+  .toolbar-status-pill {
+    min-height: 1.75rem;
+    padding: 0.25rem 0.5rem;
+  }
+
+  .brim-editor-canvas {
+    padding: 0;
+  }
+
+  .brim-editor-canvas[data-viewport] .brim-editor-frame {
+    flex: 1 1 auto;
+    width: 100%;
+    outline: 0;
+    box-shadow: none;
+  }
+
+  /* On a phone the page has the whole width and the panel covers it: there is nothing to drag. */
+  .brim-sidebar-handle,
+  .brim-frame-handle,
+  .brim-frame-size {
+    display: none;
+  }
+
+  /* On a phone the panel covers the page, so it shows only what the owner opened. */
+  .brim-editor-panel:not([data-asked]) {
+    display: none;
+  }
+
+  .brim-sidebar {
+    --brim-sidebar-width: 100%;
+    position: absolute;
+    inset: 0;
+    /* Above the bar over the selected element (1000), below the editor's top bar and its menus (2000). */
+    z-index: 1100;
+    border-inline-start: 0;
+  }
+
+  .breadcrumb-navigation-layer {
+    inset-block-start: 3rem;
+  }
+
+  .breadcrumb-navigation-drawer {
+    width: 100vw;
+    border-inline-end: 0;
+  }
+
+  .breadcrumb-navigation-header {
+    padding: 0.75rem 0.75rem 0.625rem 1rem;
+  }
+
+  /* The bar over a selected element wraps instead of running off the screen. */
+  .brim-element__toolbar-cluster {
+    max-width: calc(100% - 16px);
+  }
+
+  .brim-element__toolbar {
+    flex-wrap: wrap;
+  }
+
+  /* Its menus (style, colours, link) open under the whole bar, so none runs off the screen. */
+  .brim-element__toolbar {
+    position: relative;
+  }
+
+  .brim-toolbar-anchor {
+    position: static;
+  }
+
+  .brim-toolbar-popover {
+    left: 0;
+    max-width: 100%;
+  }
+
+  .toolbar-link-popover {
+    width: min(340px, calc(100vw - 24px));
+  }
+
+  /* Content browser: the search gets its own row, the toolbar wraps, the table keeps name, status and actions. */
+  .cb-header {
+    height: auto;
+  }
+
+  .cb-header-inner {
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 10px 12px;
+  }
+
+  .cb-search {
+    order: 3;
+    flex: 1 0 100%;
+    max-width: none;
+    margin: 0;
+  }
+
+  .cb-item-count,
+  .cb-toolbar-divider,
+  .cb-name code {
+    display: none;
+  }
+
+  .cb-toolbar {
+    position: static;
+  }
+
+  .cb-toolbar-inner {
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 8px 12px;
+  }
+
+  .cb-toolbar-right {
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+
+  .cb-table-container {
+    padding: 0 0 16px;
+  }
+
+  .cb-table-header th,
+  .cb-row td {
+    padding-inline: 8px;
+  }
+
+  /* No room for choosing several at once: each row keeps its own status and actions. */
+  .cb-col-check,
+  .cb-select-all,
+  .cb-toolbar-right > .cb-toolbar-btn {
+    display: none;
+  }
+
+  .cb-col-status,
+  .cb-col-actions {
+    width: auto;
+  }
+
+  /* "New Project" in a folder row: the + is enough; the words stay for screen readers. */
+  .cb-folder-new {
+    gap: 0;
+    padding: 6px;
+    font-size: 0;
+  }
+
+  .cb-item-form {
+    padding: 16px 12px 0;
+  }
+
+  .cb-item-form__header {
+    flex-wrap: wrap;
+  }
+}
+
+/*
+ * Phones: everything in the bar must fit in one row, because its menus open below it. What can wait goes first:
+ * the visibility word (the dot stays), Redo (Undo stays), and the preview link; the page keeps its icon.
+ */
+@media (max-width: 480px) {
+  .brim-toolbar-btn--icon,
+  .brim-toolbar-btn--outline {
+    padding: 0.3125rem;
+  }
+
+  .brim-toolbar-btn--action,
+  .brim-toolbar-btn--outline:not(:has(svg)) {
+    padding-inline: 0.5rem;
+  }
+
+  .toolbar-status-text,
+  .breadcrumb-page-title,
+  .toolbar-redo,
+  .toolbar-preview {
+    display: none;
+  }
+
+  .toolbar-zone-left > .breadcrumb-page-trigger {
+    flex: none;
+  }
+
+  .toolbar-status-pill {
+    padding: 0.25rem 0.375rem;
+  }
+}
+
+/* ------------------------------------------------------------ page settings */
+.brim-page-address {
+  display: block;
+  padding: 0.5rem 0.625rem;
+  overflow-wrap: anywhere;
+  border: 1px solid var(--border);
+  border-radius: 0.375rem;
+  background: var(--accent);
+  color: var(--muted-foreground);
+  font-size: 0.8125rem;
+}
+
+/* ---------------------------------------------------------------- video upload */
+.video-upload {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 10px;
+  border: 1px dashed var(--border);
+  border-radius: 0.375rem;
+}
+
+.video-upload[data-over="true"] {
+  border-color: var(--ring);
+  background: var(--accent);
+}
+
+.video-upload button {
+  padding: 6px 12px;
+  border: 1px solid var(--border);
+  border-radius: 0.375rem;
+  background: var(--card);
+  color: var(--foreground);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.video-upload .btn-upload {
+  border-color: var(--brim-btn-bg);
+  background: var(--brim-btn-bg);
+  color: var(--brim-btn-text);
+}
+
+.video-upload .btn-upload:hover {
+  background: var(--brim-btn-bg-hover);
+}
+
+.video-upload .btn-remove {
+  color: var(--destructive);
+}
+
+.video-upload .field-description {
+  margin: 0;
+}
+
+.video-upload__status {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.video-upload__status small {
+  color: var(--muted-foreground);
+  font-weight: 400;
+}
+
+.video-upload__bar {
+  width: 100%;
+  height: 6px;
+  accent-color: var(--brim-btn-bg);
+}
+
+/* The videos already on the site's video host, under the upload. */
+.video-list {
+  margin-top: 8px;
+  font-size: 13px;
+}
+
+.video-list__title {
+  margin: 0 0 4px;
+  font-weight: 600;
+}
+
+.video-list ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.video-list li {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 0;
+  border-top: 1px solid var(--border);
+}
+
+.video-list__name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.video-list__name small {
+  display: block;
+  color: var(--muted-foreground);
+}
+
+.video-list button {
+  padding: 3px 8px;
+  border: 1px solid var(--border);
+  border-radius: 0.375rem;
+  background: var(--card);
+  color: var(--foreground);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.video-list button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.video-list .btn-remove {
+  color: var(--destructive);
+}
+
+/* Waiting for a server that is away: restarting, or stopped while nobody was editing. */
+.brim-editor-reconnecting {
+  position: fixed;
+  left: 50%;
+  bottom: 24px;
+  transform: translateX(-50%);
+  z-index: 4000;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  max-width: min(520px, calc(100vw - 32px));
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: var(--brim-btn-bg);
+  color: var(--brim-btn-text);
+  box-shadow: 0 8px 24px var(--brim-shadow);
+  font-size: 0.875rem;
+  line-height: 1.4;
+}
+
+.brim-editor-reconnecting-dot {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--brim-success);
+  animation: brim-editor-reconnecting-pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes brim-editor-reconnecting-pulse {
+  50% {
+    opacity: 0.25;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .brim-editor-reconnecting-dot {
+    animation: none;
+  }
+}
+
+/* ------------------------------------------------------------- languages */
+.toolbar-language {
+  gap: 0.25rem;
+  padding-inline: 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 650;
+  letter-spacing: 0.02em;
+}
+
+.cb-item-languages {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin: -8px 0 20px;
+}
+
+.cb-item-languages__label {
+  margin-right: 4px;
+  color: var(--muted-foreground);
+  font-size: 13px;
+}
+
+.cb-language-chip {
+  min-width: 40px;
+  padding: 4px 10px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--card);
+  color: var(--foreground);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.cb-language-chip[aria-current="true"] {
+  border-color: var(--foreground);
+  background: var(--foreground);
+  color: var(--background);
+  cursor: default;
+  opacity: 1;
+}
+
+.cb-language-chip--missing {
+  border-style: dashed;
+  color: var(--muted-foreground);
+}
+
+.cb-language-chip:disabled:not([aria-current="true"]) {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.cb-badge-language {
+  margin-left: 6px;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: var(--accent);
+  color: var(--muted-foreground);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+/* ------------------------------------------- page settings: counters and previews */
+.field-counter {
+  margin: 4px 0 0;
+  color: var(--muted-foreground);
+  font-size: 0.6875rem;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.field-counter[data-over] {
+  color: #b45309;
+}
+
+.brim-seo-preview {
+  margin: 0 0 1rem;
+}
+
+.brim-seo-preview__note {
+  margin: 0 0 6px;
+  color: #b45309;
+  font-size: 0.75rem;
+}
+
+/* Drawn the way search results and chat apps draw them, in their own colors: light, or dark with the editor. */
+.brim-search-result {
+  display: grid;
+  gap: 2px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: #ffffff;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+.brim-search-result[data-hidden] {
+  opacity: 0.5;
+}
+
+.brim-search-result__url {
+  overflow: hidden;
+  color: #4d5156;
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.brim-search-result__title {
+  overflow: hidden;
+  color: #1a0dab;
+  font-size: 18px;
+  line-height: 1.3;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.brim-search-result__description {
+  display: -webkit-box;
+  overflow: hidden;
+  color: #4d5156;
+  font-size: 13px;
+  line-height: 1.45;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.brim-share-card {
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: #ffffff;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+.brim-share-card__image {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1200 / 630;
+  object-fit: cover;
+  background: #f1f1f0;
+}
+
+.brim-share-card__image--empty {
+  display: grid;
+  place-items: center;
+  color: #8a8a86;
+  font-size: 12px;
+}
+
+.brim-share-card__text {
+  display: grid;
+  gap: 2px;
+  padding: 10px 12px 12px;
+  border-top: 1px solid #ececea;
+}
+
+.brim-share-card__host {
+  overflow: hidden;
+  color: #65676b;
+  font-size: 11px;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.brim-share-card__title {
+  overflow: hidden;
+  color: #050505;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.3;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.brim-share-card__description {
+  display: -webkit-box;
+  overflow: hidden;
+  color: #65676b;
+  font-size: 13px;
+  line-height: 1.4;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.dark .brim-search-result {
+  background: #1f1f1f;
+}
+
+.dark .brim-search-result__url,
+.dark .brim-search-result__description {
+  color: #bdc1c6;
+}
+
+.dark .brim-search-result__title {
+  color: #8ab4f8;
+}
+
+.dark .brim-share-card {
+  background: #242526;
+}
+
+.dark .brim-share-card__image {
+  background: #3a3b3c;
+}
+
+.dark .brim-share-card__image--empty,
+.dark .brim-share-card__host,
+.dark .brim-share-card__description {
+  color: #b0b3b8;
+}
+
+.dark .brim-share-card__text {
+  border-top-color: #3a3b3c;
+}
+
+.dark .brim-share-card__title {
+  color: #e4e6eb;
+}
+
+/* ------------------------------------------- site settings: redirects */
+.brim-redirects {
+  display: grid;
+  gap: 6px;
+  margin: 0 0 1rem;
+  padding: 0;
+  list-style: none;
+}
+
+.brim-redirects__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 6px 6px 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+}
+
+.brim-redirects__addresses {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  font-size: 0.8125rem;
+}
+
+.brim-redirects__addresses code {
+  overflow-wrap: anywhere;
+}
+
+.brim-redirects__addresses .cb-badge {
+  padding: 1px 8px;
+  font-size: 0.6875rem;
+}
+
+/* ------------------------------------------- history */
+.brim-history__scope {
+  margin: 0 0 0.75rem;
+}
+
+.brim-history__what {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+  font-size: 0.75rem;
+  color: var(--muted-foreground);
+}
+
+.brim-history__what strong {
+  overflow: hidden;
+  color: var(--foreground);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.brim-history .brim-toolbar-btn {
+  flex: none;
+}
+
+/* ------------------------------------------- page settings: address and password */
+.brim-inline-form {
+  display: flex;
+  gap: 6px;
+}
+
+.brim-inline-form .field-input {
+  flex: 1;
+  min-width: 0;
+}
+
+.brim-page-protected {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 0.75rem;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  font-size: 0.8125rem;
+}
+
+/* ------------------------------------------- listing panel */
+.brim-listing-panel {
+  display: grid;
+  gap: 0.75rem;
+  padding: 1rem;
+}
+
+.brim-listing-panel__count {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.brim-listing-panel__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.brim-listing-panel__actions button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* ------------------------------------------- link picker (every link widget, and the text toolbar's link) */
+.url-actions__label {
+  margin-right: auto;
+  color: var(--muted-foreground);
+}
+
+.brim-link-picker {
+  display: flex;
+  flex-direction: column;
+  width: min(560px, calc(100vw - 32px));
+  max-height: min(640px, calc(100vh - 48px));
+  overflow: hidden;
+  border-radius: 12px;
+  background: var(--card);
+  color: var(--foreground);
+  box-shadow: 0 20px 60px rgb(0 0 0 / 0.3);
+}
+
+.brim-link-picker__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 16px 8px 20px;
+}
+
+.brim-link-picker__header h3 {
+  margin: 0;
+  font-size: 16px;
+}
+
+.brim-link-picker__tabs {
+  display: flex;
+  gap: 4px;
+  padding: 0 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.brim-link-picker__tabs button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: -1px;
+  padding: 10px 12px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: none;
+  color: var(--muted-foreground);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.brim-link-picker__tabs button[aria-selected="true"] {
+  border-bottom-color: var(--brim-canvas-selection);
+  color: var(--foreground);
+  font-weight: 600;
+}
+
+.brim-link-picker__body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 0;
+  padding: 16px 20px 20px;
+}
+
+.brim-link-picker__search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--muted-foreground);
+}
+
+.brim-link-picker__search input {
+  flex: 1;
+  min-width: 0;
+  padding: 9px 0;
+  border: 0;
+  outline: none;
+  background: none;
+  color: var(--foreground);
+  font: inherit;
+}
+
+.brim-link-picker__list {
+  display: grid;
+  gap: 2px;
+  min-height: 0;
+  max-height: 420px;
+  overflow-y: auto;
+}
+
+.brim-link-picker__group {
+  margin: 12px 0 4px;
+  color: var(--muted-foreground);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.brim-link-picker__list section:first-child .brim-link-picker__group {
+  margin-top: 0;
+}
+
+.brim-link-picker__row {
+  display: flex;
+  align-items: stretch;
+  border-radius: 8px;
+}
+
+.brim-link-picker__row:hover,
+.brim-link-picker__row[aria-current] {
+  background: var(--accent);
+}
+
+.brim-link-picker__choose {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  padding: 8px 10px;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.brim-link-picker__text {
+  display: grid;
+  min-width: 0;
+}
+
+.brim-link-picker__title {
+  overflow: hidden;
+  font-size: 13px;
+  font-weight: 500;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.brim-link-picker__text code {
+  overflow: hidden;
+  color: var(--muted-foreground);
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.brim-link-picker__parts {
+  padding: 0 10px;
+  border: 0;
+  border-radius: 0 8px 8px 0;
+  background: none;
+  color: var(--muted-foreground);
+  cursor: pointer;
+}
+
+.brim-link-picker__parts:hover {
+  color: var(--foreground);
+}
+
+.brim-link-picker__kind {
+  flex: none;
+  width: 58px;
+  color: var(--muted-foreground);
+  font-size: 11px;
+}
+
+.brim-link-picker__step {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.brim-link-picker__step > span {
+  display: grid;
+}
+
+.brim-link-picker__kicker {
+  color: var(--muted-foreground);
+  font-size: 11px;
+}
+
+.brim-link-picker__kinds {
+  display: flex;
+  gap: 6px;
+}
+
+.brim-link-picker__kinds button {
+  padding: 6px 12px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: none;
+  color: inherit;
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.brim-link-picker__kinds button[aria-checked="true"] {
+  border-color: var(--foreground);
+  background: var(--foreground);
+  color: var(--background);
+}
+
+/* The last option of a reference widget: a term that does not exist yet, added to its vocabulary when picked. */
+.field-select-option--add {
+  border-top: 1px solid var(--border);
+  border-radius: 0 0 4px 4px;
+  color: var(--brim-dark-theme-accent, currentColor);
+}
+
+/* Date widget: a calendar under the field. */
+.field-select-label[data-empty] {
+  color: var(--muted-foreground, color-mix(in srgb, currentColor 55%, transparent));
+}
+
+.field-calendar {
+  position: fixed;
+  z-index: 9999;
+  width: 252px;
+  padding: 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--brim-widget-select-radius, 0.375rem);
+  background: var(--brim-editor-control-bg, var(--background));
+  color: var(--brim-editor-text, var(--foreground));
+  box-shadow: 0 4px 16px var(--brim-shadow);
+  font-size: 0.8125rem;
+}
+
+.field-calendar button {
+  border: none;
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.field-calendar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.field-calendar-header button {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 4px;
+}
+
+.field-calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+}
+
+.field-calendar-weekday {
+  padding: 4px 0;
+  text-align: center;
+  font-size: 0.6875rem;
+  text-transform: capitalize;
+  opacity: 0.6;
+}
+
+.field-calendar-day {
+  height: 32px;
+  border-radius: 4px;
+  font-variant-numeric: tabular-nums;
+}
+
+.field-calendar-day[data-outside] {
+  opacity: 0.4;
+}
+
+.field-calendar-day[data-today] {
+  box-shadow: inset 0 0 0 1px var(--brim-dark-theme-accent);
+}
+
+.field-calendar button:hover,
+.field-calendar button:focus-visible {
+  background: color-mix(in srgb, var(--brim-dark-theme-accent) 18%, transparent);
+  outline: none;
+}
+
+.field-calendar-day[aria-selected="true"],
+.field-calendar-day[aria-selected="true"]:hover {
+  background: var(--brim-dark-theme-accent);
+  color: #fff;
+  font-weight: 600;
+  opacity: 1;
+}
+
+.field-calendar-footer {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px solid var(--border);
+}
+
+.field-calendar-footer button {
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+
+.field-calendar-footer button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+/* The chevron of a site map group whose term has its own page: the name opens the page, this shows its items. */
+.breadcrumb-navigation-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 2rem;
+  flex: none;
+  padding: 0;
+  border: 0;
+  border-radius: 0.25rem;
+  background: transparent;
+  cursor: pointer;
+}
+
+.breadcrumb-navigation-toggle:hover {
+  background: var(--accent);
+}
+
+.breadcrumb-navigation-toggle .breadcrumb-navigation-chevron {
+  margin: 0;
+}
+
+.breadcrumb-navigation-row .breadcrumb-navigation-item--after-toggle {
+  padding-inline-start: 0.375rem;
+}
+
+/* Read out by screen readers, never seen: which element of the page is selected. */
+.brim-visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* Reached with F6 from the page: the panel shows that the keyboard is now in it. */
+.brim-sidebar:focus {
+  outline: none;
+}
+
+.brim-sidebar:focus-visible {
+  outline: 2px solid var(--brim-canvas-selection);
+  outline-offset: -2px;
+}
+
+/* A form's steps: an accordion, one step open at a time, each with its questions inside. */
+.form-step {
+  margin-bottom: 6px;
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  background: var(--brim-editor-control-bg, var(--background));
+}
+
+.form-step[data-open="true"] {
+  border-color: var(--foreground);
+}
+
+.form-step .card-list-toggle {
+  align-items: flex-start;
+}
+
+.form-step .card-list-toggle > span:last-child {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.form-step-number {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--foreground);
+  color: var(--background);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.form-step-summary {
+  overflow: hidden;
+  color: var(--muted-foreground, #71717a);
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.form-step > .card-list:only-child {
+  padding: 6px;
+}
+
+.form-steps-add {
+  width: 100%;
+  margin-top: 4px;
+}
+
+/* Up and down next to the drag handle of an ordered type's rows. */
+.cb-move {
+  display: inline-flex;
+  flex: none;
+  gap: 2px;
+}
+
+.cb-move-btn {
+  display: inline-grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--background);
+  color: var(--muted-foreground);
+  font-size: 12px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.cb-move-btn:hover:not(:disabled),
+.cb-move-btn:focus-visible {
+  border-color: var(--foreground);
+  color: var(--foreground);
+}
+
+.cb-move-btn:disabled {
+  opacity: 0.35;
+  cursor: default;
+}

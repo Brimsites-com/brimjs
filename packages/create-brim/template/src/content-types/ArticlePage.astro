@@ -1,0 +1,79 @@
+---
+import type { ItemPageProps } from "brimjs";
+import { Blocks, Image, Link, Text } from "brimjs/components";
+import Site from "../layouts/Site.astro";
+import type { article as Article } from "./article.ts";
+
+/**
+ * The template of every article: Brim draws it at /blog/<address> with the article as `item`. The title, summary,
+ * author, cover and the blocks of its body (text, images, videos…) are the article's, edited on its page; the rest
+ * is the template, changed once for all articles.
+ */
+// Typed from the fields article.ts declares: a misspelt field fails the build instead of showing nothing.
+const { item: article } = Astro.props as ItemPageProps<typeof Article>;
+const { summary, cover, published, author } = article.data;
+const date = published ? new Date(published).toLocaleDateString("en", { dateStyle: "long" }) : undefined;
+---
+
+<Site title={article.title} description={summary}>
+  <article class="section">
+    <div class="container article">
+      <Link nodeId="article-back" href="/blog" class="article__back">
+        ← All articles
+      </Link>
+      {(date || author) && (
+        <p class="eyebrow article__meta">
+          {date && <time datetime={published}>{date}</time>}
+          {author && (
+            <Text nodeId="article-author" item={article} field="author" as="span">
+              {author}
+            </Text>
+          )}
+        </p>
+      )}
+      <Text nodeId="article-title" item={article} field="title" as="h1">
+        {article.title}
+      </Text>
+      <Text nodeId="article-summary" item={article} field="summary" class="lead">
+        {summary}
+      </Text>
+      {cover && (
+        <div class="article__cover">
+          <Image nodeId="article-cover" item={article} field="cover" src={cover.src} alt={cover.alt} />
+        </div>
+      )}
+      <Blocks nodeId="article-body" item={article} field="body" class="article__body" />
+    </div>
+  </article>
+</Site>
+
+<style>
+  .article {
+    max-width: 46rem;
+  }
+
+  .article :global(.article__back) {
+    display: inline-block;
+    margin-bottom: 2rem;
+    color: var(--brim-theme-dark1);
+    text-decoration: none;
+  }
+
+  .article :global(.article__meta > * + *::before) {
+    content: "·";
+    margin-inline: 0.5em;
+  }
+
+  .article__cover {
+    margin-block: 2rem;
+    --brim-image-radius: var(--site-radius);
+  }
+
+  .article :global(.article__body) {
+    font-size: 1.0625rem;
+  }
+
+  .article :global(.article__body > * + *) {
+    margin-top: 1.5rem;
+  }
+</style>

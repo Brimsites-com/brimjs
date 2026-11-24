@@ -1,0 +1,247 @@
+---
+import { defaultScope } from "../../runtime/request-state.ts";
+import "../button/button.css";
+import "./form.css";
+import type { FormDefinition } from "../../forms/define.ts";
+import { type FormValue, formFields, formSteps } from "../../forms/fields.ts";
+import Captcha from "./Captcha.astro";
+import Field from "./FormField.astro";
+import type { NodeScope } from "../../runtime/context.ts";
+import { signForm, takesFormFiles } from "../../runtime/forms.ts";
+import { form } from "../schemas/form.ts";
+import { plainText } from "../theme.ts";
+
+/**
+ * A contact form. What visitors send is kept with the site's content and shown in the editor.
+ * `fields` is the starting list; the owner can change it. Its look is the site's CSS: `.brim-form`,
+ * `.brim-form__field[data-type]`, `.brim-form__actions`, `.brim-form__success` and the rest keep their names.
+ *
+ * A field `{ type: "step", label: "…", help: "…" }` starts a step: the form is then asked in steps, with tabs, a
+ * progress bar and Back / Continue buttons, each step checked before the next. A field's `width: "half"` puts it next
+ * to another half; its `help` is a line under it. `buttonClass` gives the buttons the site's own classes.
+ *
+ * Pass a function to draw the fields in the site's own markup; Brim still draws the form around them (its sending,
+ * consent, button and messages). It gets the steps and fields, each field with the `id` its input takes, and `Field`,
+ * which draws one question:
+ *
+ *   <Form nodeId="quote" fields={…}>
+ *     {({ fields, Field }) => <div class="quote-grid">{fields.map((field) => <Field field={field} />)}</div>}
+ *   </Form>
+ *
+ * In a form asked in steps, an element with `data-step="0"`, `data-step="1"`… is a step; `data-go-step`, `data-next-step`
+ * and `data-back-step` buttons move between them.
+ *
+ * `form={contact}` places a form declared once with `defineForm`: the same form wherever it is, edited once, kept in
+ * the site's shared content as `form-<key>`. Props given next to it (`buttonText`) still win where it is placed.
+ */
+interface Props {
+  /** A form declared with `defineForm`; then `nodeId` and `scope` are the form's own unless given. */
+  form?: FormDefinition;
+  /** Required unless `form` is given. */
+  nodeId?: string;
+  scope?: NodeScope;
+  formName?: string;
+  infoText?: string;
+  /** The questions, in order; `{ type: "step", label, help }` starts a step. */
+  fields?: (
+    | {
+        name: string;
+        label: string;
+        type: string;
+        required?: boolean;
+        placeholder?: string;
+        options?: (string | { label: string; icon?: string; description?: string })[];
+        display?: "list" | "cards";
+        showWhen?: { field: string; equals: string | string[] };
+        width?: "full" | "half";
+        help?: string;
+        /** Of a `file` field: the kinds it takes, `["pdf", "jpg", "png", "webp"]` unless given. */
+        accept?: string[] | string;
+        /** Of a `file` field: several files (five at most) instead of one. */
+        multiple?: boolean;
+      }
+    | { type: "step"; label: string; help?: string }
+  )[];
+  buttonText?: string;
+  showConsent?: boolean;
+  consentText?: string;
+  consentLinkText?: string;
+  consentLinkUrl?: string;
+  consentRequired?: boolean;
+  successMessage?: string;
+  /** Email the visitor that their message arrived. Off unless set here or turned on by the owner. */
+  confirmationEmail?: boolean;
+  /** The `name` of the email field the confirmation goes to; the form's first email field without it. */
+  confirmationField?: string;
+  confirmationSubject?: string;
+  confirmationMessage?: string;
+  /** The confirmation also lists what the visitor answered (text, shortened). Off by default: see the README. */
+  confirmationAnswers?: boolean;
+  nextText?: string;
+  backText?: string;
+  /** Classes of the send and Continue buttons, the site's own instead of Brim's. */
+  buttonClass?: string;
+  /** In a form asked in steps: a step asking one single choice moves on by itself once it is answered. */
+  autoAdvance?: boolean;
+  /** Classes of the Back button; by default `buttonClass`. */
+  backClass?: string;
+  /** Classes of the form element itself. */
+  class?: string;
+}
+
+const {
+  form: declared,
+  nodeId: givenId,
+  scope: givenScope,
+  buttonClass = "brim-btn brim-btn--block brim-btn--md",
+  autoAdvance = false,
+  backClass = buttonClass,
+  class: className,
+  ...given
+} = Astro.props;
+const nodeId = givenId ?? declared?.nodeId;
+if (!nodeId) throw new Error("<Form> needs a nodeId, or a form declared with defineForm: <Form form={contact} />.");
+// A declared form is one form for the whole site, wherever it is placed.
+const scope = givenScope ?? (declared ? "site" : defaultScope());
+const source = { ...declared?.settings, ...given };
+const settings = Astro.locals.brim.settings(form, nodeId, scope, source);
+
+const id = (name: string): string => `${nodeId}-${name}`;
+// A site with no private place for visitors' files (a static build, a host without private storage) asks for none.
+const asked = takesFormFiles()
+  ? settings.fields
+  : (Array.isArray(settings.fields) ? settings.fields : []).filter(
+      (field) => (field as { type?: unknown } | null)?.type !== "file",
+    );
+const steps = formSteps(asked).map((step) => ({
+  ...step,
+  fields: step.fields.map((field) => ({ ...field, id: id(field.name) })),
+}));
+const shown = steps.flatMap((step) => step.fields);
+// What the server checks each answer against: the questions, without how they are laid out.
+const fields = formFields(asked).map(({ width: _width, help: _help, display: _display, ...field }) => field);
+const stepped = steps.length > 1;
+const drawn = Astro.slots.has("default");
+const content = drawn
+  ? await Astro.slots.render("default", [{ steps, fields: shown, Field } satisfies FormValue<typeof Field>])
+  : undefined;
+// Responses are listed under the declared form's name even when its heading is left out of the page.
+const title = String(settings.formName || declared?.settings.responsesName || "Form");
+const consentRequired = settings.showConsent === true && settings.consentRequired === true;
+const notify = typeof settings.notificationEmail === "string" ? settings.notificationEmail.trim() : "";
+// The confirmation goes to one of the form's own email fields: the one chosen, else the first. A form without an
+// email field sends none.
+const text = (value: unknown, max: number): string => (typeof value === "string" ? plainText(value).slice(0, max) : "");
+const confirmTo =
+  settings.confirmationEmail === true
+    ? (fields.find((field) => field.type === "email" && field.name === settings.confirmationField) ??
+      fields.find((field) => field.type === "email"))
+    : undefined;
+const confirm = confirmTo && {
+  field: confirmTo.name,
+  subject: text(settings.confirmationSubject, 150),
+  message: text(settings.confirmationMessage, 5000),
+  ...(settings.confirmationAnswers === true && { answers: true }),
+};
+const signed = await signForm({
+  form: `${Astro.url.pathname}#${nodeId}`,
+  title,
+  fields,
+  consentRequired,
+  ...(notify && { notify }),
+  ...(confirm && { confirm }),
+});
+const info = plainText(settings.infoText);
+const consentLink =
+  typeof settings.consentLinkUrl === "string" && /^(https?:\/\/|\/(?!\/))/i.test(settings.consentLinkUrl)
+    ? settings.consentLinkUrl
+    : undefined;
+---
+
+<brim-form
+  class:list={["brim-form", className]}
+  data-spec={signed.spec}
+  data-signature={signed.signature}
+  data-stepped={stepped ? "" : undefined}
+  data-auto-advance={stepped && autoAdvance ? "" : undefined}
+  {...Astro.locals.brim.marker("form", nodeId, scope, settings)}
+>
+  <form novalidate>
+    {settings.formName && <h2 class="brim-form__title">{settings.formName}</h2>}
+    {info && <p class="brim-form__info">{info}</p>}
+    {drawn ? (
+      <Fragment set:html={content} />
+    ) : stepped ? (
+      <>
+        <div class="brim-form__tabs" role="tablist">
+          {steps.map((step, index) => (
+            <button type="button" class="brim-form__tab" role="tab" data-go-step={index}>
+              <span class="brim-form__tab-number">{index + 1}</span>
+              <span class="brim-form__tab-title">{step.title}</span>
+            </button>
+          ))}
+        </div>
+        <div class="brim-form__progress" aria-hidden="true">
+          <span />
+        </div>
+        {steps.map((step, index) => (
+          <fieldset class="brim-form__step" data-step={index}>
+            <legend class="brim-form__step-title">{step.title}</legend>
+            {step.intro && <p class="brim-form__step-intro">{step.intro}</p>}
+            <div class="brim-form__fields">
+              {step.fields.map((field) => (
+                <Field field={field} />
+              ))}
+            </div>
+          </fieldset>
+        ))}
+      </>
+    ) : (
+      <div class="brim-form__fields">
+        {shown.map((field) => (
+          <Field field={field} />
+        ))}
+      </div>
+    )}
+    {/* Hidden from people; a script that fills every field gives itself away here. */}
+    <div class="brim-form__trap" aria-hidden="true">
+      <label>
+        Leave this field empty <input type="text" name="website" tabindex="-1" autocomplete="off" />
+      </label>
+    </div>
+    {settings.showConsent && (
+      <label class="brim-form__check brim-form__consent" data-last-step>
+        <input type="checkbox" name="consent" required={consentRequired} />
+        <span>
+          {settings.consentText}{" "}
+          {consentLink ? <a href={consentLink}>{settings.consentLinkText}</a> : settings.consentLinkText}
+        </span>
+      </label>
+    )}
+    {/* The challenge, when the site's forms ask for one: in a form asked in steps, on the last step. */}
+    <Captcha />
+    <div class="brim-form__actions">
+      {stepped && (
+        <button type="button" class:list={[backClass, "brim-form__back"]} data-back-step>
+          {settings.backText || "Back"}
+        </button>
+      )}
+      {stepped && (
+        <button type="button" class:list={[buttonClass, "brim-form__next"]} data-next-step>
+          {settings.nextText || "Continue"}
+        </button>
+      )}
+      <button type="submit" class:list={[buttonClass, "brim-form__submit"]} data-last-step>
+        {settings.buttonText}
+      </button>
+    </div>
+    <p class="brim-form__error" role="alert" hidden></p>
+  </form>
+  <p class="brim-form__success" role="status" hidden>
+    {plainText(settings.successMessage)}
+  </p>
+</brim-form>
+
+<script>
+  import "./form.client.ts";
+</script>

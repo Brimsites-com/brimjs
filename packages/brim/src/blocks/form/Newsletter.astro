@@ -1,0 +1,77 @@
+---
+import "../button/button.css";
+import "./form.css";
+import Captcha from "./Captcha.astro";
+import type { NodeScope } from "../../runtime/context.ts";
+import { signForm } from "../../runtime/forms.ts";
+import { newsletter } from "../schemas/newsletter.ts";
+import { plainText } from "../theme.ts";
+
+/** An e-mail sign-up. Addresses are kept with the site's content and shown in the editor. */
+interface Props {
+  nodeId: string;
+  scope?: NodeScope;
+  title?: string;
+  description?: string;
+  disclaimer?: string;
+  formName?: string;
+  placeholder?: string;
+  buttonText?: string;
+  successMessage?: string;
+  errorMessage?: string;
+}
+
+const { nodeId, scope = "site", ...source } = Astro.props;
+const settings = Astro.locals.brim.settings(newsletter, nodeId, scope, source);
+
+const signed = await signForm({
+  // The same sign-up appears on every page, so it is one form wherever it is filled in.
+  form: scope === "site" ? `#${nodeId}` : `${Astro.url.pathname}#${nodeId}`,
+  title: String(settings.formName || "Newsletter"),
+  fields: [{ name: "email", label: "Email", type: "email", required: true }],
+  consentRequired: false,
+});
+const description = plainText(settings.description);
+const disclaimer = plainText(settings.disclaimer);
+---
+
+<brim-form
+  class="brim-form brim-newsletter"
+  data-spec={signed.spec}
+  data-signature={signed.signature}
+  data-error={settings.errorMessage}
+  {...Astro.locals.brim.marker("newsletter", nodeId, scope, settings)}
+>
+  <form novalidate>
+    {settings.title && <h2 class="brim-form__title">{settings.title}</h2>}
+    {description && <p class="brim-form__info">{description}</p>}
+    <div class="brim-newsletter__row">
+      <input
+        type="email"
+        name="email"
+        autocomplete="email"
+        required
+        placeholder={String(settings.placeholder ?? "")}
+        aria-label="Email"
+      />
+      <button type="submit" class="brim-btn brim-btn--block brim-btn--md">
+        {settings.buttonText}
+      </button>
+    </div>
+    <div class="brim-form__trap" aria-hidden="true">
+      <label>
+        Leave this field empty <input type="text" name="website" tabindex="-1" autocomplete="off" />
+      </label>
+    </div>
+    <Captcha />
+    {disclaimer && <p class="brim-form__disclaimer">{disclaimer}</p>}
+    <p class="brim-form__error" role="alert" hidden></p>
+  </form>
+  <p class="brim-form__success" role="status" hidden>
+    {settings.successMessage}
+  </p>
+</brim-form>
+
+<script>
+  import "./form.client.ts";
+</script>

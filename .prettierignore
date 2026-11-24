@@ -1,0 +1,6 @@
+node_modules
+dist
+.astro
+.brim
+editor-dist
+pnpm-lock.yaml

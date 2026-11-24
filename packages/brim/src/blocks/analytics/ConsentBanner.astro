@@ -1,0 +1,41 @@
+---
+import "./analytics.css";
+
+/** The choice itself, drawn by `<Analytics>` only where statistics are on: its script comes with it. */
+interface Props {
+  id: string;
+  text: string;
+  acceptText: string;
+  rejectText: string;
+  policyHref?: string | undefined;
+  policyText: string;
+}
+
+const { id, text, acceptText, rejectText, policyHref, policyText } = Astro.props;
+---
+
+<brim-analytics data-id={id}>
+  <section class="brim-consent" aria-label="Cookies" hidden>
+    <p class="brim-consent__text">
+      {text}
+      {policyHref && (
+        <Fragment>
+          {" "}
+          <a href={policyHref}>{policyText}</a>
+        </Fragment>
+      )}
+    </p>
+    <div class="brim-consent__actions">
+      <button type="button" class="brim-consent__button" data-consent="reject">
+        {rejectText}
+      </button>
+      <button type="button" class="brim-consent__button" data-consent="accept">
+        {acceptText}
+      </button>
+    </div>
+  </section>
+</brim-analytics>
+
+<script>
+  import "./analytics.client.ts";
+</script>

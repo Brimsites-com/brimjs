@@ -1,0 +1,90 @@
+---
+import { defaultScope } from "../../runtime/request-state.ts";
+import "./video.css";
+import type { NodeScope } from "../../runtime/context.ts";
+import { video } from "../schemas/video.ts";
+import { videoSource } from "./video-source.ts";
+
+/**
+ * A video from YouTube, Vimeo, a video file or an HLS stream: the owner picks it and how it plays; its size and
+ * shape are the site's. Brim draws it 16:9 at the width it is given. `bare` draws only the `<video>` (or the
+ * player's `<iframe>`), with every attribute the code gives it, for a site whose CSS styles it: a background video
+ * is `<Video bare nodeId="hero-video" url="/hero.mp4" autoplay loop controls={false} class="hero__video" />`.
+ */
+interface Props {
+  nodeId: string;
+  /** A YouTube or Vimeo link, or the address of a video file or of an HLS stream (`.m3u8`). */
+  url: string;
+  scope?: NodeScope;
+  posterUrl?: string;
+  autoplay?: boolean;
+  loop?: boolean;
+  muted?: boolean;
+  controls?: boolean;
+  /** Only the video element, with the attributes below, and no frame. */
+  bare?: boolean;
+  /** With `bare`, any other attribute goes on the element as it is. */
+  [attribute: string]: unknown;
+}
+
+const SETTINGS = new Set(Object.keys(video.schema.properties));
+const { nodeId, scope = defaultScope(), bare = false, ...rest } = Astro.props;
+const source = Object.fromEntries(Object.entries(rest).filter(([name]) => SETTINGS.has(name)));
+const attributes = Object.fromEntries(Object.entries(rest).filter(([name]) => !SETTINGS.has(name)));
+const settings = Astro.locals.brim.settings(video, nodeId, scope, source);
+
+const playback = {
+  autoplay: settings.autoplay === true,
+  loop: settings.loop === true,
+  // Browsers only start a video by themselves when it is silent.
+  muted: settings.muted !== false || settings.autoplay === true,
+  controls: settings.controls !== false,
+};
+const media = videoSource(settings.url, playback);
+const poster = typeof settings.posterUrl === "string" && settings.posterUrl ? settings.posterUrl : undefined;
+const marker = Astro.locals.brim.marker("video", nodeId, scope, settings);
+// Bare, the player itself carries the site's attributes and the editor's marker; framed, Brim's frame does.
+const Frame = bare ? Fragment : "div";
+const frame = bare
+  ? {}
+  : { ...attributes, class: ["brim-video", attributes.class].filter(Boolean).join(" "), ...marker };
+const player = bare ? { ...attributes, ...marker } : {};
+---
+
+<Frame {...frame}>
+  {media.kind === "embed" && (
+    <iframe
+      {...player}
+      src={media.src}
+      title="Video"
+      loading="lazy"
+      allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
+      allowfullscreen
+      referrerpolicy="strict-origin-when-cross-origin"
+    />
+  )}
+  {(media.kind === "file" || media.kind === "hls") && (
+    <video
+      {...player}
+      src={media.src}
+      data-brim-hls={media.kind === "hls" ? media.src : undefined}
+      poster={poster}
+      autoplay={playback.autoplay}
+      loop={playback.loop}
+      muted={playback.muted}
+      controls={playback.controls}
+      playsinline
+      preload="metadata"
+    />
+  )}
+  {media.kind === "none" && Astro.locals.brim.editing && (
+    <p class="brim-video__empty" {...player}>
+      No video yet. Select this block to add one.
+    </p>
+  )}
+</Frame>
+
+{/* Only a page with an HLS video gets the script; it loads hls.js only where the browser needs it. */}
+{media.kind === "hls" && <script>
+  import "./video.client.ts";
+</script>}

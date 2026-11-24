@@ -1,0 +1,48 @@
+---
+import { defaultScope } from "../../runtime/request-state.ts";
+import "./accordion.css";
+import type { NodeScope } from "../../runtime/context.ts";
+import { accordion } from "../schemas/accordion.ts";
+import { plainText } from "../theme.ts";
+
+export interface AccordionItem {
+  title: string;
+  content: string;
+}
+
+/**
+ * Questions that open to show their answer. Built on the browser's own <details>,
+ * so it works without JavaScript. Only the questions: a heading or an intro above them is the site's own `Text`.
+ */
+interface Props {
+  nodeId: string;
+  scope?: NodeScope;
+  items?: AccordionItem[];
+  allowMultiple?: boolean;
+  icon?: "chevron" | "plus";
+  gap?: number;
+  radius?: number;
+}
+
+const { nodeId, scope = defaultScope(), ...source } = Astro.props;
+const settings = Astro.locals.brim.settings(accordion, nodeId, scope, source);
+const items = (Array.isArray(settings.items) ? settings.items : []) as AccordionItem[];
+// Sharing a name makes the browser close the open item when another one opens.
+const group = settings.allowMultiple ? undefined : `brim-accordion-${nodeId}`;
+---
+
+<div
+  class="brim-accordion"
+  data-icon={settings.icon === "plus" ? "plus" : "chevron"}
+  style={`--brim-accordion-gap:${Number(settings.gap) || 0}px;--brim-accordion-radius:${Number(settings.radius) || 0}px`}
+  {...Astro.locals.brim.marker("accordion", nodeId, scope, settings)}
+>
+  <div class="brim-accordion__items">
+    {items.map((item) => (
+      <details class="brim-accordion__item" name={group}>
+        <summary>{item.title}</summary>
+        <div class="brim-accordion__content">{plainText(item.content)}</div>
+      </details>
+    ))}
+  </div>
+</div>

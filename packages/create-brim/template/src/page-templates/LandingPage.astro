@@ -1,0 +1,40 @@
+---
+import type { TemplatePageProps } from "brimjs";
+import CallToAction from "../components/CallToAction.astro";
+import Features from "../components/Features.astro";
+import Hero from "../components/Hero.astro";
+import Site from "../layouts/Site.astro";
+
+/** One landing page: a hero, three points and a call to action. Each page made from it keeps its own edits. */
+interface Props {
+  page: TemplatePageProps;
+}
+
+const { page } = Astro.props;
+---
+
+<Site title={page.title}>
+  <Hero
+    id="landing-hero"
+    eyebrow="New"
+    title={page.title}
+    lead="One sentence on what this page offers and who it is for. Click any text to rewrite it."
+    cta={{ text: "Get in touch", url: "/contact" }}
+    image={{ src: "/images/hero.svg", alt: "Colorful abstract shapes" }}
+  />
+  <Features
+    id="landing-features"
+    title="Why it works"
+    features={[
+      { icon: "check", title: "Clear", text: "Say what you do in one line." },
+      { icon: "star", title: "Proven", text: "Show a result people care about." },
+      { icon: "heart", title: "Personal", text: "Tell them who they will work with." },
+    ]}
+  />
+  <CallToAction
+    id="landing-cta"
+    title="Ready to start?"
+    text="Tell us what you need and we will answer within a day."
+    cta={{ text: "Contact us", url: "/contact" }}
+  />
+</Site>

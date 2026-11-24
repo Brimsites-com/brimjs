@@ -1,0 +1,49 @@
+---
+import { Listing, Text } from "brimjs/components";
+import CallToAction from "../components/CallToAction.astro";
+import Features from "../components/Features.astro";
+import Hero from "../components/Hero.astro";
+import Site from "../layouts/Site.astro";
+import { SITE_NAME } from "../components/navigation.ts";
+---
+
+<Site title={SITE_NAME} description="A site written in Astro and edited in the browser.">
+  <Hero
+    id="home-hero"
+    eyebrow="Welcome"
+    title="A website you can change yourself"
+    lead="Every text, image and link on this page can be edited at /admin/edit. The layout stays in code."
+    cta={{ text: "See the components", url: "/components" }}
+    image={{ src: "/images/hero.svg", alt: "Colorful abstract shapes" }}
+  />
+
+  <Features
+    id="home-features"
+    title="What this starter includes"
+    features={[
+      { icon: "home", title: "Pages in Astro", text: "Write pages and sections as Astro components in src." },
+      { icon: "settings", title: "Edited in place", text: "Owners change texts, images and settings on the page." },
+      {
+        icon: "star",
+        title: "Static output",
+        text: "The build is plain HTML and CSS, with JavaScript only where needed.",
+      },
+    ]}
+  />
+
+  <section class="section">
+    <div class="container">
+      <Text nodeId="home-articles-title" as="h2">
+        Latest articles
+      </Text>
+      <Listing nodeId="home-articles" type="article" columns={3} maxItems={3} />
+    </div>
+  </section>
+
+  <CallToAction
+    id="home-cta"
+    title="Have a project in mind?"
+    text="Tell us about it and we will get back to you within two working days."
+    cta={{ text: "Get in touch", url: "/contact" }}
+  />
+</Site>

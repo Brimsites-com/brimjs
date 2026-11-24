@@ -1,0 +1,9 @@
+node_modules
+dist
+.astro
+# The local database: content, users and form responses.
+.brim
+# Images uploaded in the editor.
+public/uploads
+# What the site is filled from (photos, catalogues, data for an import): content, not code.
+import

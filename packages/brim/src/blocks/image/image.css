@@ -1,0 +1,42 @@
+/* The frame Brim draws around an image: as wide as the picture, never wider than its place. */
+/* In the `brim` layer: any CSS of the site wins over it, whatever its selectors. */
+@layer brim {
+  .brim-image {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    max-width: 100%;
+    margin: 0;
+  }
+
+  .brim-image__frame {
+    display: block;
+    max-width: 100%;
+  }
+
+  .brim-image__frame img {
+    display: block;
+    max-width: 100%;
+    height: auto;
+  }
+
+  .brim-image__caption {
+    font-size: 0.875em;
+  }
+
+  /* Only in the editor: where an image without a picture yet is, so it can be selected. */
+  .brim-image__empty {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32rem;
+    max-width: 100%;
+    aspect-ratio: 16 / 9;
+    padding: 1rem;
+    border: 1px dashed color-mix(in srgb, currentColor 35%, transparent);
+    background: color-mix(in srgb, currentColor 6%, transparent);
+    font-size: 0.875rem;
+    text-align: center;
+    opacity: 0.75;
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "name": "create-brim",
+  "version": "0.0.0",
+  "description": "Starts a new Brim.js site: an Astro project with brimjs, a layout, pages, components and a content type.",
+  "license": "FSL-1.1-MIT",
+  "type": "module",
+  "bin": {
+    "create-brim": "./index.js"
+  },
+  "files": [
+    "index.js",
+    "template"
+  ],
+  "engines": {
+    "node": ">=22.23.4"
+  }
+}

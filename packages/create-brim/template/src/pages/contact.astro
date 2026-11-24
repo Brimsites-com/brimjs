@@ -1,0 +1,35 @@
+---
+import { Form, Map, Text } from "brimjs/components";
+import Site from "../layouts/Site.astro";
+
+// Messages are checked against abuse and saved; the owner reads them under "Form responses" in the editor.
+// On a host that only serves static files, forms need the Brim server part to receive messages.
+---
+
+<Site title="Contact" description="Write to us or visit the studio.">
+  <section class="section">
+    <div class="container contact">
+      <div class="stack">
+        <Text nodeId="contact-title" as="h1">
+          Get in touch
+        </Text>
+        <Text nodeId="contact-lead" class="lead">
+          Tell us what you need. We answer every message.
+        </Text>
+        <Form nodeId="contact-form" formName="Contact" />
+      </div>
+      <Map
+        nodeId="contact-map"
+        points={[{ lat: 46.7712, lng: 23.6236, title: "Studio", address: "Piața Unirii, Cluj-Napoca" }]}
+      />
+    </div>
+  </section>
+</Site>
+
+<style>
+  .contact {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 22rem), 1fr));
+    gap: clamp(2rem, 5vw, 4rem);
+  }
+</style>

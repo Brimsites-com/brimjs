@@ -1,0 +1,75 @@
+---
+import { defaultScope } from "../../runtime/request-state.ts";
+import "./map.css";
+import type { NodeScope } from "../../runtime/context.ts";
+import { map } from "../schemas/map.ts";
+
+export interface MapPoint {
+  lat: number;
+  lng: number;
+  title?: string;
+  address?: string;
+  details?: string;
+  hours?: string;
+  phone?: string;
+  directionsUrl?: string;
+}
+
+/**
+ * A map of the first location, with every location listed beside it.
+ * The map is OpenStreetMap's own embed, so the page needs no script. Its size is the site's (or, in a `blocks`
+ * field, the block's width); `class` goes on `.brim-map`.
+ */
+interface Props {
+  nodeId: string;
+  scope?: NodeScope;
+  points?: MapPoint[];
+  showMarker?: boolean;
+  class?: string;
+}
+
+const { nodeId, scope = defaultScope(), class: className, ...source } = Astro.props;
+const settings = Astro.locals.brim.settings(map, nodeId, scope, source);
+
+const points = (Array.isArray(settings.points) ? settings.points : []).filter(
+  (point): point is MapPoint => Number.isFinite(point?.lat) && Number.isFinite(point?.lng),
+);
+const center = points[0];
+// Roughly a neighbourhood around the location.
+const SPAN = 0.01;
+const embed = center
+  ? `https://www.openstreetmap.org/export/embed.html?${new URLSearchParams({
+      bbox: [center.lng - SPAN, center.lat - SPAN, center.lng + SPAN, center.lat + SPAN]
+        .map((value) => value.toFixed(5))
+        .join(","),
+      layer: "mapnik",
+      ...(settings.showMarker !== false && { marker: `${center.lat},${center.lng}` }),
+    })}`
+  : undefined;
+const listed = points.filter((point) => point.title || point.address);
+const directions = (url: unknown): string | undefined =>
+  typeof url === "string" && /^https?:\/\//i.test(url) ? url : undefined;
+---
+
+<div class:list={["brim-map", className]} {...Astro.locals.brim.marker("map", nodeId, scope, settings)}>
+  {embed && <iframe class="brim-map__frame" src={embed} title={center?.title || "Map"} loading="lazy" />}
+  {!embed && Astro.locals.brim.editing && <p>No location yet. Select this block to add one.</p>}
+  {listed.length > 0 && (
+    <ul class="brim-map__points">
+      {listed.map((point) => (
+        <li>
+          {point.title && <strong>{point.title}</strong>}
+          {point.address && <span>{point.address}</span>}
+          {point.details && <span>{point.details}</span>}
+          {point.hours && <span>{point.hours}</span>}
+          {point.phone && <a href={`tel:${point.phone.replace(/[^\d+]/g, "")}`}>{point.phone}</a>}
+          {directions(point.directionsUrl) && (
+            <a href={directions(point.directionsUrl)} target="_blank" rel="noopener noreferrer">
+              Directions
+            </a>
+          )}
+        </li>
+      ))}
+    </ul>
+  )}
+</div>

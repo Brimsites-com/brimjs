@@ -1,0 +1,36 @@
+---
+import config from "virtual:brim/config";
+import type { FooterGroup, FooterValue, ImageValue } from "../content/types.ts";
+import { expandFooter, navSources } from "../content/menus.ts";
+import { itemLinks } from "../runtime/nav.ts";
+
+/**
+ * Holds the footer's brand and link groups, nothing else. The markup is yours:
+ *
+ *   <Footer nodeId="footer" logoText="Acme" groups={[{ title: "Company", items: [...] }]}>
+ *     {({ logoText, groups }) => <div>…</div>}
+ *   </Footer>
+ *
+ * A group with `from: "<content type>"` lists that type's items (`{ title: "Categories", items: [], from:
+ * "category" }`), in the owner's order when the type is `ordered`.
+ */
+interface Props {
+  nodeId: string;
+  logo?: ImageValue;
+  logoText?: string;
+  groups: FooterGroup[];
+  as?: "footer" | "div";
+  [attribute: string]: unknown;
+}
+
+const { nodeId, logo, logoText, groups, as: Tag = "footer", ...attributes } = Astro.props;
+const source: FooterValue = { groups, ...(logo && { logo }), ...(logoText !== undefined && { logoText }) };
+const stored = Astro.locals.brim.read("footer", nodeId, "site") ?? source;
+const footer = await expandFooter(stored, itemLinks);
+const content = await Astro.slots.render("default", [footer]);
+const sources = Astro.locals.brim.editing ? { "data-brim-nav-sources": navSources(config.contentTypes) } : {};
+---
+
+<Tag {...attributes} {...Astro.locals.brim.marker("footer", nodeId, "site", stored)} {...sources}>
+  <Fragment set:html={content} />
+</Tag>

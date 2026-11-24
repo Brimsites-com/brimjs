@@ -1,0 +1,234 @@
+---
+import { iconNames } from "brimjs";
+import {
+  Accordion,
+  Button,
+  Carousel,
+  Divider,
+  Form,
+  Icon,
+  Image,
+  ImageGallery,
+  Link,
+  Listing,
+  Map,
+  Newsletter,
+  RichText,
+  SocialMedia,
+  Text,
+  Video,
+} from "brimjs/components";
+import Site from "../layouts/Site.astro";
+
+// Every primitive and block Brim ships, each with a few of its settings.
+// Click any of them at /admin/edit to see all of its options in the sidebar. Delete this page when you no longer need it.
+
+const photos = [
+  { url: "/images/hero.svg", alt: "Colorful abstract shapes", title: "First" },
+  { url: "/images/hero.svg", alt: "Colorful abstract shapes", title: "Second" },
+  { url: "/images/hero.svg", alt: "Colorful abstract shapes", title: "Third" },
+  { url: "/images/hero.svg", alt: "Colorful abstract shapes", title: "Fourth" },
+];
+---
+
+<Site title="Components" description="Every Brim primitive and block on one page.">
+  <section class="section">
+    <div class="container">
+      <p class="eyebrow">Reference</p>
+      <h1>Components</h1>
+      <p class="lead">
+        Every primitive and block Brim ships. Open this page at /admin/edit and click one to change it.
+      </p>
+      <nav class="toc" aria-label="On this page">
+        <a href="#text">Text</a>
+        <a href="#buttons">Buttons and links</a>
+        <a href="#media">Images and video</a>
+        <a href="#icons">Icons</a>
+        <a href="#layout">Accordion and divider</a>
+        <a href="#content">Listing</a>
+        <a href="#forms">Forms</a>
+        <a href="#places">Map and social</a>
+      </nav>
+    </div>
+  </section>
+
+  <section class="section section--tinted" id="text">
+    <div class="container stack">
+      <h2>Text</h2>
+      <Text nodeId="demo-heading" as="h3">
+        A heading made with Text
+      </Text>
+      <Text nodeId="demo-paragraph">
+        A paragraph. Select it in the editor to make words bold, italic or a link, change its color or alignment.
+      </Text>
+      <RichText nodeId="demo-richtext">
+        <p>RichText holds several paragraphs, headings and lists that the owner writes freely.</p>
+        <ul>
+          <li>Lists</li>
+          <li>
+            <strong>Formatting</strong> and <a href="/about">links</a>
+          </li>
+        </ul>
+      </RichText>
+    </div>
+  </section>
+
+  <section class="section" id="buttons">
+    <div class="container stack">
+      <h2>Buttons and links</h2>
+      <div class="row">
+        <Button nodeId="demo-button-accent" text="Accent" url="/contact" variant="accent" />
+        <Button nodeId="demo-button-block" text="Block" url="/contact" variant="block" />
+        <Button nodeId="demo-button-light" text="Light" url="/contact" variant="light-2" />
+        <Button nodeId="demo-button-ghost" text="Outline" url="/contact" variant="ghost" />
+        <Button
+          nodeId="demo-button-icon"
+          text="With an icon"
+          url="/contact"
+          variant="dark-1"
+          showIcon
+          icon="arrow-right"
+        />
+      </div>
+      <div class="row">
+        <Button nodeId="demo-button-sm" text="Small" url="/contact" size="sm" />
+        <Button nodeId="demo-button-md" text="Medium" url="/contact" size="md" />
+        <Button nodeId="demo-button-lg" text="Large" url="/contact" size="lg" />
+      </div>
+      <Link nodeId="demo-link" href="/about">
+        A plain link whose text and address the owner can change
+      </Link>
+    </div>
+  </section>
+
+  <section class="section section--tinted" id="media">
+    <div class="container stack">
+      <h2>Images and video</h2>
+      <Image
+        nodeId="demo-image"
+        src="/images/hero.svg"
+        alt="Colorful abstract shapes"
+        width="640"
+        height="480"
+        showCaption
+        caption="An image with a caption"
+      />
+      <ImageGallery nodeId="demo-gallery" images={photos} columns={4} />
+      <Carousel
+        nodeId="demo-carousel"
+        images={photos.map((photo) => ({ url: photo.url, alt: photo.alt, caption: photo.title }))}
+        slidesPerView={2}
+        gap={16}
+        showDots
+      />
+      <Video nodeId="demo-video" url="https://www.youtube.com/watch?v=aqz-KE-bpKQ" />
+    </div>
+  </section>
+
+  <section class="section" id="icons">
+    <div class="container">
+      <h2>Icons</h2>
+      <p class="lead">The built-in set. Icon and Button accept any of these names.</p>
+      <ul class="icons">
+        {iconNames.map((name) => (
+          <li>
+            <Icon nodeId={`demo-icon-${name}`} icon={name} />
+            <code>{name}</code>
+          </li>
+        ))}
+      </ul>
+    </div>
+  </section>
+
+  <section class="section section--tinted" id="layout">
+    <div class="container stack">
+      <h2>Accordion and divider</h2>
+      <Accordion
+        nodeId="demo-accordion"
+        items={[
+          { title: "First question", content: "Answers open and close without JavaScript." },
+          { title: "Second question", content: "The owner adds, removes and reorders the items." },
+        ]}
+      />
+      <Divider nodeId="demo-divider-solid" />
+    </div>
+  </section>
+
+  <section class="section" id="content">
+    <div class="container">
+      <h2>Listing</h2>
+      <p class="lead">Items of a content type declared in src/content-types. Add articles in the editor to fill it.</p>
+      <Listing nodeId="demo-listing" type="article" columns={3} />
+    </div>
+  </section>
+
+  <section class="section section--tinted" id="forms">
+    <div class="container forms">
+      <div class="stack">
+        <h2>Form</h2>
+        <Form nodeId="demo-form" formName="Demo form" />
+      </div>
+      <div class="stack">
+        <h2>Newsletter</h2>
+        <Newsletter nodeId="demo-newsletter" />
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="places">
+    <div class="container stack">
+      <h2>Map and social</h2>
+      <Map nodeId="demo-map" points={[{ lat: 46.7712, lng: 23.6236, title: "Studio", address: "Cluj-Napoca" }]} />
+      <SocialMedia nodeId="demo-share" scope="page" mode="share" shareText="Look at this page" />
+    </div>
+  </section>
+</Site>
+
+<style>
+  .toc {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1.25rem;
+    margin-top: 1.5rem;
+  }
+
+  .toc a {
+    color: var(--brim-theme-accent);
+  }
+
+  .row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .icons {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(7rem, 1fr));
+    gap: 1rem;
+    margin: 2rem 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .icons li {
+    display: grid;
+    justify-items: center;
+    gap: 0.5rem;
+    padding: 1rem 0.5rem;
+    border: 1px solid var(--brim-theme-light2);
+    border-radius: var(--site-radius);
+  }
+
+  .icons code {
+    font-size: 0.75rem;
+    color: var(--brim-theme-dark1);
+  }
+
+  .forms {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 22rem), 1fr));
+    gap: clamp(2rem, 5vw, 4rem);
+  }
+</style>

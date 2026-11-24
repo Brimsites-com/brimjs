@@ -1,0 +1,30 @@
+---
+import { renderBlocks, type ItemPageProps } from "brimjs";
+import { Blocks, Field, Icon, Link, Text } from "brimjs/components";
+import Site from "../layouts/Site.astro";
+
+// The template of every project: Brim draws it at /projects/<address> with the project as `item`.
+const { item: project } = Astro.props as ItemPageProps;
+const { summary, cover, location, story } = project.data;
+---
+
+<Site title={`${project.title} — Acme Studio`} description={summary}>
+  {/* From the site's own icon pack, added in astro.config.mjs. */}
+  <Icon nodeId="project-icon" scope="site" icon="brand:spark" />
+  <Text nodeId="project-title" item={project} field="title" as="h1">
+    {project.title}
+  </Text>
+  <p>
+    {location && `${location} · `}
+    <Field nodeId="project-year" item={project} field="year" />
+  </p>
+  {cover && <img src={cover.src} alt={cover.alt} width="640" />}
+  <Text nodeId="project-summary" item={project} field="summary">
+    {summary}
+  </Text>
+  <Link nodeId="project-back" href="/">
+    ← All projects
+  </Link>
+  {story && <Fragment set:html={renderBlocks(story.blocks)} />}
+  <Blocks nodeId="project-content" item={project} field="content" class="project-content" />
+</Site>

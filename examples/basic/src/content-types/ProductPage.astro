@@ -1,0 +1,15 @@
+---
+import type { ItemPageProps } from "brimjs";
+import { Text } from "brimjs/components";
+import Site from "../layouts/Site.astro";
+
+// The template of every product, drawn at /shop/<category>/<address> (the type's `path`).
+const { item: product } = Astro.props as ItemPageProps;
+---
+
+<Site title={`${product.title} — Acme Shop`} description={String(product.data.summary ?? "")}>
+  <Text nodeId="product-title" item={product} field="title" as="h1">
+    {product.title}
+  </Text>
+  <Text nodeId="product-note">Made in the studio.</Text>
+</Site>

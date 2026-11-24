@@ -1,0 +1,87 @@
+---
+import { defaultScope } from "../../runtime/request-state.ts";
+import { imageSources } from "../../runtime/media.ts";
+import "./gallery.css";
+import type { Item } from "../../content/items.ts";
+import { type ItemBinding, boundValue } from "../../content/item-fields.ts";
+import type { NodeScope } from "../../runtime/context.ts";
+import { type GalleryValue, type StartingImage, readImages, toSaved } from "../images.ts";
+import { imageGallery } from "../schemas/image-gallery.ts";
+
+/**
+ * Images the owner adds, orders and describes in the side panel. The gallery keeps them and the sizes visitors
+ * download (a `srcset` the CDN serves); their layout is the site's. Draw it with a function, any shape at all:
+ *
+ *   <Gallery nodeId="team-photos" images={photos} sizes="(max-width: 768px) 100vw, 50vw">
+ *     {({ images }) => images.map((image) => <img {...image.img} class="photo" loading="lazy" />)}
+ *   </Gallery>
+ *
+ * With `item` and `field` it shows an item's `gallery` field, and what the owner changes is saved into the item.
+ * Without a function, Brim draws a plain grid of `columns`.
+ */
+interface Props {
+  nodeId: string;
+  scope?: NodeScope;
+  /** Starting images: `{ src, alt, caption?, link? }`. */
+  images?: StartingImage[];
+  item?: Item;
+  field?: string;
+  /** How wide each image is drawn, for the browser's choice of copy; by default from `columns`. */
+  sizes?: string;
+  columns?: number;
+  gap?: number;
+  as?: "div" | "section" | "ul" | "figure";
+  [attribute: string]: unknown;
+}
+
+const {
+  nodeId,
+  scope = defaultScope(),
+  images: starting,
+  item,
+  field,
+  sizes,
+  columns,
+  gap,
+  as: Tag = "div",
+  // Given once, through class:list: spread with the other attributes it would be written twice.
+  class: className,
+  ...attributes
+} = Astro.props;
+const binding: ItemBinding | undefined = item && field ? { item, field } : undefined;
+const settings = Astro.locals.brim.settings(imageGallery, nodeId, scope, {
+  ...(starting && { images: toSaved(starting) }),
+  ...(columns !== undefined && { columns }),
+  ...(gap !== undefined && { gap }),
+});
+// The item's gallery wins over anything stored with the element: the item is where it is saved.
+if (binding) settings.images = toSaved((boundValue(binding) as StartingImage[] | undefined) ?? []);
+const count = Math.max(1, Math.min(6, Number(settings.columns) || 3));
+const drawnAt = sizes ?? `(max-width: 640px) 100vw, ${Math.round(100 / count)}vw`;
+const images = readImages(settings.images, (src) => imageSources(src, drawnAt));
+const drawn = Astro.slots.has("default");
+const content = drawn ? await Astro.slots.render("default", [{ images } satisfies GalleryValue]) : undefined;
+---
+
+<Tag
+  {...attributes}
+  class:list={[!drawn && "brim-gallery", className as string | undefined]}
+  style={drawn ? undefined : `--brim-gallery-columns:${count};--brim-gallery-gap:${Number(settings.gap) || 0}px`}
+  data-brim-drawn={drawn && Astro.locals.brim.editing ? "" : undefined}
+  {...Astro.locals.brim.marker("image-gallery", nodeId, scope, settings, binding)}
+>
+  {drawn ? (
+    <Fragment set:html={content} />
+  ) : (
+    images.map((image) => {
+      const Frame = image.link ? "a" : "figure";
+      return (
+        <Frame class="brim-gallery__item" href={image.link}>
+          <img {...image.img} loading="lazy" decoding="async" />
+          {image.caption && <span class="brim-gallery__caption">{image.caption}</span>}
+        </Frame>
+      );
+    })
+  )}
+  {images.length === 0 && Astro.locals.brim.editing && <p>No images yet. Select the gallery to add some.</p>}
+</Tag>

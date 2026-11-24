@@ -1,0 +1,53 @@
+---
+import { Button, Image, Text } from "brimjs/components";
+
+/**
+ * A section built from primitives. `id` prefixes every node id inside, so the same section
+ * can appear on several pages and each copy keeps its own edits.
+ */
+interface Props {
+  id: string;
+  eyebrow: string;
+  title: string;
+  lead: string;
+  cta: { text: string; url: string };
+  image: { src: string; alt: string };
+}
+
+const { id, eyebrow, title, lead, cta, image } = Astro.props;
+---
+
+<section class="section hero">
+  <div class="container hero__grid">
+    <div class="stack">
+      <Text nodeId={`${id}-eyebrow`} class="eyebrow">
+        {eyebrow}
+      </Text>
+      <Text nodeId={`${id}-title`} as="h1">
+        {title}
+      </Text>
+      <Text nodeId={`${id}-lead`} class="lead">
+        {lead}
+      </Text>
+      <Button
+        nodeId={`${id}-cta`}
+        text={cta.text}
+        url={cta.url}
+        variant="accent"
+        size="lg"
+        showIcon
+        icon="arrow-right"
+      />
+    </div>
+    <Image nodeId={`${id}-image`} src={image.src} alt={image.alt} width="640" height="480" />
+  </div>
+</section>
+
+<style>
+  .hero__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 22rem), 1fr));
+    align-items: center;
+    gap: clamp(2rem, 5vw, 4rem);
+  }
+</style>

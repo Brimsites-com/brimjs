@@ -1,0 +1,32 @@
+/* In the `brim` layer: any CSS of the site wins over it, whatever its selectors. */
+@layer brim {
+  .brim-map {
+    --brim-map-height: 360px;
+
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .brim-map__frame {
+    width: 100%;
+    height: var(--brim-map-height);
+    border: 0;
+    border-radius: var(--brim-theme-radius, 0.5rem);
+  }
+
+  .brim-map__points {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .brim-map__points li {
+    display: flex;
+    flex-direction: column;
+    gap: 0.125rem;
+  }
+}

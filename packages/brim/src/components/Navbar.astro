@@ -1,0 +1,42 @@
+---
+import config from "virtual:brim/config";
+import type { ImageValue, NavItem, NavbarValue } from "../content/types.ts";
+import { expandNavbar, navSources } from "../content/menus.ts";
+import { itemLinks } from "../runtime/nav.ts";
+
+/**
+ * Holds the site's brand and navigation, nothing else. The markup is yours:
+ *
+ *   <Navbar nodeId="nav" logoText="Acme" items={[{ label: "About", href: "/about" }]}>
+ *     {({ logoText, items }) => <nav>…</nav>}
+ *   </Navbar>
+ *
+ * An item may have `children` (sub-links, two levels deep at most) and an `image`, for a dropdown or a megamenu:
+ * `{ label: "Products", href: "/products", children: [{ label: "Chairs", href: "/chairs", image }] }`. How they
+ * are drawn is still up to the markup.
+ *
+ * `from` builds the sub-links from content: `{ label: "Products", href: "/products", from: "category" }` lists the
+ * category items (title, page, first picture), in the owner's order when the type is `ordered`, so a category the
+ * owner adds is in the menu at once. The owner can switch a link between written and built sub-links.
+ */
+interface Props {
+  nodeId: string;
+  logo?: ImageValue;
+  logoText?: string;
+  items: NavItem[];
+  as?: "header" | "nav" | "div";
+  [attribute: string]: unknown;
+}
+
+const { nodeId, logo, logoText, items, as: Tag = "header", ...attributes } = Astro.props;
+const source: NavbarValue = { items, ...(logo && { logo }), ...(logoText !== undefined && { logoText }) };
+const stored = Astro.locals.brim.read("navbar", nodeId, "site") ?? source;
+// The markup gets the sub-links built from content; the editor edits what is saved, `from` and all.
+const navbar = await expandNavbar(stored, itemLinks);
+const content = await Astro.slots.render("default", [navbar]);
+const sources = Astro.locals.brim.editing ? { "data-brim-nav-sources": navSources(config.contentTypes) } : {};
+---
+
+<Tag {...attributes} {...Astro.locals.brim.marker("navbar", nodeId, "site", stored)} {...sources}>
+  <Fragment set:html={content} />
+</Tag>

@@ -1,0 +1,47 @@
+---
+import { Button, Image, Link, Listing, Text } from "brimjs/components";
+import { Shared } from "brimjs/components";
+import Promo from "../components/Promo.astro";
+import Site from "../layouts/Site.astro";
+---
+
+<Site title="Acme Studio">
+  <Text nodeId="hero-title" as="h1">
+    Websites your clients can edit
+  </Text>
+  <Text nodeId="hero-lead">Written in Astro, edited in the browser, served as static files.</Text>
+  <Image nodeId="hero-image" src="/hero.svg" alt="Abstract shapes" width="640" height="360" priority />
+  {/* The site's own plain <img>, still replaceable by the owner. */}
+  <Image
+    bare
+    nodeId="team-photo"
+    src="/hero.svg"
+    alt="The team"
+    class="team-photo"
+    loading="eager"
+    shape="circle"
+    srcset="/hero.svg 640w"
+  />
+  {/* A starting picture with smaller copies of its own in public/. */}
+  <Image
+    bare
+    nodeId="studio-photo"
+    src="/hero.svg"
+    alt="The studio"
+    class="studio-photo"
+    srcset="/hero.svg 640w, /hero.svg 1280w"
+    sizes="100vw"
+  />
+  <Link nodeId="hero-cta" href="/about">
+    Meet the studio
+  </Link>
+  <Button nodeId="hero-button" text="Start a project" url="/about" variant="accent" showIcon icon="arrow-right" />
+  <Text nodeId="projects-title" as="h2">
+    Recent projects
+  </Text>
+  <Listing nodeId="projects" type="project" columns={3} />
+  {/* The same on every page: edited once for the whole site. */}
+  <Shared>
+    <Promo />
+  </Shared>
+</Site>

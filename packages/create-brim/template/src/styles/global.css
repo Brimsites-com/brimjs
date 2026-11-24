@@ -1,0 +1,94 @@
+/*
+ * The site's colors. Brim blocks read the --brim-theme-* names, and the editor offers them
+ * in every color setting, so change them here and the whole site follows.
+ */
+:root {
+  --brim-theme-background: #ffffff;
+  --brim-theme-light1: #f6f5f2;
+  --brim-theme-light2: #e7e5df;
+  --brim-theme-accent: #2f5d50;
+  --brim-theme-accent-contrast: #ffffff;
+  --brim-theme-primary: #1d1d1b;
+  --brim-theme-dark1: #4a4a45;
+  --brim-theme-dark2: #111110;
+
+  --site-width: 72rem;
+  --site-gutter: clamp(1rem, 4vw, 2.5rem);
+  --site-space: clamp(3rem, 8vw, 6rem);
+  --site-radius: 0.75rem;
+  --site-font: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--brim-theme-background);
+  color: var(--brim-theme-primary);
+  font-family: var(--site-font);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+}
+
+a {
+  color: inherit;
+}
+
+h1,
+h2,
+h3 {
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  margin: 0 0 0.5em;
+}
+
+h1 {
+  font-size: clamp(2.25rem, 5vw, 3.75rem);
+}
+
+h2 {
+  font-size: clamp(1.75rem, 3.5vw, 2.5rem);
+}
+
+/* A centered column for page content. */
+.container {
+  width: min(100% - 2 * var(--site-gutter), var(--site-width));
+  margin-inline: auto;
+}
+
+/* A band of the page with room above and below. */
+.section {
+  padding-block: var(--site-space);
+}
+
+.section--tinted {
+  background: var(--brim-theme-light1);
+}
+
+.eyebrow {
+  color: var(--brim-theme-accent);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin: 0 0 0.75rem;
+}
+
+.lead {
+  color: var(--brim-theme-dark1);
+  font-size: 1.125rem;
+  max-width: 40rem;
+}
+
+.stack > * + * {
+  margin-top: 1.5rem;
+}

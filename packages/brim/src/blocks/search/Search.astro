@@ -1,0 +1,147 @@
+---
+import "./search.css";
+import config from "virtual:brim/config";
+import { type ContentItem, getItems } from "../../runtime/content.ts";
+import { searchItems } from "../../content/search.ts";
+import type { SearchResult, SearchState } from "./state.ts";
+import { noteQueryReads } from "../../runtime/query-reads.ts";
+
+const LABELS = {
+  search: "Search",
+  button: "Search",
+  placeholder: "",
+  results: "{count} results for “{query}”",
+  empty: "Nothing found for “{query}”.",
+  previous: "Previous",
+  next: "Next",
+};
+
+/**
+ * A search of the whole site: the items of several content types, found by any word of their title, their texts,
+ * their rich text and the blocks of their body, whatever its case and accents. The words are in the page's address
+ * (`?q=`), so a result page can be shared and a search box anywhere (the header) can send visitors to it with a plain
+ * `<form action="/search">`.
+ *
+ *   <Search types={["article", "project"]} />
+ *
+ * Pass a function to draw the box and the results in the site's own markup, from the state (`SearchState`):
+ *
+ *   <Search types={["article", "project"]}>
+ *     {({ query, results }) => results.map((result) => <a href={result.url}>{result.title}</a>)}
+ *   </Search>
+ *
+ * It needs a page drawn on request (the dev server, the Node server, Brimsites): a static copy has no address to
+ * read the words from, so it shows the box alone.
+ */
+interface Props {
+  /** Keys of the content types searched; by default every type whose items have pages, except vocabularies. */
+  types?: string[];
+  /** The address parameter of the words. */
+  param?: string;
+  /** How many results one page shows. */
+  pageSize?: number;
+  /** The words of the box and the results, in the site's language. `{count}` and `{query}` are filled in. */
+  labels?: Partial<typeof LABELS>;
+  class?: string;
+}
+
+const { types, param = "q", pageSize = 20, labels, class: className } = Astro.props;
+const words = { ...LABELS, ...labels };
+const searched = (
+  types
+    ? types.map((key) => {
+        const type = config.contentTypes.find((candidate) => candidate.key === key);
+        if (!type) throw new Error(`<Search> searches "${key}", which is not a content type of the site.`);
+        return type;
+      })
+    : config.contentTypes.filter((type) => !type.vocabulary && (type.component || type.path))
+).filter(Boolean);
+
+const params = config.mode === "static" ? new URLSearchParams() : Astro.url.searchParams;
+const query = (params.get(param) ?? "").trim().slice(0, 200);
+const pageParam = `${param}page`;
+// What the page reads of its address, for a host that caches pages by the parameters they read.
+noteQueryReads([param, pageParam]);
+const groups = query
+  ? await Promise.all(searched.map(async (type) => ({ type, items: await getItems(type.key) })))
+  : [];
+const hits = searchItems<ContentItem>(groups, query);
+const size = pageSize > 0 ? Math.floor(pageSize) : hits.length || 1;
+const pageCount = Math.max(1, Math.ceil(hits.length / size));
+const asked = Number.parseInt(params.get(pageParam) ?? "1", 10);
+const page = Math.min(pageCount, Math.max(1, Number.isFinite(asked) ? asked : 1));
+const typeOf = new Map(searched.map((type) => [type.key, type]));
+const results: SearchResult[] = hits.slice((page - 1) * size, page * size).map((hit) => ({
+  item: hit.item,
+  type: hit.type,
+  typeLabel: typeOf.get(hit.type)?.singular ?? hit.type,
+  title: hit.item.title,
+  url: hit.item.url,
+  excerpt: hit.excerpt,
+}));
+const pageHref = (target: number): string => {
+  const next = new URLSearchParams(params);
+  if (target > 1) next.set(pageParam, String(target));
+  else next.delete(pageParam);
+  return `?${next.toString()}`;
+};
+const state: SearchState = { query, param, results, total: hits.length, page, pageCount, pageHref };
+const fill = (text: string) => text.replace("{count}", String(hits.length)).replace("{query}", query);
+const drawn = Astro.slots.has("default");
+const content = drawn ? await Astro.slots.render("default", [state]) : undefined;
+---
+
+<div class:list={["brim-search", className]}>
+  {drawn ? (
+    <Fragment set:html={content} />
+  ) : (
+    <>
+      <form class="brim-search__box" role="search" method="get">
+        <label class="brim-search__label">
+          <span>{words.search}</span>
+          <input type="search" name={param} value={query} placeholder={words.placeholder || undefined} />
+        </label>
+        <button type="submit" class="brim-btn brim-btn--block brim-btn--md">
+          {words.button}
+        </button>
+      </form>
+      {query && (
+        <p class="brim-search__count" role="status">
+          {fill(hits.length > 0 ? words.results : words.empty)}
+        </p>
+      )}
+      {results.length > 0 && (
+        <ol class="brim-search__results">
+          {results.map((result) => (
+            <li class="brim-search__result" data-type={result.type}>
+              <span class="brim-search__type">{result.typeLabel}</span>
+              <a class="brim-search__title" href={result.url}>
+                {result.title}
+              </a>
+              {result.excerpt && <p class="brim-search__excerpt">{result.excerpt}</p>}
+            </li>
+          ))}
+        </ol>
+      )}
+      {pageCount > 1 && (
+        <nav class="brim-search__pages">
+          {page > 1 && (
+            <a href={pageHref(page - 1)} rel="prev">
+              {words.previous}
+            </a>
+          )}
+          {Array.from({ length: pageCount }, (_, index) => index + 1).map((target) => (
+            <a href={pageHref(target)} aria-current={target === page ? "page" : undefined}>
+              {target}
+            </a>
+          ))}
+          {page < pageCount && (
+            <a href={pageHref(page + 1)} rel="next">
+              {words.next}
+            </a>
+          )}
+        </nav>
+      )}
+    </>
+  )}
+</div>
