@@ -30,6 +30,25 @@ const photos = [
 
 Without a function, Brim draws a plain grid of `columns` with a `gap`.
 
+## Pictures that open full screen
+
+A click on a gallery's picture opens it over the whole screen, as a slideshow of the gallery. Buttons, the arrow keys and a swipe go from one picture to the next; Escape, the button or a click beside the picture closes it. It works in your own markup too, because `image.img` carries what makes a picture open.
+
+```astro
+<Gallery
+  nodeId="projects"
+  images={photos}
+  labels={{ gallery: "Galerie", close: "Închide", previous: "Imaginea anterioară", next: "Imaginea următoare" }}
+/>
+```
+
+| Prop | What it does |
+| --- | --- |
+| `lightbox={false}` | Leaves it out; the owner can also switch **Open full screen** off in the side panel |
+| `labels` | What its buttons are called for a screen reader, in the page's language |
+
+A picture with a link, or one your markup puts in a link or a button, keeps doing what that does. Style it through `.brim-lightbox` (with `--brim-lightbox-background` and `--brim-lightbox-color`), `.brim-lightbox__button`, `.brim-lightbox__caption` and `.brim-lightbox__count`.
+
 ## A carousel in your own markup
 
 ```astro

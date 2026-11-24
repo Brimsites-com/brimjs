@@ -137,7 +137,7 @@ const IMAGE_CONTENT = ["url", "alt", "images"];
  * What the owner still changes on a gallery or carousel the site draws itself: the images and how they move. Its
  * columns, arrows and dots are the site's markup, so they are not offered.
  */
-const DRAWN_SETTINGS = ["images", "start", "autoplay", "autoplaySpeed", "pauseOnHover", "loop", "continuousSpeed"];
+const DRAWN_SETTINGS = ["images", "lightbox", "start", "autoplay", "autoplaySpeed", "pauseOnHover", "loop", "continuousSpeed"];
 
 /** The image block's settings without its image, which belongs to the item. */
 function withoutImageContent(form: FormValue): FormValue {

@@ -11,8 +11,9 @@ export interface ShownImage {
   /**
    * Everything an `<img>` needs, a `srcset` included when the site's media can be resized and its `width` and
    * `height` when the media library measured it: `<img {...image.img} />`.
+   * In a `Gallery` whose pictures open over the whole screen, also what makes this one open (`data-lightbox`).
    */
-  img: ImageSources & { alt: string };
+  img: ImageSources & { alt: string; "data-lightbox"?: number; "data-caption"?: string | undefined };
 }
 
 /** What a `Gallery`'s function gets: `{({ images }) => …}`. */

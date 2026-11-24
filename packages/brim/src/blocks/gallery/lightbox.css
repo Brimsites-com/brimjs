@@ -1,0 +1,134 @@
+/* A gallery's pictures over the whole screen (lightbox.client.ts). */
+/* In the `brim` layer: any CSS of the site wins over it, whatever its selectors. */
+@layer brim {
+  [data-lightbox][role="button"] {
+    cursor: zoom-in;
+  }
+
+  html:has(.brim-lightbox[open]) {
+    overflow: hidden;
+  }
+
+  .brim-lightbox {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    max-width: none;
+    height: 100%;
+    max-height: none;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: var(--brim-lightbox-background, rgb(16 16 16 / 0.96));
+    color: var(--brim-lightbox-color, #fff);
+    overflow: hidden;
+  }
+
+  .brim-lightbox__track {
+    position: relative;
+    display: flex;
+    width: 100%;
+    height: 100%;
+    overflow: auto hidden;
+    overscroll-behavior: contain;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+  }
+
+  .brim-lightbox__slide {
+    display: flex;
+    flex: 0 0 100%;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    min-width: 0;
+    height: 100%;
+    margin: 0;
+    padding: 4rem 5rem;
+    scroll-snap-align: start;
+    scroll-snap-stop: always;
+  }
+
+  /* Fits whatever a site's own `img` rules set (`max-width: 100%; height: auto`), and is never stretched. */
+  .brim-lightbox__image {
+    width: auto;
+    min-height: 0;
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+  }
+
+  .brim-lightbox__caption {
+    flex: none;
+    max-width: 42rem;
+    text-align: center;
+  }
+
+  .brim-lightbox__count {
+    position: absolute;
+    inset-block-start: 1.25rem;
+    inset-inline-start: 1.25rem;
+    margin: 0;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .brim-lightbox__button {
+    position: absolute;
+    display: grid;
+    place-items: center;
+    width: 3rem;
+    height: 3rem;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: rgb(128 128 128 / 0.35);
+    color: inherit;
+    cursor: pointer;
+  }
+
+  .brim-lightbox__close {
+    inset-block-start: 0.75rem;
+    inset-inline-end: 0.75rem;
+  }
+
+  .brim-lightbox__previous,
+  .brim-lightbox__next {
+    inset-block-start: calc(50% - 1.5rem);
+  }
+
+  .brim-lightbox__previous {
+    inset-inline-start: 0.75rem;
+  }
+
+  .brim-lightbox__next {
+    inset-inline-end: 0.75rem;
+  }
+
+  :dir(rtl) > .brim-lightbox__button svg {
+    transform: scaleX(-1);
+  }
+
+  @media (max-width: 700px) {
+    .brim-lightbox__slide {
+      padding: 4rem 0 5rem;
+    }
+
+    .brim-lightbox__caption {
+      padding-inline: 1rem;
+    }
+
+    .brim-lightbox__previous,
+    .brim-lightbox__next {
+      inset-block: auto calc(1rem + env(safe-area-inset-bottom));
+    }
+
+    .brim-lightbox__previous {
+      inset-inline-start: calc(50% - 3.5rem);
+    }
+
+    .brim-lightbox__next {
+      inset-inline-end: calc(50% - 3.5rem);
+    }
+  }
+}

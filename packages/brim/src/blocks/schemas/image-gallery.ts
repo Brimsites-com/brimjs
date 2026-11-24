@@ -9,11 +9,18 @@ export const imageGallery: BlockDefinition = {
   description: "Images the owner adds and orders; the site lays them out",
   schema: {
     fieldsets: [
-      { id: "content", title: "Content", fields: ["images"] },
+      { id: "content", title: "Content", fields: ["images", "lightbox"] },
       { id: "image_gallery_layout", title: "Layout", fields: ["columns", "gap"] },
     ],
     properties: {
       images: imagesProperty("Images"),
+      lightbox: {
+        title: "Open full screen",
+        type: "boolean",
+        widget: "checkbox",
+        default: true,
+        description: "A click on an image opens it over the whole screen, as a slideshow. Images with a link keep it.",
+      },
       columns: {
         title: "Columns",
         type: "number",
@@ -40,6 +47,7 @@ export const imageGallery: BlockDefinition = {
     "@type": "image-gallery",
     presetId: "default-theme",
     images: [],
+    lightbox: true,
     columns: 3,
     gap: 16,
   },

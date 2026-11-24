@@ -283,8 +283,8 @@ describe("the site's own confirmation (src/emails.ts)", () => {
       confirmation: (email) => {
         seen.push(email);
         return {
-          subject: `${email.subject} · Codeso`,
-          fromName: "Codeso",
+          subject: `${email.subject} · Studio Nord`,
+          fromName: "Studio Nord",
           html: html`<h1>${email.form}</h1>`,
           // Not part of what a template gives: ignored.
           ...({ to: ["victim@example.test"], replyTo: "attacker@evil.example" } as object),
@@ -296,8 +296,8 @@ describe("the site's own confirmation (src/emails.ts)", () => {
     expect(toVisitor()).toHaveLength(1);
     expect(toVisitor()[0]).toMatchObject({
       to: ["ana@example.test"],
-      subject: "Am primit mesajul tău · Codeso",
-      fromName: "Codeso",
+      subject: "Am primit mesajul tău · Studio Nord",
+      fromName: "Studio Nord",
       html: "<h1>Contact</h1>",
     });
     expect(toVisitor()[0]?.replyTo).toBeUndefined();

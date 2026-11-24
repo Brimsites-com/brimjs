@@ -2,7 +2,7 @@
 /**
  * Packs `brimjs` and `create-brim` as they are published on npm, at one version:
  *
- *   node scripts/pack-release.mjs 0.1.80 <empty folder>
+ *   node scripts/pack-release.mjs 1.0.0 <empty folder>
  *
  * In the repo both are at 0.0.0; the version is written into them while they are packed (the `brim` command carries
  * the version it was built with) and taken out again. Nothing is published: `.github/workflows/release.yml` publishes

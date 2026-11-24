@@ -432,7 +432,7 @@ describe("brim check: passwords in files and version control", () => {
       ".brim/login-local.txt": "email: owner@acme.ro\npassword: Sup3r-secret!\n", // betterleaks:allow (a test fixture)
       ".env": "BRIM_DATABASE_TOKEN=abc123456", // betterleaks:allow (a test fixture)
       "README.md": "Sign in with `npx brim user link you@example.com`.",
-      "notes/acces.md": "Editor: http://localhost:4321/admin\nParolă: Codeso-2026! (doar local)", // betterleaks:allow (a test fixture)
+      "notes/acces.md": "Editor: http://localhost:4321/admin\nParolă: Parola-test1! (doar local)", // betterleaks:allow (a test fixture)
     });
     const report = checkSite(root, { starter: [], git: false });
     const found = report.findings.filter((finding) => finding.rule === "saved-password");

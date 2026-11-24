@@ -46,16 +46,16 @@ const visit = <T>(run: () => Promise<T>) => withKeptReads(run);
 
 describe("reads kept between visits", () => {
   it("asks only for the version once the content was read", async () => {
-    await content.saveNode("site", "title", "text", "Codeso");
+    await content.saveNode("site", "title", "text", "Studio Nord");
     const draw = () =>
       visit(async () => {
         await Promise.all([content.loadNodes(["site", "page:/"]), content.page("/"), content.redirects()]);
         return content.loadNodes(["site", "page:/"]);
       });
 
-    expect((await draw())[0]?.value).toBe("Codeso");
+    expect((await draw())[0]?.value).toBe("Studio Nord");
     sent = [];
-    expect((await draw())[0]?.value).toBe("Codeso");
+    expect((await draw())[0]?.value).toBe("Studio Nord");
     expect(sent).toEqual(["SELECT version FROM brim_changes WHERE id = 1"]);
   });
 
@@ -99,7 +99,7 @@ describe("reads kept between visits", () => {
   });
 
   it("hands each caller its own rows", async () => {
-    await content.saveNode("site", "title", "text", "Codeso");
+    await content.saveNode("site", "title", "text", "Studio Nord");
     await visit(async () => {
       const first = await db.query("SELECT * FROM brim_nodes");
       first[0]!.value = "changed";

@@ -7,12 +7,12 @@ lead: How Brim.js versions change, how a site's database moves forward, and what
 
 ## Versions
 
-Changes are listed in [CHANGELOG.md](../CHANGELOG.md). Until 1.0, a minor version (0.x) may change the API of components and config, and says so there under Changed; a patch version never does.
+Changes are listed in [CHANGELOG.md](../CHANGELOG.md). Versions are semantic: only a major version may break the API of components and config, and says so there under Changed; a minor version adds, a patch version fixes.
 
 A site pins its range in `package.json`:
 
 ```json
-"dependencies": { "brimjs": "^0.1.0" }
+"dependencies": { "brimjs": "^1.0.0" }
 ```
 
 ## The database moves forward by itself

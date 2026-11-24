@@ -2,11 +2,15 @@
 import { defaultScope } from "../../runtime/request-state.ts";
 import { imageSources } from "../../runtime/media.ts";
 import "./gallery.css";
+import "./lightbox.css";
 import type { Item } from "../../content/items.ts";
 import { type ItemBinding, boundValue } from "../../content/item-fields.ts";
 import type { NodeScope } from "../../runtime/context.ts";
 import { type GalleryValue, type StartingImage, readImages, toSaved } from "../images.ts";
 import { imageGallery } from "../schemas/image-gallery.ts";
+
+/** The slideshow's buttons, in English unless the site says otherwise. */
+const LABELS = { gallery: "Gallery", close: "Close", previous: "Previous picture", next: "Next picture" };
 
 /**
  * Images the owner adds, orders and describes in the side panel. The gallery keeps them and the sizes visitors
@@ -18,6 +22,10 @@ import { imageGallery } from "../schemas/image-gallery.ts";
  *
  * With `item` and `field` it shows an item's `gallery` field, and what the owner changes is saved into the item.
  * Without a function, Brim draws a plain grid of `columns`.
+ *
+ * A picture that is not a link opens over the whole screen, as a slideshow of the gallery; `image.img` carries what
+ * makes it open. `lightbox={false}` leaves it out, and so does the owner's switch in the side panel. `labels` says
+ * its buttons in the page's language.
  */
 interface Props {
   nodeId: string;
@@ -30,6 +38,10 @@ interface Props {
   sizes?: string;
   columns?: number;
   gap?: number;
+  /** Whether a click opens a picture over the whole screen; true until the owner switches it off. */
+  lightbox?: boolean;
+  /** What the slideshow's buttons are called for a screen reader, in the page's language. */
+  labels?: Partial<typeof LABELS>;
   as?: "div" | "section" | "ul" | "figure";
   [attribute: string]: unknown;
 }
@@ -43,6 +55,8 @@ const {
   sizes,
   columns,
   gap,
+  lightbox,
+  labels,
   as: Tag = "div",
   // Given once, through class:list: spread with the other attributes it would be written twice.
   class: className,
@@ -53,12 +67,31 @@ const settings = Astro.locals.brim.settings(imageGallery, nodeId, scope, {
   ...(starting && { images: toSaved(starting) }),
   ...(columns !== undefined && { columns }),
   ...(gap !== undefined && { gap }),
+  ...(lightbox !== undefined && { lightbox }),
 });
 // The item's gallery wins over anything stored with the element: the item is where it is saved.
 if (binding) settings.images = toSaved((boundValue(binding) as StartingImage[] | undefined) ?? []);
 const count = Math.max(1, Math.min(6, Number(settings.columns) || 3));
 const drawnAt = sizes ?? `(max-width: 640px) 100vw, ${Math.round(100 / count)}vw`;
-const images = readImages(settings.images, (src) => imageSources(src, drawnAt));
+const opensPictures = settings.lightbox !== false;
+const images = readImages(settings.images, (src) => imageSources(src, drawnAt)).map((image, index) => ({
+  ...image,
+  img: {
+    ...image.img,
+    ...(opensPictures && !image.link && { "data-lightbox": index, "data-caption": image.caption }),
+  },
+}));
+const words = { ...LABELS, ...labels };
+const opening =
+  opensPictures && images.some((image) => !image.link)
+    ? {
+        "data-lightbox-gallery": "",
+        "data-lightbox-label": words.gallery,
+        "data-lightbox-close": words.close,
+        "data-lightbox-previous": words.previous,
+        "data-lightbox-next": words.next,
+      }
+    : undefined;
 const drawn = Astro.slots.has("default");
 const content = drawn ? await Astro.slots.render("default", [{ images } satisfies GalleryValue]) : undefined;
 ---
@@ -68,6 +101,7 @@ const content = drawn ? await Astro.slots.render("default", [{ images } satisfie
   class:list={[!drawn && "brim-gallery", className as string | undefined]}
   style={drawn ? undefined : `--brim-gallery-columns:${count};--brim-gallery-gap:${Number(settings.gap) || 0}px`}
   data-brim-drawn={drawn && Astro.locals.brim.editing ? "" : undefined}
+  {...opening}
   {...Astro.locals.brim.marker("image-gallery", nodeId, scope, settings, binding)}
 >
   {drawn ? (
@@ -85,3 +119,8 @@ const content = drawn ? await Astro.slots.render("default", [{ images } satisfie
   )}
   {images.length === 0 && Astro.locals.brim.editing && <p>No images yet. Select the gallery to add some.</p>}
 </Tag>
+
+{/* Only a page with a gallery that opens gets the script. */}
+{opening && <script>
+  import "./lightbox.client.ts";
+</script>}

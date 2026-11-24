@@ -9,14 +9,7 @@
  * they see.
  */
 
-/** The page is drawn inside Brim's editor. */
-function inEditor(): boolean {
-  try {
-    return window.self !== window.top && (window.top?.location.pathname.startsWith("/admin/edit") ?? false);
-  } catch {
-    return false;
-  }
-}
+import { inEditor } from "../in-editor.client.ts";
 
 class BrimCarousel extends HTMLElement {
   #track: HTMLElement | null = null;

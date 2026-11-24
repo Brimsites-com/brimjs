@@ -1,9 +1,10 @@
 # Changelog
 
-What changed in Brim.js, newest first. Until 1.0, a minor version (0.x) may change the API of components and config
-and says so here under **Changed**; a patch version never does. Database migrations are append-only.
+What changed in Brim.js, newest first. Since 1.0 the versions are semantic: only a major version may break the API of
+components and config, and says so here under **Changed**; a minor version adds, a patch version fixes. Database
+migrations are append-only.
 
-## 0.1.80
+## 1.0.0
 
 ### Added
 
@@ -34,6 +35,11 @@ and says so here under **Changed**; a patch version never does. Database migrati
   is scrolled near.
 - **`brim check` warns about `<Image>` without `sizes`** (`image-sizes`, once per file): the browser takes such a
   picture for the page's width and downloads a copy that wide.
+- **A gallery's pictures open full screen, as a slideshow.** A click on a picture of a `Gallery`, drawn by Brim or by
+  the site, opens it over the whole page; buttons, arrow keys and a swipe go through the gallery, and Escape, the
+  button or a click beside the picture closes it. It is on unless the code says `lightbox={false}` or the owner
+  switches **Open full screen** off; a picture with a link, or inside one, stays a link. `labels` says the buttons in
+  the page's language. A site that opens its pictures with a script of its own takes one of the two out.
 - **`MobileMenu`**: a menu that opens over the whole page from a button, for phones. Brim keeps how it opens and
   closes (the browser's own popover: Escape, the button, a click outside or following a link closes it, and the page
   does not scroll behind it); the links inside, their look and the width from which it shows are the site's. A header
@@ -474,12 +480,12 @@ and says so here under **Changed**; a patch version never does. Database migrati
   `brim_list_media` takes the same `search`, `folder` and `after`.
 - **"Choose from site" shows its pictures as cards, and loads only what is on screen.** While the pictures were
   still loading, the grid in the fixed-height dialog sized its rows at 2 px, so the cards lay over each other in
-  strips and every picture was in view, so loaded at once: on Codeso, over a thousand uploads at full size. Rows are
+  strips and every picture was in view, so loaded at once: on one site, over a thousand uploads at full size. Rows are
   as tall as their cards now, and `GET /admin/api/media` gives each upload a `thumbnail`, a 320 px copy from the
   site's CDN when `media.resize` is set, which the picker shows.
 - **Pictures of the site's own code are no longer sent at full size.** An image in `public/` (`/images/hero.jpg`),
   as the hero, a gallery or a section starts with, gets a `srcset` of WebP copies made by Astro's image endpoint
-  (`/_image`, quality 75, never wider than the picture), as uploads get theirs from `media.resize`. On Codeso the
+  (`/_image`, quality 75, never wider than the picture), as uploads get theirs from `media.resize`. On one site the
   home page's hero went from 1.6 MB of JPEGs to about a third of that on a wide screen, and far less on a phone.
   Only on a server; a static build sends them as they are. A host that copies `public/` to its CDN at each deploy
   says where with `media.siteUrl` (`BRIM_MEDIA_SITE_URL`): with `resize`, those pictures then come from the CDN,
@@ -491,7 +497,7 @@ and says so here under **Changed**; a patch version never does. Database migrati
   `public/`, then an upload saved as the element's value": half of that looked done, and shipped megabytes.
   `brim check`'s `large-public-image` says so too.
 - **The content browser opens at once with many items.** It waited for every type's whole list before showing
-  anything, and the editor's API read each list whole from the database: on Codeso, 1,056 products took 6.5 s on
+  anything, and the editor's API read each list whole from the database: on one site, 1,056 products took 6.5 s on
   Bunny Database, with only "Loading…" and the pages on screen. `GET /admin/api/items` now answers from the list the
   server keeps (read again only where items changed), and the browser shows the types first and each type's items
   as they arrive.

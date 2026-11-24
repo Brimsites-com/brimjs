@@ -48,10 +48,10 @@ describe("the site's form email", () => {
     );
     expect(message).toEqual({ ...brims, subject: "Cerere: Comandă produs Bcc: x", html: "<h1>Comandă produs</h1>" });
 
-    const full = await writtenBySite(brims, async () => ({ text: "Text", fromName: "Codeso" }), email);
+    const full = await writtenBySite(brims, async () => ({ text: "Text", fromName: "Studio Nord" }), email);
     expect(full).toMatchObject({
       text: "Text",
-      fromName: "Codeso",
+      fromName: "Studio Nord",
       html: brims.html,
       to: brims.to,
       replyTo: brims.replyTo,

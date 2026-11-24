@@ -1,4 +1,4 @@
-# Publishes `brimjs` and `create-brim` on npm when a tag such as v0.1.80 is pushed. It signs in with npm's trusted
+# Publishes `brimjs` and `create-brim` on npm when a tag such as v1.0.0 is pushed. It signs in with npm's trusted
 # publishing (OIDC), so there is no npm token in the repository: each package names this file as its trusted publisher
 # on npmjs.com. Publishing a version that is already there is skipped, so a run that stopped halfway can be run again.
 name: Release

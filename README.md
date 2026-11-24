@@ -31,7 +31,7 @@ Brim.js is the npm package `brimjs`, and a new site starts with `npm create brim
 depends on it under its name:
 
 ```json
-"dependencies": { "brimjs": "^0.1.80" }
+"dependencies": { "brimjs": "^1.0.0" }
 ```
 
 Versions up to 0.1.79 were published privately as `@brimsites/brimjs`. A site that depends on
@@ -1055,6 +1055,12 @@ whose slides the owner sees and orders in the side panel, never several `Image`s
 </style>
 ```
 
+A click on a gallery's picture opens it over the whole screen, as a slideshow of the gallery, whoever draws it:
+`image.img` carries what makes it open. Buttons, arrow keys and a swipe go through the pictures. A picture with a link,
+or inside one, stays a link. `lightbox={false}` or the owner's **Open full screen** switch leaves it out, `labels` says
+its buttons in the page's language (`gallery`, `close`, `previous`, `next`), and `.brim-lightbox` is the site's to
+style.
+
 With `item` and `field`, either shows an item's `gallery` field, and what the owner changes in the side panel is
 saved into the item. Without a function, Brim draws a plain grid of `columns` (`gap`) or a slider (`slidesPerView`,
 `gap`, `showArrows`, `showDots`); a carousel that peeks takes its middle slide's width from `--brim-carousel-peek`.
@@ -1561,7 +1567,7 @@ import { defineEmails, html } from "brimjs";
 export const emails = defineEmails({
   form: (email) => ({
     subject: `${email.form}: ${email.answers[0]?.value ?? "mesaj nou"}`,
-    fromName: "Codeso",
+    fromName: "Studio Nord",
     html: html`
       <div style="font-family: Georgia, serif; max-width: 560px; color: #242321">
         <h1 style="font-size: 22px">${email.form}</h1>
@@ -1584,7 +1590,7 @@ _Include the visitor's answers_ on:
 export const emails = defineEmails({
   form: (email) => ({ /* … */ }),
   confirmation: (email) => ({
-    fromName: "Codeso",
+    fromName: "Studio Nord",
     html: html`
       <div style="font-family: Georgia, serif; max-width: 560px; color: #242321">
         ${rawHtml(logo)}
@@ -1894,8 +1900,8 @@ sections, undo while typing (History takes saved changes back), hosting adapters
 
 ## Versions
 
-Changes are listed in [CHANGELOG.md](CHANGELOG.md). Until 1.0, a minor version (0.x) may change the API of
-components and config, and says so there; a patch version never does. Database migrations are append-only and released ones are never edited: a site's
+Changes are listed in [CHANGELOG.md](CHANGELOG.md). Versions are semantic: only a major version
+may break the API of components and config, and says so there. Database migrations are append-only and released ones are never edited: a site's
 database is brought forward by itself when a newer Brim.js opens it. `GET /admin/api/info` and `brim info` name the
 schema version, so a host can check a site against what it supports before putting it live.
 

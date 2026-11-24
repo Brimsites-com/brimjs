@@ -541,6 +541,17 @@ describe("built server", () => {
     );
   });
 
+  it("marks a gallery's pictures to open full screen, and no carousel's", async () => {
+    const about = await (await send("GET", "/about", undefined, { cookie })).text();
+    const gallery = /<div[^>]*about-gallery[^>]*>.*?<img[^>]*>/s.exec(about)?.[0] ?? "";
+
+    expect(gallery).toContain("data-lightbox-gallery");
+    expect(gallery).toContain('data-lightbox-next="Next picture"');
+    expect(gallery).toMatch(/<img[^>]*data-lightbox="0"/);
+    // A carousel's pictures are its own to move.
+    expect(/<brim-carousel[^>]*about-carousel.*?<\/brim-carousel>/s.exec(about)?.[0]).not.toContain("data-lightbox");
+  });
+
   it("makes the sitemap from the content as it is now", async () => {
     const xml = await (await send("GET", "/sitemap.xml")).text();
 
