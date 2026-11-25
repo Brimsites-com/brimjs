@@ -27,6 +27,16 @@ export function normalizePagePath(pathname: string): string {
   return trimmed === "" ? "/" : trimmed;
 }
 
+/**
+ * The page a visitor's address asks for. Astro draws the page at `/about` for `/about.html` too (always where the
+ * route has a parameter, everywhere with `build.format: "file"`), so what is kept by address, such as whether the
+ * page is private, is asked by the page's own. A route with `.html` in its pattern is at the address it says.
+ */
+export function requestedPage(pathname: string, routePattern: string): string {
+  const path = normalizePagePath(pathname);
+  return routePattern.includes(".html") ? path : normalizePagePath(path.replace(/\.html$/, ""));
+}
+
 export function pageScope(pathname: string): string {
   return `page:${normalizePagePath(pathname)}`;
 }

@@ -86,18 +86,44 @@ export function readCookies(request: Request, name: string): string[] {
 }
 
 /**
- * The site's public address for what leaves the site (emails, links in them): the address its host gives it
- * (`BRIM_SITE_URL`, its own domain on Brimsites), else the one the visitor used. Never the server's own address
- * behind a proxy (`localhost:43967`), which `request.url` holds there.
+ * The site's public address as it was set: by its host (`BRIM_SITE_URL`, its own domain on Brimsites), else by its
+ * code (`site` in the Astro config).
  */
-export function publicOrigin(request: Request): string {
-  try {
-    const host = new URL(String(process.env.BRIM_SITE_URL ?? "").trim());
-    if (host.protocol === "https:" || host.protocol === "http:") return host.origin;
-  } catch {
-    // Not set, or not an address: the request says it.
+export function givenOrigin(siteUrl?: string | URL): string | undefined {
+  for (const value of [process.env.BRIM_SITE_URL, siteUrl]) {
+    try {
+      const url = new URL(String(value ?? "").trim());
+      if (url.protocol === "https:" || url.protocol === "http:") return url.origin;
+    } catch {
+      // Not set, or not an address: the next one says it.
+    }
   }
-  return requestOrigin(request);
+  return undefined;
+}
+
+/**
+ * The site's public address, as it was set or else as the request names it. Never the server's own address behind a
+ * proxy (`localhost:43967`), which `request.url` holds there. Only for an answer to whoever asked: what is sent to
+ * someone else takes `trustedOrigin`.
+ */
+export function publicOrigin(request: Request, siteUrl?: string | URL): string {
+  return givenOrigin(siteUrl) ?? requestOrigin(request);
+}
+
+/**
+ * The site's public address for what reaches someone other than the sender of the request (emails): the one that was
+ * set. The request's own `Host` is its sender's to write, so it is believed only on this computer, and otherwise
+ * there is none.
+ */
+export function trustedOrigin(request: Request, siteUrl?: string | URL): string | undefined {
+  const given = givenOrigin(siteUrl);
+  if (given) return given;
+  const origin = requestOrigin(request);
+  return URL.canParse(origin) && isLocalHost(new URL(origin).hostname) ? origin : undefined;
+}
+
+export function isLocalHost(hostname: string): boolean {
+  return ["localhost", "127.0.0.1", "[::1]", "::1"].includes(hostname) || hostname.endsWith(".localhost");
 }
 
 /**

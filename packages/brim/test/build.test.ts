@@ -4,7 +4,6 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { build } from "astro";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { hashPassword } from "../src/auth/password.ts";
 import { pageScope, siteScope, typeScope } from "../src/content/ids.ts";
 import { connect } from "../src/runtime/connect.ts";
 
@@ -103,9 +102,6 @@ beforeAll(async () => {
   await store.saveNode(pageScope("/services/lawn-care"), "service-lead", "text", { text: "Mowing every week" });
   await store.createPage("/services/draft", "service", "Draft service", "private");
   await store.createPage("/services/orphan", "removed-template", "Orphan", "published");
-  await store.createPage("/services/members", "service", "Members", "published");
-  await store.saveNode(pageScope("/services/members"), "service-lead", "text", { text: "Only for members" });
-  await store.setPagePassword("/services/members", await hashPassword("members-only"));
   await store.createPage("/services/copy", "service", "Copy", "published");
   await store.setPageSeo("/services/copy", { canonical: "/services/lawn-care" });
 
@@ -310,14 +306,6 @@ describe("static build", () => {
       '<link rel="canonical" href="https://acme.test/services/lawn-care">',
     );
     expect(page("sitemap.xml")).not.toContain("/services/copy<");
-  });
-
-  it("leaves a password-protected page out of a static build, which has no server to ask for it", () => {
-    const html = page("services/members/index.html");
-
-    expect(html).toContain("This page is protected");
-    expect(html).not.toContain("Only for members");
-    expect(page("sitemap.xml")).not.toContain("/services/members");
   });
 
   it("gives link previews the owner's title, description and preview image", () => {

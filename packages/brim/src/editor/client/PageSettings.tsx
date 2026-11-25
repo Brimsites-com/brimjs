@@ -42,23 +42,17 @@ export function PageSettings({
   page,
   own,
   item,
-  isOwner,
   onChange,
   onMove,
-  onPassword,
   onClose,
 }: {
   page: SitePage;
   /** Absent when the page's layout has no `<Seo>`: then nothing set here reaches the page. */
   own: OwnSeo | undefined;
   item?: PageItem | undefined;
-  /** Owners protect a page with a password. */
-  isOwner: boolean;
   onChange: (seo: SeoSettings) => void;
   /** Moves a page added from a template to a new address; resolves to false when it could not. */
   onMove: (to: string) => Promise<boolean>;
-  /** Sets the page's password, or removes it with `null`; resolves to false when it could not. */
-  onPassword: (password: string | null) => Promise<boolean>; // betterleaks:allow
   onClose?: (() => void) | undefined;
 }) {
   const { seo } = page;
@@ -171,11 +165,6 @@ export function PageSettings({
           onChange={(value) => set({ canonical: value })}
         />
       </Fieldset>
-      {isOwner && (
-        <Fieldset title="Password">
-          <PasswordField protectedPage={page.protected === true} onPassword={onPassword} />
-        </Fieldset>
-      )}
     </Sidebar>
   );
 }
@@ -209,67 +198,6 @@ function AddressField({ path, onMove }: { path: string; onMove: (to: string) => 
         </button>
       </div>
     </form>
-  );
-}
-
-/** Visitors give the password once to open the page; the site's editors open it as it is. */
-function PasswordField({
-  protectedPage,
-  onPassword,
-}: {
-  protectedPage: boolean;
-  onPassword: (password: string | null) => Promise<boolean>; // betterleaks:allow
-}) {
-  const id = useId();
-  const [password, setPassword] = useState("");
-  const [busy, setBusy] = useState(false);
-
-  async function change(next: string | null): Promise<void> {
-    setBusy(true);
-    if (await onPassword(next)) setPassword("");
-    setBusy(false);
-  }
-
-  return (
-    <>
-      {protectedPage && (
-        <div className="brim-page-protected">
-          <span>Visitors need a password to open this page.</span>
-          <button type="button" className="url-browse-btn" disabled={busy} onClick={() => void change(null)}>
-            Remove
-          </button>
-        </div>
-      )}
-      <form
-        className="field-group"
-        onSubmit={(event) => {
-          event.preventDefault();
-          void change(password);
-        }}
-      >
-        <label className="field-label" htmlFor={id}>
-          {protectedPage ? "New password" : "Protect with a password"}
-        </label>
-        <p className="field-description">
-          Visitors see a password form instead of the page, which also leaves search results and the sitemap. It needs
-          the site to run on a server; a static build leaves the page out.
-        </p>
-        <div className="brim-inline-form">
-          <input
-            id={id}
-            className="field-input"
-            type="password"
-            autoComplete="new-password"
-            minLength={6}
-            value={password}
-            onChange={(event) => setPassword(event.target.value)}
-          />
-          <button type="submit" className="url-browse-btn" disabled={busy || password.length < 6}>
-            {protectedPage ? "Change" : "Protect"}
-          </button>
-        </div>
-      </form>
-    </>
   );
 }
 

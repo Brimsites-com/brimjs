@@ -50,7 +50,10 @@ export function rawHtml(trusted: string): Html {
 export interface FormEmail {
   /** The form's title, e.g. "Comandă produs". */
   form: string;
-  /** The site's host, e.g. `studionord.ro`, and its address. */
+  /**
+   * The site's host, e.g. `studionord.ro`, and its address. A site whose address is not set (`site` in the Astro
+   * config, or `BRIM_SITE_URL`) has its name as `site`, and every address here is "".
+   */
   site: string;
   siteUrl: string;
   /** The page it was sent from, when the form is on one (a product's order form says which product). */
@@ -107,7 +110,7 @@ export interface AccountEmail {
 export interface ConfirmationEmail {
   /** The form's title. */
   form: string;
-  /** The site's host and its address. */
+  /** The site's host and its address; its name and "" when its address is not set, as in `FormEmail`. */
   site: string;
   siteUrl: string;
   /** The page the form was sent from, when it is on one. */

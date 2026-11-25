@@ -4165,7 +4165,7 @@ button.cb-badge {
   flex: none;
 }
 
-/* ------------------------------------------- page settings: address and password */
+/* ------------------------------------------- page settings: address */
 .brim-inline-form {
   display: flex;
   gap: 6px;
@@ -4174,18 +4174,6 @@ button.cb-badge {
 .brim-inline-form .field-input {
   flex: 1;
   min-width: 0;
-}
-
-.brim-page-protected {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  margin-bottom: 0.75rem;
-  padding: 8px 10px;
-  border: 1px solid var(--border);
-  border-radius: 0.5rem;
-  font-size: 0.8125rem;
 }
 
 /* ------------------------------------------- listing panel */

@@ -51,26 +51,21 @@ export async function sitemapEntries({
     // A page whose template left the code is not built, so it is not listed either.
     ...(await content.templatePages({ publishedOnly: true })).filter((page) => templateKeys.has(page.template ?? "")),
   ];
-  // A page behind a password is not for search engines.
-  const passwords = await content.pagePasswords(); // betterleaks:allow
   for (const page of pages) {
-    if (passwords[page.path]) continue;
     if (page.visibility === "published" && !page.seo.noindex && pointsHere(page.path, page.seo.canonical)) {
       listed.set(page.path, { path: page.path });
     }
   }
 
-  // An item's page takes the same settings by address as any page: a password, "hide from search engines" and a
-  // canonical address elsewhere keep it out, as they do for pages.
+  // An item's page takes the same settings by address as any page: "hide from search engines" and a canonical
+  // address elsewhere keep it out, as they do for pages.
   const seoByPath = await content.pageSeoSettings();
   for (const type of contentTypes) {
     for (const item of await items.list(type.key, { publishedOnly: true, sort: "oldest" })) {
       const path = itemPagePath(type, item, locales);
       if (!itemHasPage(type, item, path, routes)) continue;
       const seo = seoByPath.get(normalizePagePath(path));
-      if (passwords[normalizePagePath(path)] || seo?.noindex || !pointsHere(normalizePagePath(path), seo?.canonical)) {
-        continue;
-      }
+      if (seo?.noindex || !pointsHere(normalizePagePath(path), seo?.canonical)) continue;
       listed.set(path, { path, lastModified: item.updatedAt.slice(0, 10) });
     }
   }

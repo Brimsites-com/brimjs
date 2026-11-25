@@ -85,6 +85,11 @@ migrations are append-only.
 - **A shared link's picture is a copy 1200 px wide** where the CDN makes copies (`media.resize`), instead of the
   upload at full size: `og:image` and `twitter:image`.
 
+### Removed
+
+- **Passwords on pages** (Page Settings, `password` of `brim_update_page` and `PUT /admin/api/pages`, `protected` in
+  the pages listed). A page that had one is open to everyone after the update: make it private first, or remove it.
+
 ### Fixed
 
 - The site's MCP says which version of Brim.js it runs (it always said 0.0.0).
@@ -94,6 +99,27 @@ migrations are append-only.
   where emails leave the site: a line end in a subject written by a template can no longer reach a mail server.
 - **A writer no longer sees a visitor's message in the email preview** (`/admin/api/emails/form` showed the newest
   message to anyone signed in; a role that cannot read messages now sees the example).
+- **A private page stays private with `.html` after its address.** Astro draws `/about` for `/about.html` too (pages
+  with a parameter always, every page with `build.format: "file"`), where Brim looked up a page nobody had made
+  private. What the owner saved for a page now shows at either address.
+- **A writer cannot have a form's messages emailed to themselves.** A form's `notificationEmail` is changed by the roles
+  that read its messages (owners, editors); when a writer saves the form it stays as it was, whatever is sent.
+- **Links in form emails never follow the request's `Host`.** They go to `BRIM_SITE_URL` or the config's `site`. A site
+  with neither sends emails without links, naming the site by its `identity.name`, and says so once in the log; on
+  localhost nothing changes. In a template the addresses are then `""`.
+- **Wrong passwords are counted per account however its email is written.** Spaces around it started a new count, and
+  an address past its limit still left a row in the database for each email it named.
+- **An item that moves takes everything along, whichever way it moves.** A field in its address set on its page, or a
+  term in its address renamed, left its search settings (a page hidden from search engines showed again) and the
+  redirect from its old address behind. An item naming the term in two fields kept the old one in the first.
+- **A writer cannot move a published item** through a draft, a field set on its page or a term in its address either.
+- **A form's work is raised only by messages with a good token, five from one address at most.** Anyone could raise it
+  for every visitor with posts that cost them nothing.
+- **Site Settings are not saved as an element** (`PUT /admin/api/nodes` with `site-settings`), past their own checks.
+- **A mail server's password is sent only over an encrypted connection.** On any port but 465, a server that offers no
+  STARTTLS is refused when there is a password; a server on this computer is not.
+- **`/sitemap.xml` and `/robots.txt` of a site whose address is not set are not cached** (`no-store`): they name the
+  address they were asked at.
 
 ## 0.1.79
 

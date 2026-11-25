@@ -4,7 +4,6 @@ import { join } from "node:path";
 import { pathToFileURL } from "node:url";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { Accounts, type Role } from "../src/auth/accounts.ts";
-import { hashPassword } from "../src/auth/password.ts";
 import { defineContentType } from "../src/content/content-types.ts";
 import { DraftStore } from "../src/content/drafts.ts";
 import { HistoryStore } from "../src/content/history.ts";
@@ -220,10 +219,9 @@ describe("MCP batches", () => {
 });
 
 describe("an item that changes its address", () => {
-  it("keeps its page's password and search settings", async () => {
+  it("keeps its page's search settings", async () => {
     const owner = await userWith("owner");
     const item = await brim.items.create("project", { title: "A", slug: "a", visibility: "published", data: {} });
-    await brim.content.setPagePassword("/projects/a", await hashPassword("open sesame"));
     await brim.content.setPageSeo("/projects/a", { noindex: true });
 
     const response = await api("PUT", "/items", owner.cookie, {
@@ -235,9 +233,6 @@ describe("an item that changes its address", () => {
     });
     expect(response.status).toBe(200);
 
-    const passwords = await brim.content.pagePasswords(); // betterleaks:allow
-    expect(passwords["/projects/b"]).toBeTruthy();
-    expect(passwords["/projects/a"]).toBeUndefined();
     expect((await brim.content.page("/projects/b")).seo).toEqual({ noindex: true });
   });
 });
@@ -266,10 +261,9 @@ describe("an original item deleted and put back", () => {
 });
 
 describe("the sitemap", () => {
-  it("leaves out item pages behind a password, hidden from search or pointing elsewhere", async () => {
+  it("leaves out item pages hidden from search or pointing elsewhere", async () => {
     const draft = (slug: string) => ({ title: slug, slug, visibility: "published" as const, data: {} });
-    for (const slug of ["open", "locked", "hidden", "moved"]) await brim.items.create("project", draft(slug));
-    await brim.content.setPagePassword("/projects/locked", "hash");
+    for (const slug of ["open", "hidden", "moved"]) await brim.items.create("project", draft(slug));
     await brim.content.setPageSeo("/projects/hidden", { noindex: true });
     await brim.content.setPageSeo("/projects/moved", { canonical: "/elsewhere" });
 

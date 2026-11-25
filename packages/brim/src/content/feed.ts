@@ -90,15 +90,14 @@ interface Sources {
 }
 
 /**
- * A feed's newest published items, those with a page a visitor can open: an item that is private, has no page, or
- * whose page is behind a password is left out. Read when asked, so an item just published is in the next feed.
+ * A feed's newest published items, those with a page a visitor can open: an item that is private or has no page is
+ * left out. Read when asked, so an item just published is in the next feed.
  */
 export async function buildFeed(
   { type, locale, path }: FeedAddress,
   { types, content, items, routes, locales, siteName }: Sources,
 ): Promise<Feed> {
   const options: FeedOptions = feedOptionsOf(type) ?? {};
-  const passwords = await content.pagePasswords(); // betterleaks:allow
   const listed = await items.list(type.key, {
     publishedOnly: true,
     sort: "newest",
@@ -109,7 +108,7 @@ export async function buildFeed(
   const publishedItems = (key: string) => items.listCached(key, { publishedOnly: true });
   const candidates = listed
     .map((item) => ({ item, path: itemPagePath(type, item, locales) }))
-    .filter(({ item, path }) => !passwords[path] && itemHasPage(type, item, path, routes))
+    .filter(({ item, path }) => itemHasPage(type, item, path, routes))
     .map((entry) => ({ ...entry, published: publishedAt(entry.item, dateField) }))
     .sort((a, b) => b.published.getTime() - a.published.getTime())
     .slice(0, options.limit ?? DEFAULT_LIMIT);

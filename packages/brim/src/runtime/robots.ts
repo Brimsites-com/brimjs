@@ -1,6 +1,6 @@
 import type { APIRoute } from "astro";
 import config from "virtual:brim/config";
-import { requestOrigin } from "../server/http.ts";
+import { givenOrigin, requestOrigin } from "../server/http.ts";
 
 /**
  * `/robots.txt`, added by Brim: everything may be crawled except the editor. It names the sitemap at the site's
@@ -10,8 +10,9 @@ export const prerender = true;
 
 export const GET: APIRoute = ({ site, request }) => {
   // Behind the CDN the server is asked at its own internal address: the visitor's is in `X-Forwarded-Host`.
+  const given = site ?? givenOrigin();
   const origin =
-    site ??
+    given ??
     (config.mode === "server"
       ? requestOrigin(request)
       : config.mode === "dev"
@@ -19,6 +20,10 @@ export const GET: APIRoute = ({ site, request }) => {
         : undefined);
   const sitemap = origin ? `\nSitemap: ${new URL("/sitemap.xml", origin).href}\n` : "";
   return new Response(`User-agent: *\nAllow: /\nDisallow: /admin\n${sitemap}`, {
-    headers: { "content-type": "text/plain; charset=utf-8" },
+    headers: {
+      "content-type": "text/plain; charset=utf-8",
+      // The address asked at is the asker's to write: a cache must not hand this answer to anyone else.
+      ...(!given && config.mode === "server" && { "cache-control": "no-store" }),
+    },
   });
 };

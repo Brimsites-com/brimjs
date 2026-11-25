@@ -182,7 +182,7 @@ go forward, so **back up before you update** Brim.js.
 | Variable | What it does |
 | --- | --- |
 | `HOST`, `PORT` | Where the server listens (default `0.0.0.0:4321`) |
-| `BRIM_SITE_URL` | The site's public address (`https://www.example.com`), used as Astro's `site` at build time when astro.config sets none: canonical links, the sitemap, feeds and shared pictures name it. Brimsites sets it to the site's domain |
+| `BRIM_SITE_URL` | The site's public address (`https://www.example.com`), used as Astro's `site` at build time when astro.config sets none: canonical links, the sitemap, feeds and shared pictures name it. Read when the server runs too: the links in form emails go to it. Brimsites sets it to the site's domain |
 | `BRIM_DATABASE_URL`, `BRIM_DATABASE_TOKEN` | A database other than `.brim/data.db`, e.g. a remote libSQL one |
 | `BRIM_CLIENT_IP_HEADER` | The header in which your proxy gives the visitor's address (e.g. `x-real-ip`) |
 | `BRIM_SMTP_URL`, `BRIM_MAIL_FROM` | An SMTP server for form emails (or `BRIM_MAIL_URL`, `BRIM_MAIL_TOKEN` for a mail service) |

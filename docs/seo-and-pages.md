@@ -2,7 +2,7 @@
 title: SEO, pages and feeds
 section: Content
 order: 7
-lead: Page Settings, passwords, redirects, the sitemap and RSS feeds, managed by the owner and written by Seo.
+lead: Page Settings, redirects, the sitemap and RSS feeds, managed by the owner and written by Seo.
 ---
 
 ## Page Settings
@@ -50,17 +50,13 @@ Nothing is used for advertising. A choice is asked again after 180 days, and tak
 
 Cookies should stay on the host name they were set on, and the page asks for that. A Google tag that comes as a Tag Manager container configures itself and ignores the page: its cookies then land on the domain (`example.com`), which every site under it receives. Where that matters, such as a site on a domain shared with other people's sites, set the tag's `cookie_domain` to `none` in Google Tag Manager. The browser's console warns when the cookies are shared, in browsers that can tell.
 
-## Passwords
-
-An owner can put a page behind a password. Visitors see a small form instead, give it once and keep the page open on that device for 30 days; changing the password closes it again. Signed-in users open the page as it is. A protected page is never cached, carries `noindex` and leaves the sitemap. It needs the server: a static build writes a notice in its place.
-
 ## Redirects
 
 Redirects live in Site Settings (owners only, or `brim_set_redirects`): an old path goes to a new path or a full address, permanently (301) or for a while (302), with the query kept. Moving a page or changing a published item's address adds its redirect and points older ones straight at the new address. A chain that leads back to itself is refused, and Brim's own routes cannot be redirected. Redirects answer on the server and the dev server; a static build has none.
 
 ## Sitemap and robots
 
-Brim adds `/sitemap.xml` to every site whose `site` is set. It lists the published pages in code, pages from templates and item pages, and leaves out private pages, hidden ones, pages behind a password and pages whose canonical is elsewhere. `/robots.txt` points to it and keeps crawlers out of `/admin`. A site with its own `src/pages/sitemap.xml.ts` or robots file keeps it.
+Brim adds `/sitemap.xml` to every site whose `site` is set. It lists the published pages in code, pages from templates and item pages, and leaves out private pages, hidden ones and pages whose canonical is elsewhere. `/robots.txt` points to it and keeps crawlers out of `/admin`. A site with its own `src/pages/sitemap.xml.ts` or robots file keeps it.
 
 `brim check --content` warns about a dynamic route in `src/pages` that no content type draws, since Brim cannot know its addresses for the sitemap.
 
@@ -87,8 +83,8 @@ A type with `feed` gets an RSS 2.0 feed of its newest published items at `/rss/<
 | `summary` | A `text`, `textarea` or `richtext` field; by default `description` (or the first `textarea` of a type without it), then the page description |
 | `title`, `description` | The feed's own; by default the type's label after the site's name |
 
-The picture is the item's `image` (or the first image field of a type without it), and its authors are named. Private items, items behind a password and items with no page are left out. Every page using `<Seo>` links the feeds of its language so readers find them. A static build writes feeds only when `site` is set.
+The picture is the item's `image` (or the first image field of a type without it), and its authors are named. Private items and items with no page are left out. Every page using `<Seo>` links the feeds of its language so readers find them. A static build writes feeds only when `site` is set.
 
 ## The site's address
 
-Set `site` in `astro.config.mjs`, or let the host give it as `BRIM_SITE_URL`, so canonical links, the sitemap, feeds, share images and password-reset links name the address visitors use.
+Set `site` in `astro.config.mjs`, or let the host give it as `BRIM_SITE_URL`, so canonical links, the sitemap, feeds, share images, password-reset links and the links in form emails name the address visitors use.

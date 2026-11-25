@@ -1015,13 +1015,6 @@ export function Editor({ user, onSignedOut }: { user: User; onSignedOut: () => v
     return true;
   }
 
-  /** `null` removes the page's password. */
-  async function setPagePassword(secret: string | null): Promise<boolean> {
-    if (!(await run(api.setPagePassword(path, secret)))) return false;
-    await refreshPages();
-    return true;
-  }
-
   function navigate(next: string): void {
     setSiteMapOpen(false);
     setBrowsing(null);
@@ -1544,10 +1537,8 @@ export function Editor({ user, onSignedOut }: { user: User; onSignedOut: () => v
             }
           : undefined
       }
-      isOwner={user.role === "owner"}
       onChange={(seo) => void changeSeo(seo)}
       onMove={movePage}
-      onPassword={setPagePassword}
       onClose={() => setPageSettingsAsked(false)}
     />
   );

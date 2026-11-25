@@ -43,7 +43,7 @@ A user's role decides what the editor offers them and what the API, and so the s
 
 | Role | For | May |
 | --- | --- | --- |
-| `owner` | Whoever builds and runs the site | Everything below, plus content type templates, Site Settings for email and redirects, page passwords |
+| `owner` | Whoever builds and runs the site | Everything below, plus content type templates, Site Settings for email and redirects |
 | `editor` | Whoever runs its content: the client | Everything a writer may, plus publish and unpublish, delete items, add, move and delete pages, read form messages |
 | `writer` | Someone who only writes | Texts, images, links, blocks, SEO, item fields and site settings; upload media; add items, which stay private |
 

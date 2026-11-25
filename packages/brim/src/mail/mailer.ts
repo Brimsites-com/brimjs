@@ -1,6 +1,6 @@
 import { createTransport } from "nodemailer";
 import type { MailOptions } from "../config.ts";
-import { HttpError } from "../server/http.ts";
+import { HttpError, isLocalHost } from "../server/http.ts";
 import { assertPublicHost } from "../server/fetch-image.ts";
 import { type MailSettings, type SmtpServer, isEmail } from "./settings.ts";
 
@@ -158,16 +158,26 @@ export function parseSmtpUrl(value: string): Omit<SmtpServer, "from"> | undefine
   };
 }
 
-async function sendSmtp(server: SmtpServer, from: string, message: MailMessage): Promise<void> {
-  const transport = createTransport({
+/**
+ * How a mail server is reached. With a password the connection is encrypted before it is sent, from the start or with
+ * STARTTLS, or nothing is sent: a server that offers no STARTTLS, or someone on the way who hides that it does, would
+ * otherwise be given the password as it is. A server on this computer may do without.
+ */
+export function smtpOptions(server: Omit<SmtpServer, "from">) {
+  return {
     host: server.host,
     port: server.port,
     secure: server.secure,
     ...(server.user && { auth: { user: server.user, pass: server.password } }), // betterleaks:allow
+    requireTLS: !server.secure && server.user !== "" && !isLocalHost(server.host),
     connectionTimeout: 10_000,
     greetingTimeout: 10_000,
     socketTimeout: 20_000,
-  });
+  };
+}
+
+async function sendSmtp(server: SmtpServer, from: string, message: MailMessage): Promise<void> {
+  const transport = createTransport(smtpOptions(server));
   const address = from.match(/<([^<>]+)>\s*$/)?.[1] ?? from;
   try {
     await transport.sendMail({

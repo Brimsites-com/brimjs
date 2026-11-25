@@ -69,9 +69,10 @@ function admin(mail = mailer()): AdminHandler {
   return createAdminHandler({ brim, assetsDirectory: new URL("../editor-dist/", import.meta.url), mailer: mail });
 }
 
-function forms(mail: Mailer | undefined = mailer(), emails?: SiteEmails): FormsHandler {
+function forms(mail: Mailer | undefined = mailer(), emails?: SiteEmails, siteUrl: string | undefined = ORIGIN) {
   return createFormsHandler(brim, {
     mailer: mail,
+    siteUrl: siteUrl || undefined,
     background: (work) => background.push(work),
     ...(emails && { emails: () => emails }),
   });
@@ -207,6 +208,33 @@ describe("a form message", () => {
     } finally {
       delete process.env.BRIM_SITE_URL;
     }
+  });
+
+  it("has no link where whoever wrote could choose its address, and says to open the editor", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    const order = { ...contact, form: "/produse/marazzi-art#comanda-form", title: "Comandă produs" };
+    // The same message, its sender naming another host: with the site's address set, and without.
+    const forged = { server: ORIGIN, forwardedHost: "acme.example" };
+    await sendForm(forms(mailer(), undefined, "https://www.studionord.test"), order, forged);
+    expect(JSON.stringify(serviceCalls[0]?.body)).toContain("https://www.studionord.test/admin/edit?response=");
+    expect(JSON.stringify(serviceCalls[0]?.body)).not.toContain("acme.example");
+
+    serviceCalls = [];
+    let seen: { site: string; siteUrl: string; responsesUrl: string; responseUrl: string } | undefined;
+    const emails: SiteEmails = {
+      form: (email) => {
+        seen = email;
+        return undefined as never;
+      },
+    };
+    await sendForm(forms(mailer(), emails, ""), order, forged);
+    const body = serviceCalls[0]?.body;
+    expect(body?.subject).toBe("New message from Comandă produs on the site");
+    expect(body?.text).toContain("Read it in the site's editor.");
+    expect(`${body?.text}${body?.html}`).not.toMatch(/https?:/);
+    expect(seen).toMatchObject({ site: "the site", siteUrl: "", responsesUrl: "", responseUrl: "" });
+    expect(warn).toHaveBeenCalledOnce();
+    warn.mockRestore();
   });
 
   it("is written by the site's template when it has one, and previewed in the editor's API", async () => {

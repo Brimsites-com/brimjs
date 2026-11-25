@@ -6,7 +6,7 @@ export const MAX_WINDOW_SECONDS = 24 * 60 * 60;
 const PRUNE_EVERY_MS = 60 * 60 * 1000;
 
 /**
- * Fixed-window counter in SQLite, for sign-ins, page passwords and forms. Every key leaves a row (a form's token
+ * Fixed-window counter in SQLite, for sign-ins and forms. Every key leaves a row (a form's token
  * leaves one per message), so rows whose window ended long ago are deleted now and then: without that, anyone
  * sending forms all day would make the table, and the database, grow without end.
  */
@@ -27,20 +27,6 @@ export class RateLimiter {
     } catch (error) {
       console.error("[brim] Old rate limit rows were not cleared:", error instanceof Error ? error.message : error);
     }
-  }
-
-  /**
-   * Whether `limit` attempts were already counted in this window, without counting one. With `allow` called only
-   * for attempts that failed, the ones that succeed use nothing up: visitors who share an address (everyone behind
-   * one proxy) are then not shut out by each other's ordinary use.
-   */
-  async exhausted(key: string, limit: number, windowSeconds: number): Promise<boolean> {
-    const now = Math.floor(Date.now() / 1000);
-    const rows = await this.#db.query("SELECT count FROM brim_rate_limits WHERE key = ? AND window_start = ?", [
-      key,
-      now - (now % windowSeconds),
-    ]);
-    return Number(rows[0]?.count ?? 0) >= limit;
   }
 
   /**

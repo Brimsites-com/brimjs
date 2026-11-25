@@ -31,7 +31,7 @@ export function formNotice(input: {
   site: string;
   title: string;
   answers: FormAnswer[];
-  /** Where the editor lists the messages. */
+  /** Where the editor lists the messages; "" when the site's address is not known, as for the other addresses. */
   responsesUrl: string;
   /** Where the editor opens this message. */
   responseUrl?: string;
@@ -53,11 +53,15 @@ export function formNotice(input: {
     ...(page ? [`Sent from: ${page}`] : []),
     "",
     ...answers.flatMap((answer) => [`${answer.label}:`, answer.value, ""]),
-    ...files.flatMap((file) => [`${file.label}:`, `${file.name} (${fileSize(file.size)}): ${file.url}`, ""]),
+    ...files.flatMap((file) => [
+      `${file.label}:`,
+      `${file.name} (${fileSize(file.size)})${file.url ? `: ${file.url}` : ""}`,
+      "",
+    ]),
     ...(files.length > 0 ? ["Files open only for someone signed in to the editor who may read messages.", ""] : []),
     replyTo ? `Reply to this email to answer ${replyTo}.` : "",
     ...(responseUrl ? [`Open it in the editor: ${responseUrl}`] : []),
-    `All messages: ${responsesUrl}`,
+    responsesUrl ? `All messages: ${responsesUrl}` : "Read it in the site's editor.",
   ].join("\n");
   const rows = answers
     .map(
@@ -70,7 +74,7 @@ export function formNotice(input: {
     .map(
       (file) =>
         `<tr><td style="padding:8px 12px 8px 0;color:#666;vertical-align:top;white-space:nowrap">${escape(file.label)}</td>` +
-        `<td style="padding:8px 0"><a href="${escape(file.url)}" style="color:#111">${escape(file.name)}</a> (${escape(fileSize(file.size))})</td></tr>`,
+        `<td style="padding:8px 0">${file.url ? `<a href="${escape(file.url)}" style="color:#111">${escape(file.name)}</a>` : escape(file.name)} (${escape(fileSize(file.size))})</td></tr>`,
     )
     .join("");
   const html =
@@ -85,7 +89,9 @@ export function formNotice(input: {
     (responseUrl
       ? `<p><a href="${escape(responseUrl)}" style="display:inline-block;padding:10px 18px;border-radius:999px;background:#111;color:#fff;text-decoration:none">Open this message</a></p>`
       : "") +
-    `<p><a href="${escape(responsesUrl)}" style="color:#111">See all messages</a></p></div>`;
+    (responsesUrl
+      ? `<p><a href="${escape(responsesUrl)}" style="color:#111">See all messages</a></p></div>`
+      : `<p>Read it in the site's editor.</p></div>`);
   return { to, subject, text, html, replyTo, fromName: settings.senderName || site };
 }
 

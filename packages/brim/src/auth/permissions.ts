@@ -7,7 +7,7 @@ import type { Role, User } from "./accounts.ts";
  * - `pages`: add, rename, move and delete the pages made from templates.
  * - `templates`: change the template of a content type, shared by the pages of all its items.
  * - `responses`: read and delete what visitors sent through the site's forms.
- * - `settings`: Site Settings (email, redirects) and page passwords.
+ * - `settings`: Site Settings (email, redirects).
  * - `users`: add and remove the site's users, change their roles and reset their access (`/admin/api/users`, which a
  *   host's dashboard calls too). Access tokens are managed with the `brim` CLI, by whoever runs the site.
  */

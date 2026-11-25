@@ -249,7 +249,7 @@ export const TOOLS: Tool[] = [
   {
     name: "brim_update_page",
     description:
-      "Changes a page's visibility (private or published), its SEO and, for pages added from a template, its title. `seo` replaces all of the page's SEO settings: send the ones to keep too (brim_site lists them). `password` protects the page (owners only; null removes it).",
+      "Changes a page's visibility (private or published), its SEO and, for pages added from a template, its title. `seo` replaces all of the page's SEO settings: send the ones to keep too (brim_site lists them).",
     inputSchema: {
       type: "object",
       properties: {
@@ -269,10 +269,6 @@ export const TOOLS: Tool[] = [
             nofollow: { type: "boolean" },
           },
         },
-        password: {
-          type: ["string", "null"],
-          description: "Visitors need it to open the page (at least 6 characters); null removes it. Owners only.",
-        },
       },
       required: ["path"],
     },
@@ -282,7 +278,6 @@ export const TOOLS: Tool[] = [
         title: args.title,
         visibility: args.visibility,
         seo: args.seo,
-        password: args.password, // betterleaks:allow
       }),
   },
   {

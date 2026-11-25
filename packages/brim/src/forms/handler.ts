@@ -1,7 +1,7 @@
 import { createHash, randomBytes, randomUUID } from "node:crypto";
 import { ValidationError } from "../content/validation-error.ts";
 import type { Brim } from "../runtime/connect.ts";
-import { HttpError, assertSameOrigin, json, publicOrigin, readBytes, readJson } from "../server/http.ts";
+import { HttpError, assertSameOrigin, json, readBytes, readJson, trustedOrigin } from "../server/http.ts";
 import { formPage } from "./form-page.ts";
 import { type ConfirmationEmail, type FormEmail, type SiteEmails, writtenBySite } from "../mail/templates.ts";
 import { RateLimiter } from "../server/rate-limit.ts";
@@ -115,12 +115,29 @@ export interface FormsOptions {
   files?: PrivateFiles | undefined;
   /** The site's name (`identity.name`), the sender's name of a confirmation when Site Settings gives none. */
   siteName?: string | undefined;
+  /**
+   * The site's public address (Astro's `site`), for the links in emails. Never taken from the request alone: whoever
+   * sends a message writes its Host header, and the email goes to someone else.
+   */
+  siteUrl?: string | undefined;
 }
 
 export function createFormsHandler(brim: Brim, options: FormsOptions = {}): FormsHandler {
   const limiter = new RateLimiter(brim.db);
   const mailSettings = new MailSettingsStore(brim.db);
   const fileStore = options.files && new FormFiles(options.files, () => brim.forms.secret());
+
+  let missingAddressLogged = false;
+
+  /** The site's address and name for an email. Without an address the email has no links (see `trustedOrigin`). */
+  function sender(request: Request): { origin: string | undefined; site: string } {
+    const origin = trustedOrigin(request, options.siteUrl);
+    if (!origin && !missingAddressLogged) {
+      missingAddressLogged = true;
+      console.warn("[brim] Emails about forms have no links: set `site` in astro.config.mjs to the site's address.");
+    }
+    return { origin, site: origin ? new URL(origin).host : options.siteName || "the site" };
+  }
 
   /** Emails the message to whoever should hear about it. A failure is logged: the message is saved either way. */
   async function notify(
@@ -137,25 +154,24 @@ export function createFormsHandler(brim: Brim, options: FormsOptions = {}): Form
     const notifyAlso = spec.notify ? openAddress(await brim.forms.secret(), spec.notify) : undefined;
     const to = await formRecipients(settings, brim.accounts, notifyAlso);
     if (to.length === 0) return;
-    // The site's public address: behind a proxy `request.url` is the server's own (`localhost:43967`).
-    const origin = publicOrigin(request);
-    const page = formPage(spec.form);
+    const { origin, site } = sender(request);
+    const page = origin && formPage(spec.form);
     // Where the editor's API hands each file to a signed-in owner or editor; the email never carries the file.
     const files = kept.map(({ id: fileId, label, name, size }) => ({
       label,
       name,
       size,
-      url: `${origin}/admin/api/responses/${id}/files/${fileId}`,
+      url: origin ? `${origin}/admin/api/responses/${id}/files/${fileId}` : "",
     }));
     const email: FormEmail = {
       form: spec.title,
-      site: new URL(origin).host,
-      siteUrl: origin,
+      site,
+      siteUrl: origin ?? "",
       ...(page && { page: `${origin}${page}` }),
       answers: answers.map(({ label, value }) => ({ label, value })),
       ...(files.length > 0 && { files }),
-      responsesUrl: `${origin}/admin/edit`,
-      responseUrl: `${origin}/admin/edit?response=${encodeURIComponent(id)}`,
+      responsesUrl: origin ? `${origin}/admin/edit` : "",
+      responseUrl: origin ? `${origin}/admin/edit?response=${encodeURIComponent(id)}` : "",
       sentAt: new Date(),
     };
     const message = formNotice({
@@ -202,9 +218,8 @@ export function createFormsHandler(brim: Brim, options: FormsOptions = {}): Form
       return;
     }
 
-    const origin = publicOrigin(request);
-    const site = new URL(origin).host;
-    const page = formPage(spec.form);
+    const { origin, site } = sender(request);
+    const page = origin && formPage(spec.form);
     const answers =
       wanted.answers === true ? confirmationAnswers(given.map(({ label, value }) => ({ label, value }))) : [];
     // "Reply" goes to the site: the form's own notification address, else the first of Site Settings'. Never to
@@ -214,7 +229,7 @@ export function createFormsHandler(brim: Brim, options: FormsOptions = {}): Form
     const email: ConfirmationEmail = {
       form: spec.title,
       site,
-      siteUrl: origin,
+      siteUrl: origin ?? "",
       ...(page && { page: `${origin}${page}` }),
       subject: String(wanted.subject ?? "").slice(0, CONFIRMATION_SUBJECT_LENGTH),
       message: String(wanted.message ?? "").slice(0, CONFIRMATION_MESSAGE_LENGTH),
@@ -251,6 +266,16 @@ export function createFormsHandler(brim: Brim, options: FormsOptions = {}): Form
 
   /** The ten-minute window a message tried now counts in; each has its own key, so the one before stays readable. */
   const attemptsKey = (offset = 0) => `form:attempts:${Math.floor(Date.now() / 1000 / WORK_WINDOW_SECONDS) - offset}`;
+
+  /**
+   * A message tried counts towards the work new tokens ask for, sent or refused, once its token is good, and only so
+   * many from one address: otherwise one person, at no cost, could have every visitor's browser work harder.
+   */
+  async function countAttempt(clientAddress: string): Promise<void> {
+    const { limit, windowSeconds } = PER_VISITOR;
+    if (!(await limiter.allow(`form-attempts:${clientAddress}`, limit, windowSeconds))) return;
+    await limiter.allow(attemptsKey(), Number.MAX_SAFE_INTEGER, WORK_WINDOW_SECONDS);
+  }
 
   /** Messages tried on the whole site lately: this window or the one before, whichever saw more. */
   async function recentAttempts(): Promise<number> {
@@ -441,14 +466,13 @@ export function createFormsHandler(brim: Brim, options: FormsOptions = {}): Form
       throw new HttpError(400, "This form is not one of this site's forms.");
     }
     const spec = decodeSpec(body.spec);
-    // Every message tried counts towards the work new tokens ask for, sent or refused.
-    await limiter.allow(attemptsKey(), Number.MAX_SAFE_INTEGER, WORK_WINDOW_SECONDS);
 
     // A filled trap field means a script. It is told all went well, so it learns nothing: nothing is kept (no
     // message, no file) and no email leaves, to the owner or to the address it wrote.
     if (typeof body.trap === "string" && body.trap !== "") return json({ ok: true });
 
     await checkToken(body.token, body.work);
+    await countAttempt(info.clientAddress);
     if (options.captcha) await checkCaptcha(options.captcha, body.captcha, info.clientAddress);
     const allowed =
       (await limiter.allow(`form:${spec.form}:${info.clientAddress}`, PER_VISITOR.limit, PER_VISITOR.windowSeconds)) &&

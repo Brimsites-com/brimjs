@@ -118,7 +118,12 @@ beforeEach(async () => {
       },
     },
   );
-  forms = createFormsHandler(brim, { files: storage, mailer, background: (work) => background.push(work) });
+  forms = createFormsHandler(brim, {
+    files: storage,
+    mailer,
+    siteUrl: ORIGIN,
+    background: (work) => background.push(work),
+  });
   admin = createAdminHandler({
     brim,
     assetsDirectory: new URL("../editor-dist/", import.meta.url),

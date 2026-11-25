@@ -3,9 +3,8 @@ import { assertNodeId, normalizePagePath, pageScope } from "./ids.ts";
 import type { Redirect } from "./redirects.ts";
 import type { PageRecord, SeoSettings, StoredNode, Visibility } from "./types.ts";
 
-/** Kept in brim_meta, as one JSON value each: both are short lists read on every visit. */
+/** Kept in brim_meta, as one JSON value: a short list read on every visit. */
 const REDIRECTS_KEY = "redirects";
-const PAGE_PASSWORDS_KEY = "page_passwords"; // betterleaks:allow
 
 /** Reads and writes the owner's content. Source code is never touched. */
 export class ContentStore {
@@ -165,19 +164,14 @@ export class ContentStore {
   }
 
   /**
-   * Carries a page's password and search settings to its new address, for a page whose address follows something
-   * else (an item's slug or category): both are kept by address, so without this a protected item page would turn
-   * public when its address changed.
+   * Carries a page's search settings to its new address, for a page whose address follows something else (an item's
+   * slug or category): they are kept by address, so without this a page hidden from search engines would be listed
+   * when its address changed.
    */
   async movePageSettings(fromPath: string, toPath: string): Promise<void> {
     const from = normalizePagePath(fromPath);
     const to = normalizePagePath(toPath);
     if (from === to) return;
-    const passwords = await this.pagePasswords(); // betterleaks:allow
-    if (passwords[from]) {
-      await this.setPagePassword(to, passwords[from]);
-      await this.setPagePassword(from, undefined);
-    }
     const { seo } = await this.page(from);
     if (Object.keys(seo).length > 0) {
       await this.setPageSeo(to, seo);
@@ -193,18 +187,6 @@ export class ContentStore {
   /** `redirects` must already be checked: see `parseRedirects`. */
   async setRedirects(redirects: Redirect[]): Promise<void> {
     await this.#setMeta(REDIRECTS_KEY, redirects);
-  }
-
-  /** The hashed password of each password-protected page, by address. */
-  async pagePasswords(): Promise<Record<string, string>> {
-    return (await this.#meta<Record<string, string>>(PAGE_PASSWORDS_KEY)) ?? {};
-  }
-
-  /** `hash` from `hashPassword`; `undefined` removes the page's password. */
-  async setPagePassword(pathname: string, hash: string | undefined): Promise<void> {
-    const path = normalizePagePath(pathname);
-    const { [path]: _removed, ...others } = await this.pagePasswords();
-    await this.#setMeta(PAGE_PASSWORDS_KEY, hash ? { ...others, [path]: hash } : others);
   }
 
   async #meta<T>(key: string): Promise<T | undefined> {
