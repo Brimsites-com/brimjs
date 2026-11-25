@@ -4,7 +4,7 @@ What changed in Brim.js, newest first. Since 1.0 the versions are semantic: only
 components and config, and says so here under **Changed**; a minor version adds, a patch version fixes. Database
 migrations are append-only.
 
-## 2.0.0
+## 1.0.0
 
 ### Added
 
@@ -23,25 +23,6 @@ migrations are append-only.
 - `max-image-preview:large` in `<meta name="robots">` on every page search engines may list.
 - `brim check --content` warns about published items with no description, image or date for search engines
   (`search-empty`), and about fields that look meant for them but are not given to them (`search-fields`).
-
-### Changed
-
-- **Types with a `component` show two more fields**, `description` and `image`, and `Listing` cards, menus, feeds and
-  shared links read those by default rather than the first text or image field declared. A site whose fields have
-  other names renames them when it updates, in its templates and in the values it has saved (Brim does not move
-  them), or says `description: false, image: false` to stay as it was.
-- `<meta name="author">` of an author picked from a vocabulary or a `select` is the name shown, no longer the saved
-  slug or value.
-
-### Fixed
-
-- `item.data.author` (and any field of a name Brim adds) has the type the site declares; a `multiple` reference was
-  typed as `string & string[]`.
-
-## 1.0.0
-
-### Added
-
 - **Forms take files from visitors**: a field of type `file` (`accept: ["pdf", "jpg", "png", "webp", "gif"]`,
   `multiple`), which the owner adds in the side panel like any other field. A file is recognised by its bytes, never
   by its name (no SVG, HTML, archives or programs, whatever a field says); 8 MB a file, 5 files and 10 MB a message,
@@ -82,6 +63,12 @@ migrations are append-only.
 
 ### Changed
 
+- **Types with a `component` show two more fields**, `description` and `image`, and `Listing` cards, menus, feeds and
+  shared links read those by default rather than the first text or image field declared. A site whose fields have
+  other names renames them when it updates, in its templates and in the values it has saved (Brim does not move
+  them), or says `description: false, image: false` to stay as it was.
+- `<meta name="author">` of an author picked from a vocabulary or a `select` is the name shown, no longer the saved
+  slug or value.
 - **Brim.js is the public npm package `brimjs`**, and `create-brim` is on npm with it. `create-brim` and `brim init`
   write `"brimjs": "^<version>"` instead of `npm:@brimsites/brimjs@…`. A site on the private package changes that one
   line in its `package.json`.
@@ -100,6 +87,8 @@ migrations are append-only.
 
 ### Fixed
 
+- `item.data.author` (and any field of a name Brim adds) has the type the site declares; a `multiple` reference was
+  typed as `string & string[]`.
 - **Every email's subject and sender's name are one clean line**, and every recipient one plain address, checked
   where emails leave the site: a line end in a subject written by a template can no longer reach a mail server.
 - **A writer no longer sees a visitor's message in the email preview** (`/admin/api/emails/form` showed the newest
