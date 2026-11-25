@@ -27,7 +27,7 @@ Any client that speaks MCP over HTTP works the same way, Codex and Cursor includ
 | `brim_page_content` | What the owner saved on a page, before its code changes |
 | `brim_set_text`, `brim_set_element`, `brim_reset_element` | Change or reset an element; block settings are merged |
 | `brim_block_schema` | The settings a block accepts |
-| `brim_update_page` | Visibility, SEO and password of a page; title of a template page |
+| `brim_update_page` | Visibility and SEO of a page; title of a template page |
 | `brim_list_page_templates`, `brim_create_page`, `brim_move_page`, `brim_delete_page` | Pages added from templates |
 | `brim_list_redirects`, `brim_set_redirects` | The site's redirects |
 | `brim_list_items`, `brim_create_item`, `brim_update_item`, `brim_delete_item` | Items of content types; filter by `tag` and `locale` |

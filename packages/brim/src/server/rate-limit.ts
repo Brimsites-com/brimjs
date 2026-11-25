@@ -6,7 +6,7 @@ export const MAX_WINDOW_SECONDS = 24 * 60 * 60;
 const PRUNE_EVERY_MS = 60 * 60 * 1000;
 
 /**
- * Fixed-window counter in SQLite, for sign-ins, page passwords and forms. Every key leaves a row (a form's token
+ * Fixed-window counter in SQLite, for sign-ins and forms. Every key leaves a row (a form's token
  * leaves one per message), so rows whose window ended long ago are deleted now and then: without that, anyone
  * sending forms all day would make the table, and the database, grow without end.
  */

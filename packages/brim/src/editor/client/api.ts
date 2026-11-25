@@ -103,8 +103,6 @@ export interface SitePage {
   path: string;
   visibility: Visibility;
   seo: SeoSettings;
-  /** Visitors need a password to open it. */
-  protected?: boolean;
   /** Set on pages added from a template, which the owner can rename and delete. */
   template?: string;
   title?: string;
@@ -319,8 +317,6 @@ export const api = {
   setVisibility: (path: string, visibility: Visibility) => request<SitePage>("PUT", "/pages", { path, visibility }),
   /** Held in the draft until saved. */
   setSeo: (path: string, seo: SeoSettings) => request<SitePage & Drafted>("PUT", "/pages", { path, seo, draft: true }),
-  /** `null` removes the page's password. */
-  setPagePassword: (path: string, password: string | null) => request<SitePage>("PUT", "/pages", { path, password }), // betterleaks:allow
   movePage: (path: string, to: string) => request<{ page: SitePage }>("POST", "/pages/move", { path, to }),
   redirects: () => request<{ redirects: Redirect[] }>("GET", "/redirects"),
   setRedirects: (redirects: Redirect[]) => request<{ redirects: Redirect[] }>("PUT", "/redirects", { redirects }),

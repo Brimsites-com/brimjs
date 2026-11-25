@@ -178,7 +178,7 @@ things:
 
 - **When visitors' pages changed.** A request to `/admin` that changed what visitors see is answered with
   `X-Brim-Changed: live` (capability `live-change-header`): drafts saved to live (`POST /admin/api/drafts/save`),
-  any change written straight to the content (elements, items, pages, their visibility, SEO and passwords, the order
+  any change written straight to the content (elements, items, pages, their visibility and SEO, the order
   of items), the redirects, the site's settings, a change taken back from the history, a translation that shows on
   published pages, and an MCP message whose tool calls did any of these. Only when the request succeeded (status
   below 400). Never for drafts being typed or thrown away, reads, sign-ins and passwords, test emails, uploads not
@@ -342,7 +342,7 @@ A user's role decides what the editor offers them and what the API, and so the s
 
 | Role     | For                                  | May                                                                                                       |
 | -------- | ------------------------------------ | --------------------------------------------------------------------------------------------------------- |
-| `owner`  | whoever builds and runs the site     | everything below, plus the templates of content types, Site Settings, redirects and page passwords        |
+| `owner`  | whoever builds and runs the site     | everything below, plus the templates of content types, Site Settings and redirects                       |
 | `editor` | whoever runs its content: the client | everything a writer may, plus publish and unpublish, delete items, add, move and delete pages, read forms |
 | `writer` | someone who only writes              | change texts, images, links, blocks, SEO and item fields; upload media; add items, which stay private     |
 
@@ -1246,10 +1246,6 @@ Each page's settings (**Page Settings** in the editor, `brim_update_page` over M
 - **Settings**: hide the page from search engines (`noindex`, and it leaves the sitemap), don't follow its links
   (`nofollow`), and a canonical address when the same content is at another one (a path of the site or a full
   address; the page then leaves the sitemap).
-- **Password**: visitors see a small password form instead of the page, give the password once and keep the page
-  open on that device for 30 days; changing the password closes it again. Owners set it; signed-in users open the
-  page as it is. A protected page is never cached, carries `noindex` and leaves the sitemap. It needs the server: a
-  static build writes a notice in its place, and the dev server, where everyone edits, shows the page.
 
 `<Seo>` also writes, by itself: the canonical address of every page, `hreflang` links between a page's versions in
 the site's languages (where it has more than one), `max-image-preview:large` on pages search engines may list, on an
@@ -1269,7 +1265,7 @@ the dev server; a static build has none.
 
 Brim adds `/sitemap.xml` to every site whose `site` is set in `astro.config`. It lists the published pages
 written in code, the published pages added from templates and the page of every published item whose type has a template, and leaves out
-private pages, pages the owner hid from search engines, pages behind a password and pages whose canonical address is
+private pages, pages the owner hid from search engines and pages whose canonical address is
 another one. The server and the dev server make it on every request; a static build writes it from the content as it is
 then. A site that has its
 own `src/pages/sitemap.xml.ts` keeps it. Beside it Brim serves a `/robots.txt` that points to the sitemap and keeps
@@ -1297,8 +1293,8 @@ const post = defineContentType({
 `feed: { title, description, date, summary, limit }` changes how it reads the items; every option is optional and a
 field it names must exist with the right type, or the site stops at startup with the reason.
 
-- **Which items**: the newest 20 (`limit`) published items that have a page a visitor can open. Private items, items
-  whose page is behind a password, and items of a type with no page per item (no template, and no page for them in
+- **Which items**: the newest 20 (`limit`) published items that have a page a visitor can open. Private items
+  and items of a type with no page per item (no template, and no page for them in
   `src/pages`) are left out.
 - **Date**: the `date` field (by default `published`, or the first one of a type without it), else when the item was created.
 - **Summary**: the `summary` field (`text`, `textarea` or `richtext`); by default `description` (or the first `textarea`
@@ -1330,7 +1326,7 @@ claude mcp add --transport http my-site http://localhost:4321/admin/mcp --header
 | `brim_read_page`                                                              | A page's editable elements: nodeId, kind, scope, text and block settings |
 | `brim_set_text`, `brim_set_element`, `brim_reset_element`                     | Change or reset an element; block settings are merged                    |
 | `brim_block_schema`                                                           | The settings a block accepts                                             |
-| `brim_update_page`                                                            | Visibility, SEO and password of a page; title of a template page         |
+| `brim_update_page`                                                            | Visibility and SEO of a page; title of a template page                   |
 | `brim_move_page`                                                              | New address for a page added from a template, the old one redirecting    |
 | `brim_list_redirects`, `brim_set_redirects`                                   | The site's redirects                                                     |
 | `brim_list_page_templates`, `brim_create_page`, `brim_delete_page`            | Pages added from templates declared in code                              |

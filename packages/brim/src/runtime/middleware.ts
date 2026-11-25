@@ -5,10 +5,7 @@ import { normalizePagePath, pageScope, siteScope, typeScope } from "../content/i
 import { itemHead } from "../content/item-head.ts";
 import { redirectFor } from "../content/redirects.ts";
 import { requestUser } from "../server/auth.ts";
-import { clientAddress } from "../server/http.ts";
-import { RateLimiter } from "../server/rate-limit.ts";
 import { BrimContext } from "./context.ts";
-import { pageGate } from "./page-access.ts";
 import { connect } from "./connect.ts";
 import { withKeptReads } from "../db/cached.ts";
 import { upgradeFieldValues } from "../content/block-values.ts";
@@ -78,10 +75,9 @@ async function drawPage(context: Parameters<MiddlewareHandler>[0], next: Paramet
   const scope = itemPage ? typeScope(itemPage.type.key, locale) : pageScope(pathname);
   const scopes = [siteScope(locale), scope];
 
-  const [redirects, user, passwords, page, saved, item] = await Promise.all([
+  const [redirects, user, page, saved, item] = await Promise.all([
     live ? brim.content.redirects() : undefined,
     signedIn ? requestUser(brim, context.request) : undefined,
-    brim.content.pagePasswords(),
     brim.content.page(pathname),
     brim.content.loadNodes(scopes),
     itemPage ? brim.items.bySlug(itemPage.type.key, itemPage.slug, { locale: itemPage.locale }) : undefined,
@@ -93,22 +89,6 @@ async function drawPage(context: Parameters<MiddlewareHandler>[0], next: Paramet
   const redirect = redirects && redirectFor(redirects, pathname, context.url.search);
   if (redirect) return redirect;
   const editing = config.mode === "dev" || (signedIn && user !== undefined);
-
-  // A password-protected page asks visitors for its password; whoever can edit the site opens it as it is.
-  const passwordHash = editing ? undefined : passwords[normalizePagePath(pathname)]; // betterleaks:allow
-  if (passwordHash) {
-    const gate = await pageGate({
-      request: context.request,
-      path: normalizePagePath(pathname),
-      hash: passwordHash,
-      secret: await brim.forms.secret(),
-      server: signedIn,
-      clientAddress: signedIn ? clientAddress(context.request, context.clientAddress) : undefined,
-      rateLimiter: new RateLimiter(brim.db),
-      siteName: config.identity?.name,
-    });
-    if (gate) return gate;
-  }
 
   // The editor draws the page in a frame, with the changes nobody has saved yet; on the server any other visit shows
   // what is saved. In dev a page has no headers to tell (it is prerendered), and only its developer visits it.
@@ -139,9 +119,8 @@ async function drawPage(context: Parameters<MiddlewareHandler>[0], next: Paramet
   // Whoever may edit gets the button: everyone on the dev server, signed-in users on the live site (whose pages are
   // never cached for others, see below). Visitors and a static copy never have it.
   const response = editing && !context.isPrerendered ? await withEditButton(drawn, context.request, pathname) : drawn;
-  // What an editor sees must never be stored and shown to visitors, nor a page opened with its password.
-  if ((signedIn && editing) || passwordHash) response.headers.set("cache-control", "private, no-store");
-  if (passwordHash) response.headers.set("x-robots-tag", "noindex");
+  // What an editor sees must never be stored and shown to visitors.
+  if (signedIn && editing) response.headers.set("cache-control", "private, no-store");
   return reads ? learnWhenDrawn(response, pathname, reads, brim.db) : response;
 }
 

@@ -92,13 +92,6 @@ describe("the items of a feed", () => {
     expect(feed.items[1]?.published.toISOString()).toBe("2026-01-05T00:00:00.000Z");
   });
 
-  it("leaves out an item whose page is behind a password", async () => {
-    await create("open", {});
-    await create("members", {});
-    await content.setPagePassword("/blog/members", "hash");
-    expect((await feedOf()).items.map((item) => item.path)).toEqual(["/blog/open"]);
-  });
-
   it("sums an item up from its page's description, then the opening of its rich text", async () => {
     await create("described", {});
     await content.setPageSeo("/blog/described", { description: "From the page settings." });

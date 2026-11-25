@@ -161,8 +161,6 @@ describe("X-Brim-Changed: live", () => {
     expect(changed(await call("PUT", "/admin/api/items/visibility", { id: item.id, visibility: "published" }))).toBe(
       "live",
     );
-    const protect = { path: "/services/lawn-care", password: "page-pass" }; // betterleaks:allow (a test value)
-    expect(changed(await call("PUT", "/admin/api/pages", protect))).toBe("live");
     expect(changed(await call("PUT", "/admin/api/redirects", { redirects: [{ from: "/old", to: "/" }] }))).toBe("live");
     expect(changed(await call("DELETE", "/admin/api/items", { id: item.id }))).toBe("live");
 

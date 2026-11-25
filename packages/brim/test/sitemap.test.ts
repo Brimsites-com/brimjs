@@ -58,9 +58,8 @@ describe("the pages of items in the sitemap", () => {
 });
 
 describe("pages left out of the sitemap", () => {
-  it("leaves out a page behind a password and one whose canonical address is another page's", async () => {
-    const routes = { pages: ["/", "/about", "/members", "/copy", "/self"], patterns: [] };
-    await content.setPagePassword("/members", "hash");
+  it("leaves out a page whose canonical address is another page's", async () => {
+    const routes = { pages: ["/", "/about", "/copy", "/self"], patterns: [] };
     await content.setPageSeo("/copy", { canonical: "/about" });
     await content.setPageSeo("/self", { canonical: "/self/" });
     const entries = await sitemapEntries({ content, items, contentTypes: [], pageTemplates: [], routes });

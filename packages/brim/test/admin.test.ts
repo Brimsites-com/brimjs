@@ -536,8 +536,8 @@ describe("editing", () => {
 
     expect(await pages.json()).toEqual({
       pages: [
-        { path: "/", visibility: "published", seo: {}, protected: false },
-        { path: "/about", visibility: "private", seo: {}, protected: false },
+        { path: "/", visibility: "published", seo: {} },
+        { path: "/about", visibility: "private", seo: {} },
       ],
     });
   });
@@ -764,7 +764,6 @@ describe("page SEO", () => {
       path: "/about",
       visibility: "published",
       seo: { title: "About us", image: "/share.jpg", noindex: true },
-      protected: false,
     });
   });
 
@@ -821,9 +820,9 @@ describe("pages from templates", () => {
 
     const { pages } = (await (await call("GET", "/admin/api/pages", { cookie })).json()) as { pages: unknown[] };
     expect(pages).toEqual([
-      { path: "/", visibility: "published", seo: {}, protected: false },
-      { path: "/about", visibility: "published", seo: {}, protected: false },
-      { ...page, title: "Lawn Care & Mowing", protected: false },
+      { path: "/", visibility: "published", seo: {} },
+      { path: "/about", visibility: "published", seo: {} },
+      { ...page, title: "Lawn Care & Mowing" },
     ]);
   });
 
@@ -1241,35 +1240,11 @@ describe("page settings for search, sharing and access", () => {
     expect((await call("PUT", "/admin/api/pages", { cookie, body })).status).toBe(422);
   });
 
-  it("protects a page with a password, which only owners set and nobody reads back", async () => {
-    const owner = await signIn();
-    const set = await call("PUT", "/admin/api/pages", {
-      cookie: owner,
-      body: { path: "/about", password: "secret-1" }, // betterleaks:allow
-    });
-    const page = (await set.json()) as Record<string, unknown>;
-
-    expect(page.protected).toBe(true);
-    expect(JSON.stringify(page)).not.toContain("secret-1");
-    expect(Object.keys(await brim.content.pagePasswords())).toEqual(["/about"]);
-
-    const editor = await signInAsEditor();
-    const refused = await call("PUT", "/admin/api/pages", { cookie: editor, body: { path: "/about", password: null } }); // betterleaks:allow
-    expect(refused.status).toBe(403);
-
-    const short = await call("PUT", "/admin/api/pages", { cookie: owner, body: { path: "/about", password: "123" } }); // betterleaks:allow
-    expect(short.status).toBe(422);
-
-    await call("PUT", "/admin/api/pages", { cookie: owner, body: { path: "/about", password: null } }); // betterleaks:allow
-    expect(await brim.content.pagePasswords()).toEqual({});
-  });
-
   it("moves a page added from a template, with its content, and redirects the old address", async () => {
     const cookie = await signIn();
     await addPage(cookie, "/services/lawn");
     await brim.content.saveNode("page:/services/lawn", "service-lead", "text", { text: "Every week" });
     await brim.content.setRedirects([{ from: "/lawn", to: "/services/lawn" }]);
-    await call("PUT", "/admin/api/pages", { cookie, body: { path: "/services/lawn", password: "members" } }); // betterleaks:allow
 
     const response = await call("POST", "/admin/api/pages/move", {
       cookie,
@@ -1286,7 +1261,6 @@ describe("page settings for search, sharing and access", () => {
       { from: "/lawn", to: "/services/lawn-care" },
       { from: "/services/lawn", to: "/services/lawn-care" },
     ]);
-    expect(Object.keys(await brim.content.pagePasswords())).toEqual(["/services/lawn-care"]);
   });
 
   it("refuses to move a page written in code, or onto an address in use", async () => {
@@ -1457,7 +1431,6 @@ describe("roles", () => {
     expect(await refused.json()).toEqual({ error: "Only the site's owners can change a content type's template." });
     expect(await status("PUT", "/admin/api/redirects", editor, { redirects: [] })).toBe(403);
     expect(await status("GET", "/admin/api/mail", editor)).toBe(403);
-    expect(await status("PUT", "/admin/api/pages", editor, { path: "/about", password: "open sesame" })).toBe(403); // betterleaks:allow
   });
 });
 

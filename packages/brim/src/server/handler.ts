@@ -16,7 +16,7 @@ import { parseSettings } from "../blocks/settings.ts";
 import type { NodeKind, PageRecord, SeoSettings, StoredNode, Visibility } from "../content/types.ts";
 import { ValidationError, parseNodeValue, parseSeo } from "../content/validate.ts";
 import { parseRedirects, redirectsAfterMove } from "../content/redirects.ts";
-import { generatePassword, hashPassword } from "../auth/password.ts";
+import { generatePassword } from "../auth/password.ts";
 import type { Brim } from "../runtime/connect.ts";
 import { HttpError, assertSameOrigin, json, publicOrigin, readBytes, readJson, requestOrigin } from "./http.ts";
 import { itemPathSegments } from "../content/item-path.ts";
@@ -526,18 +526,6 @@ export function createAdminHandler(options: AdminOptions): AdminHandler {
     return template;
   }
 
-  /** A page as the editor lists it: whether it asks visitors for a password, never the password itself. */
-  function withAccess(page: PageRecord, passwords: Record<string, string>): PageRecord & { protected: boolean } { // betterleaks:allow
-    return { ...page, protected: passwords[page.path] !== undefined };
-  }
-
-  async function pagePassword(input: unknown): Promise<string> {
-    const password = requireString(input, "password"); // betterleaks:allow
-    if (password.length < 6) throw new ValidationError("A page's password needs at least 6 characters.");
-    if (password.length > 200) throw new ValidationError("That password is too long.");
-    return hashPassword(password);
-  }
-
   /** A page added from a template; pages written in code cannot be removed or renamed here. */
   async function templatePage(path: string): Promise<PageRecord> {
     const page = await brim.content.page(path);
@@ -570,8 +558,8 @@ export function createAdminHandler(options: AdminOptions): AdminHandler {
    * (in every language) follow, once no item keeps the old slug.
    */
   /**
-   * What follows an item to its new address when its slug (or a value in its path) changes: its page's password and
-   * search settings, and, for a published item, a redirect from the old address, so links and search results that
+   * What follows an item to its new address when its slug (or a value in its path) changes: its page's search
+   * settings, and, for a published item, a redirect from the old address, so links and search results that
    * point there still arrive.
    */
   async function itemMoved(type: ContentType, existing: Item, item: Item): Promise<void> {
@@ -983,7 +971,6 @@ export function createAdminHandler(options: AdminOptions): AdminHandler {
       const paths = [...new Set(pages().map(normalizePagePath))];
       const coded = await Promise.all(paths.map((path) => brim.content.page(path)));
       const added = (await brim.content.templatePages()).filter((page) => !paths.includes(page.path));
-      const passwords = await brim.content.pagePasswords(); // betterleaks:allow
       // The editor asks with `?draft`: the SEO settings it shows are the ones it previews.
       const draft = new URL(request.url).searchParams.has("draft");
       const listed = draft
@@ -994,11 +981,7 @@ export function createAdminHandler(options: AdminOptions): AdminHandler {
             })),
           )
         : [...coded, ...added];
-      return json({
-        pages: listed
-          .sort((a, b) => a.path.localeCompare(b.path))
-          .map((page) => withAccess(page, passwords)),
-      });
+      return json({ pages: listed.sort((a, b) => a.path.localeCompare(b.path)) });
     },
 
     "POST /pages": async (request) => {
@@ -1025,7 +1008,7 @@ export function createAdminHandler(options: AdminOptions): AdminHandler {
         if (!seo) throw new HttpError(400, "Only a page's SEO settings can be drafted.");
         const page = await brim.content.page(path);
         const answer = await writeDraft("seo", path, sameJson(seo, page.seo) ? undefined : seo, path);
-        return json({ ...withAccess({ ...page, seo }, await brim.content.pagePasswords()), ...answer });
+        return json({ ...page, seo, ...answer });
       }
       if (body.title !== undefined) need(user, "pages");
       if (
@@ -1034,22 +1017,14 @@ export function createAdminHandler(options: AdminOptions): AdminHandler {
       ) {
         need(user, "publish");
       }
-      if (body.password !== undefined) need(user, "settings");
       if (body.title !== undefined) {
         await templatePage(path);
         await brim.content.setPageTitle(path, titleOf(body));
       }
       if (body.visibility !== undefined) await brim.content.setPageVisibility(path, visibilityOf(body.visibility));
       if (seo) await brim.content.setPageSeo(path, seo);
-      // Who may open the page is the owners' to decide; null removes the password.
-      if (body.password !== undefined) {
-        await brim.content.setPagePassword(
-          path,
-          body.password === null ? undefined : await pagePassword(body.password), // betterleaks:allow
-        );
-      }
       await changed(path);
-      return json(withAccess(await brim.content.page(path), await brim.content.pagePasswords()));
+      return json(await brim.content.page(path));
     },
 
     // A page added from a template gets a new address; the old one keeps working, as a redirect to the new one.
@@ -1060,18 +1035,13 @@ export function createAdminHandler(options: AdminOptions): AdminHandler {
       const template = (await pageTemplates()).find((candidate) => candidate.key === page.template);
       if (!template) throw new ValidationError("This page's template is no longer in the site's code.");
       const requested = typeof body.to === "string" ? normalizePagePath(body.to.trim().replace(/^\/*/, "/")) : "";
-      if (requested === page.path) return json({ page: withAccess(page, await brim.content.pagePasswords()) });
+      if (requested === page.path) return json({ page });
       const to = await newPagePath({ path: body.to }, template, page.title ?? "");
       await brim.content.movePage(page.path, to);
       await brim.content.setRedirects(redirectsAfterMove(await brim.content.redirects(), page.path, to));
-      const passwords = await brim.content.pagePasswords(); // betterleaks:allow
-      if (passwords[page.path]) {
-        await brim.content.setPagePassword(to, passwords[page.path]);
-        await brim.content.setPagePassword(page.path, undefined);
-      }
       await changed(page.path);
       await changed(to);
-      return json({ page: withAccess(await brim.content.page(to), await brim.content.pagePasswords()) });
+      return json({ page: await brim.content.page(to) });
     },
 
     "GET /redirects": async (request) => {

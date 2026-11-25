@@ -605,37 +605,4 @@ describe("built server: redirects and passwords", () => {
     expect(response.headers.get("location")).toBe("/services/lawn-care?ref=mail");
     await send("PUT", "/admin/api/redirects", { redirects: [] }, { cookie });
   });
-
-  it("asks visitors for a page's password and opens it once they give it, while editors open it as it is", async () => {
-    const path = "/services/lawn-care";
-    await send("PUT", "/admin/api/pages", { path, password: "lawn-members" }, { cookie }); // betterleaks:allow
-    try {
-      const locked = await send("GET", path);
-      const lockedHtml = await locked.text();
-      expect(locked.status).toBe(401);
-      expect(lockedHtml).toContain("This page is protected");
-      expect(lockedHtml).not.toContain("Lawn care");
-
-      const form = (password: string) => // betterleaks:allow
-        fetch(`${origin}${path}`, {
-          method: "POST",
-          redirect: "manual",
-          // What a browser sends with a form posted on the same site.
-          headers: { "content-type": "application/x-www-form-urlencoded", origin, "sec-fetch-site": "same-origin" },
-          body: new URLSearchParams({ brim_page_password: password }), // betterleaks:allow
-        });
-      expect((await form("wrong guess")).status).toBe(401);
-      const opened = await form("lawn-members");
-      expect(opened.status).toBe(303);
-      const access = (opened.headers.get("set-cookie") ?? "").split(";")[0] ?? "";
-
-      const visitor = await send("GET", path, undefined, { cookie: access });
-      expect(visitor.status).toBe(200);
-      expect(visitor.headers.get("cache-control")).toContain("no-store");
-      expect((await send("GET", path, undefined, { cookie })).status).toBe(200);
-      expect(await (await send("GET", "/sitemap.xml")).text()).not.toContain(path);
-    } finally {
-      await send("PUT", "/admin/api/pages", { path, password: null }, { cookie }); // betterleaks:allow
-    }
-  });
 });

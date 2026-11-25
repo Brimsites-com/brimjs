@@ -85,6 +85,11 @@ migrations are append-only.
 - **A shared link's picture is a copy 1200 px wide** where the CDN makes copies (`media.resize`), instead of the
   upload at full size: `og:image` and `twitter:image`.
 
+### Removed
+
+- **Passwords on pages** (Page Settings, `password` of `brim_update_page` and `PUT /admin/api/pages`, `protected` in
+  the pages listed). A page that had one is open to everyone after the update: make it private first, or remove it.
+
 ### Fixed
 
 - The site's MCP says which version of Brim.js it runs (it always said 0.0.0).
