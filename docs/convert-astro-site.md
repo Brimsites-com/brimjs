@@ -47,4 +47,4 @@ npx brim open
 
 ## 4. Hand it over and deploy
 
-Add the client as an `editor` and their copywriter as a `writer` (see [Editing and handover](./editing.md)), then [deploy](./deploy.md) on your own server or on Brimsites, and bring the content you wrote locally with it.
+Add the client, and their copywriter, as an `editor` (see [Editing and handover](./editing.md)), then [deploy](./deploy.md) on your own server or on Brimsites, and bring the content you wrote locally with it.

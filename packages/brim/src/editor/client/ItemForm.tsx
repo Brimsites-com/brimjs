@@ -383,10 +383,7 @@ function ReferenceField({
 
   async function add(title: string): Promise<ReferenceTerm | undefined> {
     if (!field.to) return undefined;
-    const create = (visibility: "published" | "private") =>
-      api.createItem(field.to!, { title, slug: "", visibility, data: {} });
-    // A writer may add terms but not publish them: the term is made private, and published later by an editor.
-    const made = await create("published").catch(() => create("private"));
+    const made = await api.createItem(field.to, { title, slug: "", visibility: "published", data: {} });
     const term = { value: made.item.slug, label: made.item.title };
     setTerms((known) => [...known, term].sort((a, b) => a.label.localeCompare(b.label)));
     return term;

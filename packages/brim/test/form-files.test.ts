@@ -183,8 +183,14 @@ async function nothingKept(): Promise<void> {
   expect(await brim.forms.list()).toEqual([]);
 }
 
-async function signInAs(role: "owner" | "editor" | "writer"): Promise<string> {
-  const email = `${role}@example.test`;
+/** An account whose role is none of Brim's, as one kept from when there was a third: it may read no message. */
+async function signInWithoutRole(): Promise<string> {
+  const cookie = await signInAs("editor", "leftover@example.test");
+  await brim.db.query("UPDATE brim_users SET role = 'writer' WHERE email = 'leftover@example.test'");
+  return cookie;
+}
+
+async function signInAs(role: "owner" | "editor", email = `${role}@example.test`): Promise<string> {
   await brim.accounts.createUser(email, PASSWORD, role);
   const response = await admin(
     new Request(`${ORIGIN}/admin/api/session`, {
@@ -591,12 +597,12 @@ describe("downloading a visitor's file", () => {
     return `/admin/api/responses/${message?.id}/files/${message?.files[0]?.id}`;
   }
 
-  it("is for someone signed in who may read messages: never a visitor, never a writer", async () => {
+  it("is for someone signed in who may read messages: never a visitor, nor an account without a role", async () => {
     const path = await kept();
 
     expect((await api("GET", path)).status).toBe(401);
     expect((await api("GET", path, "brim_session=made-up")).status).toBe(401);
-    expect((await api("GET", path, await signInAs("writer"))).status).toBe(403);
+    expect((await api("GET", path, await signInWithoutRole())).status).toBe(403);
     expect((await api("GET", path, await signInAs("editor"))).status).toBe(200);
   });
 
@@ -655,7 +661,7 @@ describe("downloading a visitor's file", () => {
     };
 
     expect(Object.keys(responses[0]?.files[0] ?? {}).sort()).toEqual(["id", "label", "mime", "name", "size"]);
-    expect((await api("GET", "/admin/api/responses", await signInAs("writer"))).status).toBe(403);
+    expect((await api("GET", "/admin/api/responses", await signInWithoutRole())).status).toBe(403);
     const info = (await (await api("GET", "/admin/api/info")).json()) as { capabilities: string[] };
     expect(info.capabilities).toContain("form-files");
   });
@@ -665,7 +671,7 @@ describe("downloading a visitor's file", () => {
     const owner = await signInAs("owner");
     const [message] = await brim.forms.list();
 
-    expect((await api("DELETE", "/admin/api/responses", await signInAs("writer"), { id: message?.id })).status).toBe(
+    expect((await api("DELETE", "/admin/api/responses", await signInWithoutRole(), { id: message?.id })).status).toBe(
       403,
     );
     expect(storage.kept.size).toBe(1);

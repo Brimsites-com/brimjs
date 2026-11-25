@@ -122,7 +122,6 @@ export function Toolbar({
   onEditTemplate?: (() => void) | undefined;
 }) {
   const isPublic = page.visibility === "published";
-  const canPublish = user.permissions.includes("publish");
 
   return (
     <header className="brim-editor-toolbar">
@@ -224,43 +223,32 @@ export function Toolbar({
               <span className="brim-toolbar-label">Content</span>
             </button>
             <span className="toolbar-zone-divider" />
-            {!canPublish && (
-              <span
-                className="toolbar-status-pill"
-                title={`${isPublic ? "Public" : "Private"}: your role cannot publish or unpublish`}
-              >
-                <span className="toolbar-status-dot" data-state={page.visibility} />
-                <span className="toolbar-status-text">{isPublic ? "Public" : "Private"}</span>
-              </span>
-            )}
-            {canPublish && (
-              <Menu
-                label="Who can see this page"
-                className="toolbar-status-pill"
-                trigger={
-                  <>
-                    <span className="toolbar-status-dot" data-state={page.visibility} />
-                    <span className="toolbar-status-text">{isPublic ? "Public" : "Private"}</span>
-                    <ChevronDownIcon />
-                  </>
-                }
-              >
-                {(close) => (
-                  <button
-                    type="button"
-                    role="menuitem"
-                    className="brim-editor-menu__item"
-                    onClick={() => {
-                      close();
-                      onVisibility(isPublic ? "private" : "published");
-                    }}
-                  >
-                    <span>{isPublic ? "Make Private" : "Make Public"}</span>
-                    <code>{isPublic ? "Only in the editor" : "On the public site"}</code>
-                  </button>
-                )}
-              </Menu>
-            )}
+            <Menu
+              label="Who can see this page"
+              className="toolbar-status-pill"
+              trigger={
+                <>
+                  <span className="toolbar-status-dot" data-state={page.visibility} />
+                  <span className="toolbar-status-text">{isPublic ? "Public" : "Private"}</span>
+                  <ChevronDownIcon />
+                </>
+              }
+            >
+              {(close) => (
+                <button
+                  type="button"
+                  role="menuitem"
+                  className="brim-editor-menu__item"
+                  onClick={() => {
+                    close();
+                    onVisibility(isPublic ? "private" : "published");
+                  }}
+                >
+                  <span>{isPublic ? "Make Private" : "Make Public"}</span>
+                  <code>{isPublic ? "Only in the editor" : "On the public site"}</code>
+                </button>
+              )}
+            </Menu>
             {onEditTemplate && (
               <button
                 type="button"

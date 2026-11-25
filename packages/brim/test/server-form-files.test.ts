@@ -46,7 +46,9 @@ async function signIn(email: string): Promise<string> {
 beforeAll(async () => {
   const brim = await connect(databaseUrl);
   await brim.accounts.createUser("owner@example.test", PASSWORD, "owner");
-  await brim.accounts.createUser("writer@example.test", PASSWORD, "writer");
+  // An account kept from when there was a third role: signed in, it may read no message.
+  await brim.accounts.createUser("leftover@example.test", PASSWORD, "editor");
+  await brim.db.query("UPDATE brim_users SET role = 'writer' WHERE email = 'leftover@example.test'");
   await build({ root: exampleRoot, outDir, logLevel: "silent", site: "https://acme.test" });
   const port = await freePort();
   origin = `http://127.0.0.1:${port}`;
@@ -106,7 +108,7 @@ describe("a visitor's file on the built server", () => {
     expect(existsSync(kept)).toBe(true);
     const path = `/admin/api/responses/${message?.id}/files/${message?.files[0]?.id}`;
     expect((await fetch(`${origin}${path}`)).status).toBe(401);
-    expect((await fetch(`${origin}${path}`, { headers: { cookie: await signIn("writer@example.test") } })).status).toBe(
+    expect((await fetch(`${origin}${path}`, { headers: { cookie: await signIn("leftover@example.test") } })).status).toBe(
       403,
     );
     for (const guess of [
@@ -153,5 +155,46 @@ describe("a visitor's file on the built server", () => {
 
     expect(sent).toBe(413);
     expect(readdirSync(join(workDir, "form-files"), { recursive: true }).length).toBe(0);
+  }, 30_000);
+});
+
+describe("a form drawn in the editor's preview", () => {
+  it("is signed to send no email of its own, so a draft thrown away leaves no form that emails its words", async () => {
+    const owner = await signIn("owner@example.test");
+    const save = (value: Record<string, unknown>, draft: boolean) =>
+      fetch(`${origin}/admin/api/nodes`, {
+        method: "PUT",
+        headers: { origin, cookie: owner, "content-type": "application/json" },
+        body: JSON.stringify({ path: "/quote", nodeId: "quote-form", scope: "page", kind: "form", value, draft }),
+      });
+    const drawn = async (headers: Record<string, string>) => {
+      const html = await (await fetch(`${origin}/quote`, { headers })).text();
+      const spec = JSON.parse(Buffer.from(/data-spec="([^"]+)"/.exec(html)?.[1] ?? "", "base64url").toString());
+      return { html, spec: spec as { confirm?: unknown; notify?: string } };
+    };
+    const emails = {
+      confirmationEmail: true,
+      confirmationSubject: "We got your plan",
+      confirmationMessage: "Thank you, we answer within a day.",
+      notificationEmail: "sales@example.test",
+    };
+
+    // A draft, even of someone who may write these: the preview draws it, and signs none of it to send email.
+    expect((await save({ ...emails, buttonText: "Send the draft" }, true)).status).toBe(200);
+    const preview = await drawn({ cookie: owner, "sec-fetch-dest": "iframe" });
+    expect(preview.html).toMatch(/data-last-step[^>]*>\s*Send the draft/);
+    expect(preview.spec.confirm).toBeUndefined();
+    expect(preview.spec.notify).toBeUndefined();
+
+    // Saved, the page visitors get is signed with them; the preview of it still is not.
+    expect((await save(emails, false)).status).toBe(200);
+    const live = await drawn({});
+    expect(live.spec.confirm).toEqual({
+      field: "email",
+      subject: "We got your plan",
+      message: "Thank you, we answer within a day.",
+    });
+    expect(live.spec.notify).toMatch(/^v1\./);
+    expect((await drawn({ cookie: owner, "sec-fetch-dest": "iframe" })).spec).not.toHaveProperty("confirm");
   }, 30_000);
 });

@@ -88,7 +88,7 @@ export interface AccountEmail {
   /** Whose access it is: the email goes to them. */
   email: string;
   role: Role;
-  /** What the role allows, in a few words ("change words and pictures"). */
+  /** What the role allows, in a few words ("write, publish, add pages…"). */
   roleDescription: string;
   previousRole?: Role | undefined;
   /** Who did it, when known: the owner signed in, or whose token the host used. */

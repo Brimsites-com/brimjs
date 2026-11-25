@@ -246,8 +246,8 @@ site in git (`git init`, then commit as you go): `brim check` warns when it is n
 ## Roles, for handing the site over
 
 `npx brim user add client@example.com --role editor`: an editor writes, publishes, adds pages and reads the forms,
-but cannot change templates or settings; a `writer` only changes words and pictures; an `owner` (the builder) can
-do everything. Every change is kept in the site's history for 90 days and can be taken back from the editor.
+but cannot change templates or settings; an `owner` (the builder) can do everything. Every change is kept in the
+site's history for 90 days and can be taken back from the editor.
 
 ## Deploying
 

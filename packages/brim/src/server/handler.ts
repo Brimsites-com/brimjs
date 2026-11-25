@@ -29,7 +29,7 @@ import {
   readJson,
   requestOrigin,
 } from "./http.ts";
-import { itemPathFields, itemPathSegments } from "../content/item-path.ts";
+import { itemPathSegments } from "../content/item-path.ts";
 import { type LocaleConfig, itemPagePath, localeOfPath, pathInLocale, storedLocale } from "./locales.ts";
 import { RateLimiter } from "./rate-limit.ts";
 import { SESSION_COOKIE, bearerToken, requestUser, sessionCookies } from "./auth.ts";
@@ -71,7 +71,6 @@ import {
   assertUnused,
   checkReferences,
   isReferenced,
-  referencesTo,
   renameReferences,
 } from "../content/references.ts";
 import { applySeed, exportSeed, planSeed } from "../content/seed.ts";
@@ -304,10 +303,8 @@ export function createAdminHandler(options: AdminOptions): AdminHandler {
       need(user, scope.startsWith("type:") ? "templates" : "content");
       const before = record.before as { kind: string; value: unknown } | null;
       await rememberNode(user, scope, nodeId, record.page, before ? "changed" : "reset", true);
-      if (before) {
-        const value = await allowedSettings(user, scope, nodeId, before.kind, before.value, false);
-        await brim.content.saveNode(scope, nodeId, before.kind, value);
-      } else await brim.content.resetNode(scope, nodeId);
+      if (before) await brim.content.saveNode(scope, nodeId, before.kind, before.value);
+      else await brim.content.resetNode(scope, nodeId);
       return;
     }
     if (record.target === "item") {
@@ -319,10 +316,7 @@ export function createAdminHandler(options: AdminOptions): AdminHandler {
       const current = await brim.items.get(item.id);
       if (current) {
         need(user, "content");
-        if (current.visibility !== item.visibility) need(user, "publish");
-        // Putting a published item back at its old address moves it for visitors, as editing its slug would.
         const type = await contentType(current.type);
-        await needForMove(user, type, current, item);
         await rememberItem(user, current, "changed", [], true);
         await brim.items.update(current, {
           slug: item.slug,
@@ -490,7 +484,7 @@ export function createAdminHandler(options: AdminOptions): AdminHandler {
   }
 
   function roleOf(value: unknown): Role {
-    if (!ROLES.includes(value as Role)) throw new ValidationError('The role is "owner", "editor" or "writer".');
+    if (!ROLES.includes(value as Role)) throw new ValidationError('The role is "owner" or "editor".');
     return value as Role;
   }
 
@@ -564,29 +558,6 @@ export function createAdminHandler(options: AdminOptions): AdminHandler {
   }
 
   /**
-   * Moving a published item to a new address changes what visitors see, so it takes a role that may publish, whichever
-   * way it moves: its slug, another value its address holds, or the slug of a term it, or a published item, is under.
-   */
-  async function needForMove(
-    user: User,
-    type: ContentType,
-    live: Item,
-    next: Pick<Item, "slug" | "data">,
-  ): Promise<void> {
-    if (can(user, "publish")) return;
-    const to = itemPagePath(type, { ...live, slug: next.slug, data: next.data }, locales);
-    if (live.visibility === "published" && to !== itemPagePath(type, live, locales)) need(user, "publish");
-    const types = await contentTypes();
-    if (next.slug === live.slug || !isReferenced(types, type.key)) return;
-    const translations = live.translationOf === null ? await brim.items.translations(live) : [];
-    const under = (await referencesTo(types, brim.items, live)).filter(({ type: of, field }) =>
-      itemPathFields(of).includes(field),
-    );
-    const moving = [...translations.filter(({ slug }) => slug === live.slug), ...under.map(({ item }) => item)];
-    if (moving.some(({ visibility }) => visibility === "published")) need(user, "publish");
-  }
-
-  /**
    * What follows an item to its new address when its slug (or a value in its path) changes: its page's search
    * settings, what the owner placed on its page when that is written in code, and, for a published item, a redirect
    * from the old address, so links and search results that point there still arrive.
@@ -657,11 +628,10 @@ export function createAdminHandler(options: AdminOptions): AdminHandler {
     if (body.draft === true) {
       const existing = await brim.drafts.overlayItem(live);
       const next = applyToItem(await contentType(live.type), existing, field, kind, value);
-      return json({ nodeId, kind, ...(await draftItem(user, live, next, pagePathOf(body))) });
+      return json({ nodeId, kind, ...(await draftItem(live, next, pagePathOf(body))) });
     }
     const type = await contentType(live.type);
     const next = applyToItem(type, live, field, kind, value);
-    await needForMove(user, type, live, next);
     await rememberItem(user, live, "changed");
     const item = await brim.items.update(live, next);
     await itemMoved(type, live, item);
@@ -688,36 +658,6 @@ export function createAdminHandler(options: AdminOptions): AdminHandler {
   }
 
   /**
-   * A block's settings as this user may save them: one their role may not change (`permission` in its schema) stays
-   * as it was, whatever was sent. The editor sends a block's settings whole, the code's own among them, so a value
-   * that differs from the saved one does not mean somebody changed it.
-   */
-  async function allowedSettings(
-    user: User,
-    scope: string,
-    nodeId: string,
-    kind: string,
-    value: unknown,
-    draft: boolean,
-  ): Promise<unknown> {
-    const properties = Object.hasOwn(blockDefinitions, kind) ? blockDefinitions[kind]?.schema.properties : undefined;
-    const kept = Object.entries(properties ?? {}).filter(
-      ([, { permission }]) => permission !== undefined && !can(user, permission),
-    );
-    if (kept.length === 0) return value;
-    const drafted = draft ? ((await brim.drafts.get("node", `${scope}\n${nodeId}`)) as NodeDraft | undefined) : undefined;
-    const saved = (await brim.content.loadNodes([scope])).find((node) => node.nodeId === nodeId);
-    const current = drafted && "reset" in drafted ? undefined : (drafted ?? saved);
-    const before = (current?.kind === kind ? current.value : {}) as Record<string, unknown>;
-    const settings = { ...(value as Record<string, unknown>) };
-    for (const [name] of kept) {
-      if (Object.hasOwn(before, name)) settings[name] = before[name];
-      else delete settings[name];
-    }
-    return settings;
-  }
-
-  /**
    * Writes one draft and answers with the change, so the editor can take it back (`before`) and make it again
    * (`after`); `null` is no draft, the saved content. `drafts` counts the changes nobody has saved yet.
    */
@@ -736,8 +676,7 @@ export function createAdminHandler(options: AdminOptions): AdminHandler {
   }
 
   /** An item's content held back as a draft; who can see it is never drafted. Answers with the item as previewed. */
-  async function draftItem(user: User, live: Item, next: ItemContentDraft, page: string) {
-    await needForMove(user, await contentType(live.type), live, next);
+  async function draftItem(live: Item, next: ItemContentDraft, page: string) {
     const content: ItemContentDraft = { slug: next.slug, title: next.title, data: next.data };
     const same = content.slug === live.slug && content.title === live.title && sameJson(content.data, live.data);
     const answer = await writeDraft("item", live.id, same ? undefined : content, page);
@@ -757,14 +696,13 @@ export function createAdminHandler(options: AdminOptions): AdminHandler {
       const draft = value as Record<string, unknown>;
       if (draft.reset === true) return { reset: true };
       const kind = requireString(draft.kind, "kind");
-      return { kind, value: await allowedSettings(user, scope, nodeId, kind, nodeValueOf(kind, draft.value), true) };
+      return { kind, value: nodeValueOf(kind, draft.value) };
     }
     if (target === "item") {
       const live = await existingItem({ id: key });
       if (value === null) return undefined;
       const type = await contentType(live.type);
       const parsed = parseItem(type, { ...(value as Record<string, unknown>), visibility: live.visibility });
-      await needForMove(user, type, live, parsed);
       return { slug: parsed.slug, title: parsed.title, data: parsed.data };
     }
     if (target === "seo") return value === null ? undefined : parseSeo(value);
@@ -796,7 +734,6 @@ export function createAdminHandler(options: AdminOptions): AdminHandler {
           if (existing) {
             const content = row.value as ItemContentDraft;
             const type = await contentType(existing.type);
-            await needForMove(user, type, existing, content);
             await rememberItem(user, existing, "changed", [], true);
             const item = await brim.items.update(existing, { ...content, visibility: existing.visibility });
             await itemMoved(type, existing, item);
@@ -1040,13 +977,12 @@ export function createAdminHandler(options: AdminOptions): AdminHandler {
     },
 
     "POST /pages": async (request) => {
-      const user = await allowed(request, "pages");
+      await allowed(request, "pages");
       const body = await readJson(request);
       const template = await pageTemplate(body.template);
       const title = titleOf(body);
       const path = await newPagePath(body, template, title);
       const visibility = visibilityOf(body.visibility ?? "private");
-      if (visibility === "published") need(user, "publish");
       const page = await brim.content.createPage(path, template.key, title, visibility);
       // A private page shows nobody anything yet.
       await changed(path, visibility === "published");
@@ -1054,7 +990,7 @@ export function createAdminHandler(options: AdminOptions): AdminHandler {
     },
 
     "PUT /pages": async (request) => {
-      const user = await allowed(request, "content");
+      await allowed(request, "content");
       const body = await readJson(request);
       const path = pagePathOf(body);
       const seo = body.seo === undefined ? undefined : parseSeo(body.seo);
@@ -1064,13 +1000,6 @@ export function createAdminHandler(options: AdminOptions): AdminHandler {
         const page = await brim.content.page(path);
         const answer = await writeDraft("seo", path, sameJson(seo, page.seo) ? undefined : seo, path);
         return json({ ...page, seo, ...answer });
-      }
-      if (body.title !== undefined) need(user, "pages");
-      if (
-        body.visibility !== undefined &&
-        visibilityOf(body.visibility) !== (await brim.content.page(path)).visibility
-      ) {
-        need(user, "publish");
       }
       if (body.title !== undefined) {
         await templatePage(path);
@@ -1204,10 +1133,9 @@ export function createAdminHandler(options: AdminOptions): AdminHandler {
      */
     "GET /emails/form": async (request) => {
       // It shows the newest message a visitor sent, so it asks for what reading the messages asks for.
-      const user = await allowed(request, "responses");
+      await allowed(request, "responses");
       const origin = publicOrigin(request, options.siteUrl);
-      // A role that cannot read messages (a writer) sees the example, never a visitor's words.
-      const newest = can(user, "responses") ? (await brim.forms.list())[0] : undefined;
+      const newest = (await brim.forms.list())[0];
       const page = newest ? formPage(newest.form) : "/produse/exemplu";
       const answers = newest?.answers ?? [
         { label: "Nume", value: "Ana Popescu" },
@@ -1253,7 +1181,7 @@ export function createAdminHandler(options: AdminOptions): AdminHandler {
       }
       const origin = publicOrigin(request, options.siteUrl);
       const example = { ...owner, email: "ana@example.com", role: "editor" as const };
-      const email = accountEmail(origin, kind, example, owner, kind === "role" ? undefined : "example", kind === "role" ? "writer" : undefined);
+      const email = accountEmail(origin, kind, example, owner, kind === "role" ? undefined : "example", kind === "role" ? "owner" : undefined);
       return emailPreview(request, await accountMessage(email));
     },
 
@@ -1530,12 +1458,11 @@ export function createAdminHandler(options: AdminOptions): AdminHandler {
     },
 
     "POST /items": async (request) => {
-      const user = await allowed(request, "content");
+      await allowed(request, "content");
       const body = await readJson(request);
       const type = await contentType(body.type);
       // A new item stays out of sight until it is published, like a new page.
       const draft = parseItem(type, { ...body, visibility: body.visibility ?? "private" });
-      if (draft.visibility === "published") need(user, "publish");
       await checkReferences(await contentTypes(), brim.items, type, draft);
       const locale = localeOf(body.locale);
       if (draft.visibility === "published") draft.data = withPublishedDate(type, draft.data);
@@ -1587,7 +1514,7 @@ export function createAdminHandler(options: AdminOptions): AdminHandler {
      * in code must exist in that language in the code; a page added from a template is added there too.
      */
     "POST /pages/translate": async (request) => {
-      const user = await allowed(request, "content");
+      await allowed(request, "content");
       if (!locales) throw new ValidationError("This site has one language: add others to Astro's i18n in its code.");
       const body = await readJson(request);
       const from = pagePathOf(body);
@@ -1606,7 +1533,6 @@ export function createAdminHandler(options: AdminOptions): AdminHandler {
             `This page has no ${locale.toUpperCase()} version in the site yet (${to}). It has to be added in the site's code first (src/pages), then it can be translated here.`,
           );
         }
-        need(user, "pages");
         await brim.content.createPage(to, source.template, source.title ?? "", "private");
         created = true;
       }
@@ -1627,13 +1553,10 @@ export function createAdminHandler(options: AdminOptions): AdminHandler {
       if (body.draft === true) {
         const parsed = parseItem(type, { ...body, visibility: existing.visibility });
         assertTermSlug(await contentTypes(), existing, parsed.slug);
-        return json(await draftItem(user, existing, parsed, pagePathOf(body)));
+        return json(await draftItem(existing, parsed, pagePathOf(body)));
       }
       const draft = parseItem(type, body);
       assertTermSlug(await contentTypes(), existing, draft.slug);
-      // Publishing, unpublishing and moving a published item to a new address change what visitors see at once.
-      if (draft.visibility !== existing.visibility) need(user, "publish");
-      await needForMove(user, type, existing, draft);
       if (draft.visibility === "published" && existing.visibility === "private")
         draft.data = withPublishedDate(type, draft.data);
       const types = await contentTypes();
@@ -1780,11 +1703,10 @@ export function createAdminHandler(options: AdminOptions): AdminHandler {
         }
         return saveToItem(user, body, nodeId, kind, body.value as Record<string, unknown>);
       }
-      const sent = nodeValueOf(kind, body.value);
-      if (body.item !== undefined) return saveToItem(user, body, nodeId, kind, sent as Record<string, unknown>);
+      const value = nodeValueOf(kind, body.value);
+      if (body.item !== undefined) return saveToItem(user, body, nodeId, kind, value as Record<string, unknown>);
       if (body.scope === "template") need(user, "templates");
       const scope = await scopeOf(body, path);
-      const value = await allowedSettings(user, scope, nodeId, kind, sent, body.draft === true);
       if (body.draft === true) {
         return json({ nodeId, kind, value, ...(await writeDraft("node", `${scope}\n${nodeId}`, { kind, value }, path)) });
       }
@@ -1850,9 +1772,8 @@ export function createAdminHandler(options: AdminOptions): AdminHandler {
     },
     {
       /**
-       * One file a visitor attached to a form message, for a role that may read messages (never a writer, never a
-       * visitor). The file is found through the message's own list, by two ids: no name or path from the request
-       * reaches the storage. Always a download, never shown in the page, never cached.
+       * One file a visitor attached to a form message, for a role that may read messages (never a visitor). The file is
+       * found through the message's own list, by two ids: no name or path from the request reaches the storage. Always a download, never shown in the page, never cached.
        */
       method: "GET",
       pattern: /^\/responses\/([^/]+\/files\/[^/]+)$/,

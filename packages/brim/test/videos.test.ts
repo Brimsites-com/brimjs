@@ -316,9 +316,9 @@ describe("video uploads through a video host", () => {
     expect((await call(admin, "DELETE", "/admin/api/videos/vid_1")).status).toBe(401);
     expect(hostCalls).toEqual([]);
 
-    await brim.accounts.createUser("writer@example.test", PASSWORD, "writer");
+    await brim.accounts.createUser("editor@example.test", PASSWORD, "editor");
     const session = await call(admin, "POST", "/admin/api/session", {
-      body: { email: "writer@example.test", password: PASSWORD }, // betterleaks:allow
+      body: { email: "editor@example.test", password: PASSWORD }, // betterleaks:allow
     });
     const cookie = (session.headers.get("set-cookie") ?? "").split(";")[0] ?? "";
     expect((await call(admin, "POST", "/admin/api/videos", { body: clip, cookie })).status).toBe(201);

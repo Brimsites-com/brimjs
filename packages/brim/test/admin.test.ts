@@ -1302,13 +1302,10 @@ describe("page settings for search, sharing and access", () => {
 });
 
 describe("roles", () => {
-  const signInAs = async (role: "editor" | "writer"): Promise<string> => {
-    const email = `${role}@example.test`;
-    await brim.accounts.createUser(email, PASSWORD, role);
-    const response = await call("POST", "/admin/api/session", { body: { email, password: PASSWORD } }); // betterleaks:allow
-    expect(((await response.json()) as { permissions: string[] }).permissions).toEqual(
-      role === "editor" ? ["content", "publish", "pages", "responses"] : ["content"],
-    );
+  const EDITOR = "editor@example.test";
+  const signInAsEditor = async (permissions = ["content", "publish", "pages", "responses"]): Promise<string> => {
+    const response = await call("POST", "/admin/api/session", { body: { email: EDITOR, password: PASSWORD } }); // betterleaks:allow
+    expect(((await response.json()) as { permissions: string[] }).permissions).toEqual(permissions);
     return (response.headers.get("set-cookie") ?? "").split(";")[0] ?? "";
   };
   const text = (value: string) => ({ text: value });
@@ -1323,92 +1320,67 @@ describe("roles", () => {
     });
   });
 
-  it("a writer changes words and adds private items, and nothing else", async () => {
+  it("are owner and editor: no other is given to anyone", async () => {
     const owner = await signIn();
-    const page = await call("POST", "/admin/api/pages", {
-      cookie: owner,
-      body: { template: "service", title: "Lawn care" },
-    });
-    expect(page.status).toBe(201);
+    const body = { email: EDITOR, role: "writer" };
+    const added = await call("POST", "/admin/api/users", { cookie: owner, body });
+    expect(added.status).toBe(422);
+    expect(await added.json()).toEqual({ error: 'The role is "owner" or "editor".' });
+    await brim.accounts.createUser(EDITOR, PASSWORD, "editor");
+    expect(await status("PUT", "/admin/api/users", owner, body)).toBe(422);
+    await expect(brim.accounts.setRole(EDITOR, "writer" as never)).rejects.toThrow('The role is "owner" or "editor".');
+  });
+
+  it("an account whose role is none of them changes nothing and reads no message, until an owner gives it one", async () => {
+    const owner = await signIn();
     const made = await call("POST", "/admin/api/items", {
       cookie: owner,
       body: { type: "project", title: "Lake house", visibility: "published", data: { location: "Cluj" } },
     });
     const { item } = (await made.json()) as { item: Item };
-    const writer = await signInAs("writer");
+    await call("POST", "/admin/api/pages", { cookie: owner, body: { template: "service", title: "Lawn care" } });
+    await call("PUT", "/admin/api/nodes", {
+      cookie: owner,
+      body: { path: "/", scope: "page", nodeId: "hero-title", kind: "text", value: text("Hi") },
+    });
+    const [change] = await brim.history.list();
 
-    expect(
-      await status("PUT", "/admin/api/nodes", writer, {
-        path: "/",
-        scope: "page",
-        nodeId: "hero-title",
-        kind: "text",
-        value: text("Hi"),
-      }),
-    ).toBe(200);
-    expect(
-      await status("POST", "/admin/api/items", writer, { type: "project", title: "Draft", data: { location: "Iasi" } }),
-    ).toBe(201);
-    expect(
-      await status("PUT", "/admin/api/items", writer, {
-        id: item.id,
-        title: "Lake house 2",
-        slug: item.slug,
-        visibility: "published",
-        data: item.data,
-      }),
-    ).toBe(200);
+    // As an account kept from when there was a third role, "writer".
+    await brim.accounts.createUser(EDITOR, PASSWORD, "editor");
+    await brim.db.query("UPDATE brim_users SET role = 'writer' WHERE email = ?", [EDITOR]);
+    const leftover = await signInAsEditor([]);
+    const node = { path: "/", scope: "page", nodeId: "hero-title", kind: "text", value: text("Hello") };
+    const whole = { id: item.id, title: "Lake", slug: item.slug, visibility: "published", data: item.data };
+    for (const [method, path, body] of [
+      ["PUT", "/nodes", node],
+      ["PUT", "/nodes", { ...node, draft: true }],
+      ["DELETE", "/nodes", node],
+      ["POST", "/drafts/save", {}],
+      ["DELETE", "/drafts", {}],
+      ["POST", "/items", { type: "project", title: "Draft", data: { location: "Iasi" } }],
+      ["PUT", "/items", whole],
+      ["PUT", "/items/visibility", { id: item.id, visibility: "private" }],
+      ["DELETE", "/items", { id: item.id }],
+      ["POST", "/pages", { template: "service", title: "Pruning" }],
+      ["PUT", "/pages", { path: "/about", seo: { title: "About us" } }],
+      ["POST", "/pages/move", { path: "/services/lawn-care", to: "/services/lawns" }],
+      ["DELETE", "/pages", { path: "/services/lawn-care" }],
+      ["POST", "/history/restore", { id: change!.id }],
+      ["PUT", "/redirects", { redirects: [] }],
+      ["GET", "/responses", undefined],
+      ["GET", "/emails/form", undefined],
+      ["GET", "/users", undefined],
+    ] as const) {
+      expect(await status(method, `/admin/api${path}`, leftover, body), `${method} ${path}`).toBe(403);
+    }
 
-    // Publishing, unpublishing, deleting, pages, templates, forms and settings are not a writer's.
-    expect(
-      await status("POST", "/admin/api/items", writer, {
-        type: "project",
-        title: "Live",
-        visibility: "published",
-        data: { location: "Iasi" },
-      }),
-    ).toBe(403);
-    expect(
-      await status("PUT", "/admin/api/items", writer, {
-        id: item.id,
-        title: item.title,
-        slug: item.slug,
-        visibility: "private",
-        data: item.data,
-      }),
-    ).toBe(403);
-    expect(
-      await status("PUT", "/admin/api/items", writer, {
-        id: item.id,
-        title: item.title,
-        slug: "moved",
-        visibility: "published",
-        data: item.data,
-      }),
-    ).toBe(403);
-    expect(await status("DELETE", "/admin/api/items", writer, { id: item.id })).toBe(403);
-    expect(await status("PUT", "/admin/api/pages", writer, { path: "/about", visibility: "private" })).toBe(403);
-    expect(await status("PUT", "/admin/api/pages", writer, { path: "/about", seo: { title: "About us" } })).toBe(200);
-    expect(await status("POST", "/admin/api/pages", writer, { template: "service", title: "Pruning" })).toBe(403);
-    expect(await status("DELETE", "/admin/api/pages", writer, { path: "/services/lawn-care" })).toBe(403);
-    expect(
-      await status("POST", "/admin/api/pages/move", writer, { path: "/services/lawn-care", to: "/services/lawns" }),
-    ).toBe(403);
-    expect(await status("GET", "/admin/api/responses", writer)).toBe(403);
-    expect(await status("PUT", "/admin/api/redirects", writer, { redirects: [] })).toBe(403);
-    expect(
-      await status("PUT", "/admin/api/nodes", writer, {
-        path: `/projects/${item.slug}`,
-        scope: "template",
-        nodeId: "project-back",
-        kind: "text",
-        value: text("Back"),
-      }),
-    ).toBe(403);
+    expect(await status("PUT", "/admin/api/users", owner, { email: EDITOR, role: "editor" })).toBe(200);
+    expect(await status("PUT", "/admin/api/nodes", leftover, node)).toBe(200);
   });
 
   it("an editor runs the content, but not the templates or the settings", async () => {
-    const editor = await signInAs("editor");
+    await brim.accounts.createUser(EDITOR, PASSWORD, "editor");
+    const editor = await signInAsEditor();
     const made = await call("POST", "/admin/api/items", {
       cookie: editor,
       body: { type: "project", title: "Lake house", visibility: "published", data: { location: "Cluj" } },
@@ -1546,18 +1518,24 @@ describe("history", () => {
       body: { type: "project", title: "Lake house", visibility: "published", data: { location: "Cluj" } },
     });
     const { item } = (await made.json()) as { item: Item };
+    const back = { scope: "template", nodeId: "project-back", kind: "text" };
+    await call("PUT", "/admin/api/nodes", {
+      cookie,
+      body: { ...back, path: `/projects/${item.slug}`, value: text("Back") },
+    });
+    const template = (await history(cookie)).find((entry) => entry.title === "project-back")!;
     await call("DELETE", "/admin/api/items", { cookie, body: { id: item.id } });
     const deleted = (await history(cookie)).find((entry) => entry.action === "deleted")!;
 
-    await brim.accounts.createUser("writer@example.test", PASSWORD, "writer");
-    const response = await call("POST", "/admin/api/session", { body: { email: "writer@example.test", password: PASSWORD } }); // betterleaks:allow
-    const writer = (response.headers.get("set-cookie") ?? "").split(";")[0] ?? "";
-    expect(
-      (await call("POST", "/admin/api/history/restore", { cookie: writer, body: { id: deleted.id } })).status,
-    ).toBe(403);
-    expect((await call("POST", "/admin/api/history/restore", { cookie: writer, body: { id: "nope" } })).status).toBe(
-      404,
-    );
+    await brim.accounts.createUser("editor@example.test", PASSWORD, "editor");
+    const response = await call("POST", "/admin/api/session", { body: { email: "editor@example.test", password: PASSWORD } }); // betterleaks:allow
+    const editor = (response.headers.get("set-cookie") ?? "").split(";")[0] ?? "";
+    const restore = async (id: string) =>
+      (await call("POST", "/admin/api/history/restore", { cookie: editor, body: { id } })).status;
+    // A template is the owners' to change, and so to change back; an item is an editor's to delete and to put back.
+    expect(await restore(template.id)).toBe(403);
+    expect(await restore(deleted.id)).toBe(200);
+    expect(await restore("nope")).toBe(404);
     expect((await call("GET", "/admin/api/history")).status).toBe(401);
   });
 });

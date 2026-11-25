@@ -104,13 +104,13 @@ Without `BRIM_CAPTCHA_SECRET` on the server, such forms refuse every message rat
 
 ## Where responses go
 
-Responses appear in the editor under Form responses, filtered per form, and Site Settings lists the forms with their newest message. Owners and editors can read them; writers cannot. Agents read them with `brim_list_form_responses`.
+Responses appear in the editor under Form responses, filtered per form, and Site Settings lists the forms with their newest message. Owners and editors can read them. Agents read them with `brim_list_form_responses`.
 
 Forms post to `/_brim/forms`, answered by the dev server and the built server. A static build has nothing to receive them.
 
 ## Form emails
 
-Each message is also emailed to every user of the roles ticked in Site Settings (the owners by default, the editors too when ticked), to extra addresses set there and to the form's own notification email (which only owners and editors change), ten addresses at most. Reply goes to the first email address the visitor wrote. The message is saved even if the email fails.
+Each message is also emailed to every user of the roles ticked in Site Settings (the owners by default, the editors too when ticked), to extra addresses set there and to the form's own notification email, ten addresses at most. Reply goes to the first email address the visitor wrote. The message is saved even if the email fails.
 
 The links in it go to `BRIM_SITE_URL` or the `site` of `astro.config.mjs`, never to an address taken from the request. A site with neither sends its emails without links; a template then gets `""` for each address.
 

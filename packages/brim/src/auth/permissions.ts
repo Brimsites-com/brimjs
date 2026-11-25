@@ -13,16 +13,15 @@ import type { Role, User } from "./accounts.ts";
  */
 export type Permission = "content" | "publish" | "pages" | "templates" | "responses" | "settings" | "users";
 
-export const ROLES: readonly Role[] = ["owner", "editor", "writer"];
+export const ROLES: readonly Role[] = ["owner", "editor"];
 
 /**
  * An owner builds and runs the site; an editor runs its content (the client of an agency: writes, publishes, adds
- * pages, reads the forms) without touching its structure or settings; a writer only changes words and pictures.
+ * pages, reads the forms) without touching its structure or settings.
  */
 export const ROLE_PERMISSIONS: Record<Role, readonly Permission[]> = {
   owner: ["content", "publish", "pages", "templates", "responses", "settings", "users"],
   editor: ["content", "publish", "pages", "responses"],
-  writer: ["content"],
 };
 
 export function permissionsOf(role: Role): readonly Permission[] {
@@ -36,10 +35,10 @@ export function can(user: Pick<User, "role">, permission: Permission): boolean {
 /** What the API answers when a user asks for something their role does not allow. */
 export const REFUSALS: Record<Permission, string> = {
   content: "Your role cannot change the site's content.",
-  publish: "Your role cannot publish, unpublish or delete: ask an editor or an owner of the site.",
-  pages: "Your role cannot add, move or delete pages: ask an editor or an owner of the site.",
+  publish: "Your role cannot publish, unpublish or delete: ask an owner of the site.",
+  pages: "Your role cannot add, move or delete pages: ask an owner of the site.",
   templates: "Only the site's owners can change a content type's template.",
-  responses: "Your role cannot see what visitors sent through the forms: ask an editor or an owner of the site.",
+  responses: "Your role cannot see what visitors sent through the forms: ask an owner of the site.",
   settings: "Only the site's owners can change its settings.",
   users: "Only the site's owners can manage its users.",
 };

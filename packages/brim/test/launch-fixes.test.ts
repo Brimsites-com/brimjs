@@ -133,29 +133,12 @@ describe("addresses inside the server's network", () => {
 });
 
 describe("roles", () => {
-  it("keep the newest form message from a writer, as /responses does", async () => {
-    const writer = await userWith("writer");
-    expect((await api("GET", "/emails/form?text", writer.cookie)).status).toBe(403);
+  it("keep the newest form message from an account without one, as /responses does", async () => {
+    const leftover = await userWith("editor");
+    await brim.db.query("UPDATE brim_users SET role = 'writer'");
+    expect((await api("GET", "/emails/form?text", leftover.cookie)).status).toBe(403);
     const owner = await userWith("owner");
     expect((await api("GET", "/emails/form?text", owner.cookie)).status).toBe(200);
-  });
-
-  it("do not let a writer move a published item through the history", async () => {
-    const owner = await userWith("owner");
-    const writer = await userWith("writer");
-    const item = await brim.items.create("project", { title: "A", slug: "a", visibility: "published", data: {} });
-    const moved = await api("PUT", "/items", owner.cookie, {
-      id: item.id,
-      title: "A",
-      slug: "b",
-      visibility: "published",
-      data: {},
-    });
-    expect(moved.status).toBe(200);
-    const [record] = (await brim.history.list()).filter((entry) => entry.target === "item");
-    const restored = await api("POST", "/history/restore", writer.cookie, { id: record!.id });
-    expect(restored.status).toBe(403);
-    expect((await brim.items.get(item.id))?.slug).toBe("b");
   });
 });
 

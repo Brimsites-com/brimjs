@@ -57,8 +57,8 @@ const USAGE = `Usage:
   brim user add <email> [--role <role>]         Create a user who can sign in at /admin.
                                                 The password is asked for, or read from stdin.
   brim user list [--json]                       List users with their role and number of tokens.
-  brim user role <email> <role>                 Change a user's role: owner (everything), editor (writes, publishes,
-                                                adds pages, reads forms) or writer (words and pictures only).
+  brim user role <email> <role>                 Change a user's role: owner (everything) or editor (writes, publishes,
+                                                adds pages, reads forms).
   brim user password <email>                    Set a new password (asked for, or read from stdin).
                                                 Ends their sessions and access tokens.
   brim user link <email>                        Print a link that signs the user in once, within two minutes,
