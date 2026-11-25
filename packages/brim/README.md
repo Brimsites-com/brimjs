@@ -18,6 +18,6 @@ import { Text, Image, Link } from "@brimsites/brimjs/components";
 <Link nodeId="hero-cta" href="/about">Meet the studio</Link>
 ```
 
-Documentation: https://brimjs.com/docs
+Documentation: https://brimjs.org/docs
 
 Source available under the Functional Source License (FSL-1.1-MIT); see `LICENSE`.

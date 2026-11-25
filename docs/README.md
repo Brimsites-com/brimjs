@@ -2,7 +2,7 @@
 
 Brim.js makes Astro sites editable. You write pages in Astro with components that carry a stable `nodeId`; the owner edits them in a visual editor on the site itself, and their content lives in SQLite. One Node server draws the pages, so a saved edit is live at once.
 
-These pages are the human documentation. The brimjs.com website renders them from this folder. For agents, the guides in `packages/brim/skills/` and the `AGENTS.md` of every new site carry the same rules.
+These pages are the human documentation. The brimjs.org website renders them from this folder. For agents, the guides in `packages/brim/skills/` and the `AGENTS.md` of every new site carry the same rules.
 
 ## Start
 
