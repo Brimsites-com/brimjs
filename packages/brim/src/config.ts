@@ -1,11 +1,15 @@
 import { mkdirSync } from "node:fs";
 import { join } from "node:path";
+import { splitDatabaseUrl } from "./db/url.ts";
 import type { IconsOptions } from "./icons/library.ts";
 
 export interface DatabaseOptions {
   /** SQLite database URL. Defaults to `BRIM_DATABASE_URL`, then to a file in `.brim/` inside the project. */
   database?: string;
-  /** Token for a remote database. Defaults to `BRIM_DATABASE_TOKEN`. */
+  /**
+   * Token for a remote database while developing and building. Defaults to `BRIM_DATABASE_TOKEN`, which the built
+   * server reads where it runs: a token written here is never put into the build.
+   */
   authToken?: string;
 }
 
@@ -324,9 +328,12 @@ export interface DatabaseConfig {
 }
 
 export function resolveDatabase(options: DatabaseOptions, projectRoot: string): DatabaseConfig {
+  const { url, authToken } = splitDatabaseUrl(
+    options.database ?? process.env.BRIM_DATABASE_URL ?? localDatabaseUrl(projectRoot),
+  );
   return {
-    databaseUrl: options.database ?? process.env.BRIM_DATABASE_URL ?? localDatabaseUrl(projectRoot), // betterleaks:allow
-    authToken: options.authToken ?? process.env.BRIM_DATABASE_TOKEN, // betterleaks:allow
+    databaseUrl: url, // betterleaks:allow
+    authToken: options.authToken ?? authToken ?? process.env.BRIM_DATABASE_TOKEN, // betterleaks:allow
   };
 }
 

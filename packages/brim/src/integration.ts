@@ -167,8 +167,17 @@ export default function brim(options: BrimOptions = {}): AstroIntegration {
         // The built server reads where its database is when it starts, so the same build runs anywhere and a
         // remote database's token is never written into it. A database named in the config stays as written.
         const databaseModule = options.database
-          ? `{ databaseUrl: ${JSON.stringify(database.databaseUrl)}, authToken: ${JSON.stringify(options.authToken)} ?? process.env.BRIM_DATABASE_TOKEN }`
-          : `{ databaseUrl: process.env.BRIM_DATABASE_URL ?? ${JSON.stringify(database.databaseUrl)}, authToken: ${JSON.stringify(options.authToken)} ?? process.env.BRIM_DATABASE_TOKEN }`; // betterleaks:allow
+          ? `{ databaseUrl: ${JSON.stringify(database.databaseUrl)}, authToken: process.env.BRIM_DATABASE_TOKEN }` // betterleaks:allow
+          : `{ databaseUrl: process.env.BRIM_DATABASE_URL ?? ${JSON.stringify(database.databaseUrl)}, authToken: process.env.BRIM_DATABASE_TOKEN }`; // betterleaks:allow
+        if (database.authToken && database.authToken !== process.env.BRIM_DATABASE_TOKEN) {
+          // For this process only (the dev server, the pages a build writes); the build itself never holds it.
+          process.env.BRIM_DATABASE_TOKEN = database.authToken; // betterleaks:allow
+          if (command === "build" && mode === "server") {
+            logger.warn(
+              "The database token of astro.config is not written into the build: set BRIM_DATABASE_TOKEN where the server runs.",
+            );
+          }
+        }
         // Pages read the declarations through this module, so Vite reloads them when a file changes.
         const configModule = [
           contentTypesFile && `import { contentTypes } from ${JSON.stringify(contentTypesFile)};`,

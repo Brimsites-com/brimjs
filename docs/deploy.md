@@ -31,7 +31,7 @@ What the server needs:
 | --- | --- |
 | `HOST`, `PORT` | Where the server listens |
 | `BRIM_SITE_URL` | The public address, when `site` is not set in code |
-| `BRIM_DATABASE_URL`, `BRIM_DATABASE_TOKEN` | The database; without them `.brim/data.db` in the project |
+| `BRIM_DATABASE_URL`, `BRIM_DATABASE_TOKEN` | The database, and its token (read only here, never from a build); without them `.brim/data.db` in the project |
 | `BRIM_CLIENT_IP_HEADER` | The header in which your proxy gives the visitor's address (e.g. `x-real-ip`) |
 | `BRIM_SMTP_URL`, `BRIM_MAIL_FROM` | An SMTP server for form emails (or `BRIM_MAIL_URL`, `BRIM_MAIL_TOKEN` for a mail service) |
 | `BRIM_MEDIA_STORAGE_URL`, `BRIM_MEDIA_PUBLIC_URL`… | Where uploads are kept and served from ([Media](./media.md)) |

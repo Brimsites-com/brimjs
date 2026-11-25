@@ -84,6 +84,11 @@ migrations are append-only.
   widest copy (2560 px), which is also its `src`. An image no wider than that is still the widest of its own list.
 - **A shared link's picture is a copy 1200 px wide** where the CDN makes copies (`media.resize`), instead of the
   upload at full size: `og:image` and `twitter:image`.
+- **A database token is never written into a build.** `authToken` of `brim()` (and a token in the address of `database`)
+  is used while developing and building; the built server reads `BRIM_DATABASE_TOKEN` where it runs. A server that relied
+  on the token of its build needs that variable.
+- **A database reached unencrypted over the internet is refused** (`http://`, `ws://`, `libsql://…?tls=0`): its token
+  would be readable on the way. `http://` still works for a database on the same computer or in a private network.
 
 ### Removed
 

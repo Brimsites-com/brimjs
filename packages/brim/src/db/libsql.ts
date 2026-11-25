@@ -1,8 +1,10 @@
 import { createClient } from "@libsql/client";
 import type { Database, Row, SqlValue, Statement } from "./database.ts";
+import { assertSecureDatabaseUrl } from "./url.ts";
 
 /** Opens a SQLite file (`file:./data.db`), an in-memory database (`:memory:`) or a remote libSQL URL. */
 export function openDatabase(url: string, authToken?: string): Database {
+  assertSecureDatabaseUrl(url);
   const client = createClient(authToken ? { url, authToken } : { url });
 
   return {
