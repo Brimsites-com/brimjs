@@ -49,6 +49,16 @@ const project = defineContentType({
   ],
 });
 
+const post = defineContentType({
+  key: "post",
+  label: "Posts",
+  singular: "Post",
+  slug: "blog",
+  component: () => "",
+  article: true,
+  fields: [],
+});
+
 // Its item pages are written in the site's code (`src/pages/notes/[slug].astro`), without a template.
 const note = defineContentType({
   key: "note",
@@ -96,7 +106,7 @@ beforeEach(async () => {
     locales: { defaultLocale: "en", locales: ["en", "ro"] },
     assetsDirectory: new URL("../editor-dist/", import.meta.url),
     pages: () => codePages,
-    contentTypes: () => [project, note],
+    contentTypes: () => [project, note, post],
     pageTemplates: () => [service],
     mediaDirectory,
     brandColors: resolveBrandColors({ Primary: "#FF7138", Ink: "#242420" }),
@@ -170,6 +180,11 @@ async function call(method: string, path: string, options: CallOptions = {}): Pr
   );
   if (!response) throw new Error(`${path} was not handled`);
   return response;
+}
+
+async function json<T>(response: Response): Promise<T> {
+  expect(response.ok).toBe(true);
+  return (await response.json()) as T;
 }
 
 async function signIn(): Promise<string> {
@@ -632,6 +647,7 @@ describe("content items", () => {
     expect(types).toMatchObject([
       { key: "project", slug: "projects", hasPage: true },
       { key: "note", hasPage: false },
+      { key: "post", hasPage: true, article: true },
     ]);
     expect(types[0]).not.toHaveProperty("component");
   });
@@ -1574,11 +1590,6 @@ describe("history", () => {
 });
 
 describe("drafts", () => {
-  async function json<T>(response: Response): Promise<T> {
-    expect(response.status).toBe(200);
-    return (await response.json()) as T;
-  }
-
   it("holds an element back from visitors until it is saved, and remembers it in the history then", async () => {
     const cookie = await signIn();
     const drafted = await json<{ change: { before: unknown; after: unknown }; drafts: number }>(
@@ -1690,5 +1701,49 @@ describe("drafts", () => {
     expect(pages.find((page) => page.path === "/about")?.seo).toEqual({ title: "Draft" });
     await json(await call("POST", "/admin/api/drafts/save", { cookie }));
     expect((await brim.content.page("/about")).seo).toEqual({ title: "Draft" });
+  });
+});
+
+describe("an article's published date", () => {
+  const today = new Date().toISOString().slice(0, 10);
+  const create = async (cookie: string, body: object = {}) =>
+    (
+      await json<{ item: Item }>(
+        await call("POST", "/admin/api/items", { cookie, body: { type: "post", title: "Spring", data: {}, ...body } }),
+      )
+    ).item;
+  const show = (cookie: string, id: string, visibility: string) =>
+    call("PUT", "/admin/api/items/visibility", { cookie, body: { id, visibility } });
+
+  it("is the day it is first published, kept when it is hidden and shown again", async () => {
+    const cookie = await signIn();
+    const item = await create(cookie);
+    expect(item.data.published).toBeUndefined();
+    await json(await show(cookie, item.id, "published"));
+    expect((await brim.items.get(item.id))?.data.published).toBe(today);
+    expect((await create(cookie, { title: "Summer", visibility: "published" })).data.published).toBe(today);
+
+    const dated = await create(cookie, { title: "Winter", data: { published: "2025-01-05" } });
+    for (const visibility of ["published", "private", "published"]) await json(await show(cookie, dated.id, visibility));
+    expect((await brim.items.get(dated.id))?.data.published).toBe("2025-01-05");
+  });
+
+  it("is not lost to a draft saved after, and can be emptied by hand", async () => {
+    const cookie = await signIn();
+    const item = await create(cookie);
+    const content = { id: item.id, title: "Spring again", slug: item.slug, data: { description: "New" } };
+    await json(await call("PUT", "/admin/api/items", { cookie, body: { ...content, path: "/blog/spring", draft: true } }));
+    await json(await show(cookie, item.id, "published"));
+    await json(await call("POST", "/admin/api/drafts/save", { cookie }));
+    expect((await brim.items.get(item.id))?.data).toEqual({ description: "New", published: today });
+
+    await json(await call("PUT", "/admin/api/items", { cookie, body: { ...content, visibility: "published" } }));
+    expect((await brim.items.get(item.id))?.data).toEqual({ description: "New" });
+  });
+
+  it("is only an article's", async () => {
+    const cookie = await signIn();
+    const item = await create(cookie, { type: "project", visibility: "published", data: { location: "Cluj" } });
+    expect(item.data).toEqual({ location: "Cluj" });
   });
 });

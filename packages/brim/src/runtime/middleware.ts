@@ -1,8 +1,8 @@
 import type { MiddlewareHandler } from "astro";
 import config from "virtual:brim/config";
-import { itemAuthor, itemPageOf } from "../content/content-types.ts";
+import { itemPageOf } from "../content/content-types.ts";
 import { normalizePagePath, pageScope, siteScope, typeScope } from "../content/ids.ts";
-import { itemImage } from "../content/item-image.ts";
+import { itemHead } from "../content/item-head.ts";
 import { redirectFor } from "../content/redirects.ts";
 import { requestUser } from "../server/auth.ts";
 import { clientAddress } from "../server/http.ts";
@@ -120,11 +120,17 @@ async function drawPage(context: Parameters<MiddlewareHandler>[0], next: Paramet
 
   const nodes = preview ? await brim.drafts.overlayNodes(saved, scopes) : saved;
   const seo = preview ? await brim.drafts.overlaySeo(page.path, page.seo) : page.seo;
-  // A shared link of an item shows the item's own picture, unless the owner chose a preview image for the page;
-  // search engines read who wrote it from its author.
-  const picture = item && itemPage && !seo.image ? itemImage(itemPage.type, item) : undefined;
-  const author = item && itemPage ? itemAuthor(itemPage.type, item) : undefined;
-  context.locals.brim = new BrimContext(scope, locale, nodes, editing, seo, picture, author);
+  // What search engines and shared links are told of an item, unless the owner or the page's code says otherwise.
+  const shown = item && preview ? await brim.drafts.overlayItem(item) : item;
+  const head =
+    shown && itemPage
+      ? await itemHead(itemPage.type, shown, {
+          types: config.contentTypes,
+          publishedItems: (type) => brim.items.listCached(type, { publishedOnly: true }),
+          locales: config.locales,
+        })
+      : undefined;
+  context.locals.brim = new BrimContext(scope, locale, nodes, editing, seo, head);
   // What the page reads of its address's query, noted while it is drawn (its blocks, `readsQuery`), so the server
   // can tell a host which parameters each page reads (see `QueryReads`). Only for pages a visitor gets on the server.
   const reads = signedIn && context.request.method === "GET" ? new QueryCollector() : undefined;

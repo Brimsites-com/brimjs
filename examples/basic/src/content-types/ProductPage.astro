@@ -7,7 +7,7 @@ import Site from "../layouts/Site.astro";
 const { item: product } = Astro.props as ItemPageProps;
 ---
 
-<Site title={`${product.title} — Acme Shop`} description={String(product.data.summary ?? "")}>
+<Site title={`${product.title} — Acme Shop`}>
   <Text nodeId="product-title" item={product} field="title" as="h1">
     {product.title}
   </Text>

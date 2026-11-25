@@ -38,14 +38,14 @@ Brim measures every upload, so its images carry `width` and `height` and pages d
 For an item's picture, `<Image bare>` draws only the `<img>` with its `srcset`, and the owner can still replace the picture from the page, in a template as in every card of a `Listing`:
 
 ```astro
-<Image bare nodeId="product-card-image" item={item} field="cover" src="" alt="" class="card__image"
+<Image bare nodeId="product-card-image" item={item} field="image" src="" alt="" class="card__image"
   loading="lazy" sizes="(max-width: 768px) 100vw, 33vw" />
 ```
 
 In your own markup, `mediaUrl(src)` and `imageSources(src, sizes)` from `brimjs/content` give the public address and the `srcset`:
 
 ```astro
-<img {...imageSources(item.data.cover.src, "(max-width: 768px) 100vw, 33vw")} alt={item.data.cover.alt} />
+<img {...imageSources(item.data.image.src, "(max-width: 768px) 100vw, 33vw")} alt={item.data.image.alt} />
 ```
 
 `brim check` warns about `<img src={mediaUrl(…)}>`, which sends every visitor the full upload.

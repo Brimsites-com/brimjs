@@ -5,7 +5,6 @@ import {
   type ContentField,
   type ContentType,
   defineContentType,
-  itemAuthor,
   optionLabel,
   itemPageOf,
 } from "../src/content/content-types.ts";
@@ -28,6 +27,10 @@ const summary: ContentField = { name: "summary", label: "Summary", type: "textar
 const author: ContentField = { name: "author", label: "Author", type: "text" };
 const tags: ContentField = { name: "tags", label: "Tags", type: "tags" };
 
+const description = expect.objectContaining({ name: "description", type: "textarea" });
+const image = expect.objectContaining({ name: "image", type: "image" });
+const published = expect.objectContaining({ name: "published", type: "date" });
+
 describe("defineContentType", () => {
   it("takes a blocks field that offers some of the blocks a stack can hold", () => {
     expect(() => declare({ name: "body", label: "Body", type: "blocks", blocks: ["richtext", "image"] })).not.toThrow();
@@ -47,35 +50,55 @@ describe("defineContentType", () => {
   });
 
   it("gives every item an author and tags, after the fields the type declares", () => {
-    expect(declare(summary).fields).toEqual([summary, author, tags]);
+    expect(declare(summary, false).fields).toEqual([summary, author, tags]);
   });
 
   it("leaves out the author or the tags of a type that asks for none", () => {
-    expect(declare(summary, true, { author: false }).fields).toEqual([summary, tags]);
-    expect(declare(summary, true, { tags: false }).fields).toEqual([summary, author]);
-    expect(declare(summary, true, { author: false, tags: false }).fields).toEqual([summary]);
+    expect(declare(summary, false, { author: false }).fields).toEqual([summary, tags]);
+    expect(declare(summary, false, { tags: false }).fields).toEqual([summary, author]);
+    expect(declare(summary, false, { author: false, tags: false }).fields).toEqual([summary]);
   });
 
   it("keeps a type's own author and tags fields in place of the default ones", () => {
     const writers: ContentField = { name: "author", label: "Written by", type: "select", options: ["Ana", "Ion"] };
     const rooms: ContentField = { name: "tags", label: "Rooms", type: "tags", options: ["Kitchen", "Bedroom"] };
 
-    expect(declare(summary, true, { fields: [writers, summary] }).fields).toEqual([writers, summary, tags]);
-    expect(declare(summary, true, { fields: [rooms, summary] }).fields).toEqual([rooms, summary, author]);
+    expect(declare(summary, false, { fields: [writers, summary] }).fields).toEqual([writers, summary, tags]);
+    expect(declare(summary, false, { fields: [rooms, summary] }).fields).toEqual([rooms, summary, author]);
   });
 });
 
-describe("itemAuthor", () => {
-  it("reads the item's author, trimmed, and nothing when it has none", () => {
-    const type = declare(summary);
-
-    expect(itemAuthor(type, { data: { author: "  Ana Pop " } })).toBe("Ana Pop");
-    expect(itemAuthor(type, { data: { author: "  " } })).toBeUndefined();
-    expect(itemAuthor(type, { data: {} })).toBeUndefined();
+describe("the fields Brim adds to a type with pages", () => {
+  it("gives items with a page a description and an image, first", () => {
+    expect(declare(summary).fields).toEqual([description, image, summary, author, tags]);
+    expect(declare(summary, false).fields).toEqual([summary, author, tags]);
   });
 
-  it("has no author for a type without one, whatever the item's data holds", () => {
-    expect(itemAuthor(declare(summary, true, { author: false }), { data: { author: "Ana" } })).toBeUndefined();
+  it("leaves out the ones a type asks not to have", () => {
+    const fields = declare(summary, true, { description: false, image: false, author: false, tags: false }).fields;
+    expect(fields).toEqual([summary]);
+  });
+
+  it("keeps a type's own field of a standard name, with its label", () => {
+    const own: ContentField = { name: "description", label: "Rezumat", type: "textarea", required: true };
+    expect(declare(own).fields).toEqual([image, own, author, tags]);
+  });
+
+  it("gives articles a published date, and wants a page for them", () => {
+    expect(declare(summary, true, { article: true }).fields).toEqual([
+      description,
+      image,
+      summary,
+      published,
+      author,
+      tags,
+    ]);
+    expect(() => declare(summary, false, { article: true })).toThrow(/give it a component/);
+  });
+
+  it("lets a feed read the fields it added", () => {
+    const feed = { date: "published", summary: "description" };
+    expect(() => declare(summary, true, { article: true, feed })).not.toThrow();
   });
 });
 

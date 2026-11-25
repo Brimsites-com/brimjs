@@ -5,7 +5,8 @@ import SiteFooter from "../components/SiteFooter.astro";
 import SiteHeader from "../components/SiteHeader.astro";
 
 interface Props {
-  title: string;
+  /** Left out on an item's page (an article): its own title and description go in the head. */
+  title?: string;
   description?: string;
 }
 

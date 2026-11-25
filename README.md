@@ -488,6 +488,9 @@ source. The command exits with 1 when there are errors, so it can run in CI.
   addresses, numbers of one repeated digit (`+40 000 000 000`, `0700 000 000`), TODO / FIXME notes, "placeholder",
   in items, the site settings (with their defaults) and the pages' texts and links;
 - **terms nothing uses**: a category no product points at, whose page lists nothing;
+- **items search engines are told too little of**: published items with a page but no description, image or
+  (articles) date, and fields that look meant for search engines but are not given to them (`seo_title`, or an
+  `image` that is a gallery);
 - **pages missing from the sitemap**: a dynamic route in `src/pages` (`/oferte/[slug]`) that no content type draws,
   so Brim cannot know its addresses. Make what it shows items of a type with that `path`, or a vocabulary with pages.
 
@@ -511,19 +514,22 @@ const project = defineContentType({
   singular: "Project",
   slug: "projects",
   component: ProjectPage, // the template of every project's page: /projects/<address>
-  fields: [
-    { name: "summary", label: "Summary", type: "textarea", required: true },
-    { name: "cover", label: "Cover image", type: "image" },
-  ],
+  fields: [{ name: "year", label: "Year", type: "number" }],
 });
 
 export const contentTypes = [project];
 ```
 
-Every item has an author by default: Brim adds a text field `author` after the declared ones, so it shows in the
-editor, the API and the MCP like any field, and the item's page gives it to search engines as
-`<meta name="author">`. `author: false` leaves it out, for items nobody signs (team members, products); a field
-named `author` in `fields` takes its place, e.g. a `select` of the site's writers.
+**Brim adds the fields every site needs**, under the same names everywhere: `description` and `image` to types with a
+`component`, `published` to types with `article: true`, `author` and `tags` to every type. They show in the editor,
+the API and the MCP like any field, and `<Seo>` gives them to search engines and shared links. `description: false`,
+`image: false`, `author: false` and `tags: false` leave them out; a field of that name in `fields` takes its place,
+with a label of its own (`{ name: "description", label: "Summary", type: "textarea", required: true }`). An `author`
+may be text, a `select` of the site's writers, or a vocabulary of them.
+
+**`article: true`** is for items written by someone on a date (news, blog posts): `published` is filled in when an
+item is first published, and `<Seo>` writes schema.org `Article` data on its page. See
+[docs/content-types.md](docs/content-types.md).
 
 Every item has tags too: a field `tags` of type `tags`, after the author, edited as chips that offer the tags the
 type's other items already have; a tag is the same whatever its case. `Listing` filters on them (`filter={{ tags: "garden" }}`), the editor's **Content**
@@ -1245,8 +1251,9 @@ Each page's settings (**Page Settings** in the editor, `brim_update_page` over M
   static build writes a notice in its place, and the dev server, where everyone edits, shows the page.
 
 `<Seo>` also writes, by itself: the canonical address of every page, `hreflang` links between a page's versions in
-the site's languages (where it has more than one), `<meta name="author">` on an item's page from the item's author
-(or from its `author` prop), and on the home page structured data for search engines (`WebSite` and
+the site's languages (where it has more than one), `max-image-preview:large` on pages search engines may list, on an
+item's page what neither Page Settings nor the code gives (its title, `description`, `image` and `author`; for an
+`article`, its schema.org data too), and on the home page structured data for search engines (`WebSite` and
 `Organization`, once `identity.name` is set): the name, its other spellings from `identity.alternateName`, and the
 site's profiles elsewhere from the `sameAs` prop, which takes them from Site Settings so the owner keeps them
 current: `<Seo title={title} sameAs={[facebook, instagram]} />`. Empty ones are left out.
@@ -1281,9 +1288,6 @@ const post = defineContentType({
   component: PostPage,
   feed: true, // or with options, below
   fields: [
-    { name: "excerpt", label: "Excerpt", type: "textarea" },
-    { name: "published", label: "Published on", type: "date" },
-    { name: "cover", label: "Cover", type: "image" },
     { name: "body", label: "Body", type: "blocks" },
   ],
 });
@@ -1295,9 +1299,9 @@ field it names must exist with the right type, or the site stops at startup with
 - **Which items**: the newest 20 (`limit`) published items that have a page a visitor can open. Private items, items
   whose page is behind a password, and items of a type with no page per item (no template, and no page for them in
   `src/pages`) are left out.
-- **Date**: the `date` field (by default the type's first one), else when the item was created.
-- **Summary**: the `summary` field (`text`, `textarea` or `richtext`); by default the first `textarea`, then the
-  description set in the item's Page Settings, then the opening of the first `richtext` field.
+- **Date**: the `date` field (by default `published`, or the first one of a type without it), else when the item was created.
+- **Summary**: the `summary` field (`text`, `textarea` or `richtext`); by default `description` (or the first `textarea`
+  of a type without it), then the description set in the item's Page Settings, then the opening of the first `richtext` field.
 - **Picture**: the item's first image field, as `media:content`.
 - **Title**: `title`, by default the type's label after the site's name (`Acme Studio · Blog`).
 

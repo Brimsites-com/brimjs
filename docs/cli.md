@@ -34,7 +34,7 @@ Run them with `npx brim …` (or `pnpm brim …`) in the site's folder.
 
 It exits with 1 when there are errors, so it fits in CI.
 
-`brim check --content` reads the running site and warns about lorem ipsum, example addresses, numbers of one repeated digit, TODO notes and "placeholder" left in items, settings and pages; terms nothing uses; and dynamic pages missing from the sitemap. These are warnings: some may be on purpose.
+`brim check --content` reads the running site and warns about lorem ipsum, example addresses, numbers of one repeated digit, TODO notes and "placeholder" left in items, settings and pages; terms nothing uses; dynamic pages missing from the sitemap; published items with no description, image or date for search engines; and fields that look meant for them but are not (`seo_title`). These are warnings: some may be on purpose.
 
 ## Before changing a page's code
 

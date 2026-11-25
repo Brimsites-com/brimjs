@@ -33,7 +33,7 @@ Without a function child Brim draws a plain card per item: `variation` (`grid` o
 
 Visitors see published items; in the editor private ones show too. Selecting a listing in the editor shows how many items it lists, opens them, and adds a new one with the fields its `filter` asks for already filled in, so the new item lands in the listing it was added from.
 
-For card images, use `<Image bare item={item} field="cover" … />` inside the function child, so the owner can replace a picture from the card. See [Media](./media.md).
+For card images, use `<Image bare item={item} field="image" … />` inside the function child, so the owner can replace a picture from the card. See [Media](./media.md).
 
 ## Facets, search and pages
 
@@ -45,7 +45,7 @@ A catalog lets visitors narrow the list themselves. The `filter` of the code sti
   type="product"
   filter={{ category: "ceramics" }}
   facets={["brand", "tags"]}
-  search={["title", "summary", "brand", "specs"]}
+  search={["title", "description", "brand", "specs"]}
   pageSize={12}
   labels={{ search: "Search", apply: "Apply", reset: "Reset", results: "{count} products", next: "Next", previous: "Previous" }}
 />

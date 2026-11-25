@@ -4,6 +4,40 @@ What changed in Brim.js, newest first. Since 1.0 the versions are semantic: only
 components and config, and says so here under **Changed**; a minor version adds, a patch version fixes. Database
 migrations are append-only.
 
+## 2.0.0
+
+### Added
+
+- **The fields every site needs, under the same names everywhere.** A content type with a `component` has a
+  `description` (`textarea`) and an `image`, as every type already had `author` and `tags`; `description: false` and
+  `image: false` leave them out, and a field of that name in `fields` takes its place with a label of its own
+  (`{ name: "description", label: "Summary", type: "textarea", required: true }`). `<Seo>` reads the item's title,
+  description, image and author by itself on its page, so a layout's `title` and `description` can be left out there.
+- **`article: true`** on a content type, for news and blog posts: a `published` date, filled in the day an item is
+  first published, and schema.org `Article` data on each item's page (headline, description, picture, authors with
+  their pages, dates, the site as publisher), with `og:type` `article`. Only what the item says is written: no date of
+  creation or last save, no date still to come, no site-wide description or picture. A `modified` date field, when
+  declared, is the date of the last revision.
+- **Authors kept as a vocabulary** are named by their title in the page's language, each on their own, with a link to
+  their page or to their first `url` field; a private one is not named. RSS feeds name authors (`dc:creator`).
+- `max-image-preview:large` in `<meta name="robots">` on every page search engines may list.
+- `brim check --content` warns about published items with no description, image or date for search engines
+  (`search-empty`), and about fields that look meant for them but are not given to them (`search-fields`).
+
+### Changed
+
+- **Types with a `component` show two more fields**, `description` and `image`, and `Listing` cards, menus, feeds and
+  shared links read those by default rather than the first text or image field declared. A site whose fields have
+  other names renames them when it updates, in its templates and in the values it has saved (Brim does not move
+  them), or says `description: false, image: false` to stay as it was.
+- `<meta name="author">` of an author picked from a vocabulary or a `select` is the name shown, no longer the saved
+  slug or value.
+
+### Fixed
+
+- `item.data.author` (and any field of a name Brim adds) has the type the site declares; a `multiple` reference was
+  typed as `string & string[]`.
+
 ## 1.0.0
 
 ### Added

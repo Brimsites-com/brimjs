@@ -49,8 +49,8 @@ describe("declaring a vocabulary and the fields that use it", () => {
   });
 
   it("reads a field naming its vocabulary as a reference to it, and says which vocabulary it uses", () => {
-    expect(product.fields[0]).toMatchObject({ type: "reference", to: "category", vocabulary: "category" });
-    expect(product.fields[1]).toMatchObject({ type: "reference", to: "brand", multiple: true });
+    expect(product.fields.find(({ name }) => name === "category")).toMatchObject({ type: "reference", to: "category", vocabulary: "category" });
+    expect(product.fields.find(({ name }) => name === "brands")).toMatchObject({ type: "reference", to: "brand", multiple: true });
     expect(() => checkReferenceTargets(types)).not.toThrow();
   });
 

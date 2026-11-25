@@ -42,7 +42,7 @@ export const product = defineContentType({
 export const contentTypes = [category, product];
 ```
 
-`defineVocabulary` is `defineContentType` without the default `author` and `tags` fields. A field with `vocabulary` is a `reference` field; `type: "reference", to: "…"` points at any type.
+`defineVocabulary` is `defineContentType` without the default `author` and `tags` fields; one with pages has `description` and `image`. A field with `vocabulary` is a `reference` field; `type: "reference", to: "…"` points at any type.
 
 ## How references behave
 

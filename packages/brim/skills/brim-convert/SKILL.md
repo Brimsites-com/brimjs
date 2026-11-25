@@ -116,7 +116,7 @@ Work page by page and build after each one (`astro build` or the dev server): a 
      - a logo or icon that is part of the design: a file in `public/`, not an upload.
      `npx brim check` warns about every `/uploads/…` address it finds in `src/`.
    - **A picture of an item is an `Image` too, never `<img src={mediaUrl(…)}>`**: in a template, a `Listing` card,
-     a megamenu. `<Image bare nodeId="product-card-image" item={item} field="cover" src="" alt="" class="…"
+     a megamenu. `<Image bare nodeId="product-card-image" item={item} field="image" src="" alt="" class="…"
      loading="lazy" />` draws the same `<img>` with a `srcset`, so the CDN sends a copy the size of the layout
      instead of the full upload, and the owner replaces the picture from the page (it is saved into that item, so
      one `nodeId` serves every card of a list). Give it `sizes` when the layout knows its width
@@ -146,16 +146,20 @@ Work page by page and build after each one (`astro build` or the dev server): a 
    does not draw, the Form's function child places each field with `Field`.
 7. **Repeatable content** (blog posts, projects, team, services kept as Markdown/MDX collections or arrays):
    - declare a content type in `src/content-types/index.ts` with `defineContentType` (`key`, `label`, `singular`,
-     `slug`, `fields`, and `component` when each item has a page), and export `contentTypes = [...]`; every type
-     has an `author` text field by default (an entry's `author` goes there), `author: false` for types nobody signs,
-     and a `tags` field (an entry's `tags` or categories go there as a list), `tags: false` for types without them;
+     `slug`, `fields`, and `component` when each item has a page), and export `contentTypes = [...]`; Brim
+     adds `description` and `image` to a type with a `component` (an entry's summary or excerpt and its cover go
+     there), `published` to one with `article: true` (blog posts, news: the entry's date goes there), `author` and
+     `tags` to every type (`author: false` for types nobody signs, `tags: false` for types without tags). Use these
+     names, never `summary`, `cover` or `date`; declare one only to change its label, make it required or let it
+     point at a vocabulary (`{ name: "author", label: "Written by", vocabulary: "writer" }`). An entry's SEO title
+     and description go in its page's settings (`brim_update_page`), never in fields;
    - when the item pages sit deeper than `/<slug>/<item>` (`src/pages/products/[category]/[slug].astro`), give the
      type `path: "/products/[category]/[slug]"` with `category` a required `select` or `text` field, so the addresses
      stay as they are;
    - turn the item page (`src/pages/blog/[slug].astro`) into the type's template (`src/content-types/ArticlePage.astro`):
      it gets `const { item } = Astro.props as ItemPageProps`, shows fields with
      `<Text nodeId="article-title" item={item} field="title" as="h1" />`, `RichText`, `Image`,
-     `<Field nodeId="article-date" item={item} field="date" />` for a date, number, select, boolean, url or email
+     `<Field nodeId="article-date" item={item} field="published" />` for a date, number, select, boolean, url or email
      field, and a `blocks` field with `<Blocks nodeId="article-body" item={item} field="body" />`; then delete the
      old route file;
    - **the body of an item with a page is a `blocks` field** (an article, a project, a service, a product's long
@@ -167,8 +171,7 @@ Work page by page and build after each one (`astro build` or the dev server): a 
      when the site starts;
    - replace lists of the collection with `<Listing nodeId="posts" type="article" sort="published">{(item) => …}</Listing>`
      or `getItems("article")` from `brimjs/content`;
-   - for a blog, news or anything readers follow, set `feed: true` on the type (or
-     `feed: { date: "published", summary: "excerpt" }`): Brim serves its RSS feed at `/rss/<slug>.xml` and links it
+   - for a blog, news or anything readers follow, set `feed: true` on the type: Brim serves its RSS feed at `/rss/<slug>.xml` and links it
      from `Seo`. If the site had its own RSS route (`@astrojs/rss`, `src/pages/rss.xml.ts`), keep the old address
      working with a redirect or by leaving that route in place until the user decides;
    - move the existing entries into the database as items: write them as `seed/<type>.json` (their pictures in

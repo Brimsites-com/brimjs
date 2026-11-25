@@ -5,7 +5,8 @@ import { siteSettings } from "../site-settings.ts";
 import type { FooterValue, NavbarValue } from "brimjs";
 
 interface Props {
-  title: string;
+  /** Left out on an item's page, whose own title and description go in the head. */
+  title?: string;
   description?: string;
   /** Also draws the links in a menu that opens over the page. */
   mobileMenu?: boolean;

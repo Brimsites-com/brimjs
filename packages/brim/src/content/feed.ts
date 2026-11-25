@@ -1,5 +1,6 @@
 import { type LocaleConfig, itemPagePath, storedLocale } from "../server/locales.ts";
-import { type ContentType, type FeedOptions, feedOptionsOf } from "./content-types.ts";
+import { type ContentType, type FeedOptions, feedOptionsOf, standardField } from "./content-types.ts";
+import { itemAuthors } from "./item-head.ts";
 import { itemImage } from "./item-image.ts";
 import type { Item, ItemStore } from "./items.ts";
 import { type SiteRoutes, escapeXml, itemHasPage } from "./sitemap.ts";
@@ -31,6 +32,8 @@ export interface FeedItem {
   summary?: string;
   /** The item's own picture, as stored: an address on the site or a full one. */
   image?: string;
+  /** The names of who wrote it. */
+  authors: string[];
 }
 
 export interface Feed {
@@ -76,6 +79,8 @@ export function feedAt(
 }
 
 interface Sources {
+  /** Every type of the site, for the authors an item points at. */
+  types: ContentType[];
   content: ContentStore;
   items: ItemStore;
   routes: SiteRoutes;
@@ -90,7 +95,7 @@ interface Sources {
  */
 export async function buildFeed(
   { type, locale, path }: FeedAddress,
-  { content, items, routes, locales, siteName }: Sources,
+  { types, content, items, routes, locales, siteName }: Sources,
 ): Promise<Feed> {
   const options: FeedOptions = feedOptionsOf(type) ?? {};
   const passwords = await content.pagePasswords(); // betterleaks:allow
@@ -99,7 +104,9 @@ export async function buildFeed(
     sort: "newest",
     ...(locales && { locale }),
   });
-  const dateField = options.date ?? type.fields.find((field) => field.type === "date")?.name;
+  const dateField =
+    options.date ?? (standardField(type, "published") ?? type.fields.find((field) => field.type === "date"))?.name;
+  const publishedItems = (key: string) => items.listCached(key, { publishedOnly: true });
   const candidates = listed
     .map((item) => ({ item, path: itemPagePath(type, item, locales) }))
     .filter(({ item, path }) => !passwords[path] && itemHasPage(type, item, path, routes))
@@ -111,6 +118,7 @@ export async function buildFeed(
     candidates.map(async ({ item, path, published }): Promise<FeedItem> => {
       const summary = await summaryOf(type, item, options.summary, () => content.page(path));
       const image = itemImage(type, item);
+      const authors = await itemAuthors(type, item, { types, publishedItems, locales });
       return {
         title: item.title,
         path,
@@ -119,6 +127,7 @@ export async function buildFeed(
         updated: new Date(item.updatedAt),
         ...(summary && { summary }),
         ...(image && { image }),
+        authors: authors.map(({ name }) => name),
       };
     }),
   );
@@ -161,8 +170,9 @@ async function summaryOf(
     return undefined;
   };
   if (chosen) return read(chosen);
+  const main = standardField(type, "description") ?? type.fields.find((field) => field.type === "textarea");
   return (
-    read(type.fields.find((field) => field.type === "textarea")?.name) ??
+    read(main?.name) ??
     ((await page()).seo.description?.trim() || undefined) ??
     read(type.fields.find((field) => field.type === "richtext")?.name)
   );
@@ -202,6 +212,7 @@ export function rssXml(feed: Feed, site: string | URL): string {
       `      <link>${absolute(item.path)}</link>`,
       `      <guid isPermaLink="false">${escapeXml(item.id)}</guid>`,
       `      <pubDate>${item.published.toUTCString()}</pubDate>`,
+      ...item.authors.map((author) => `      ${tag("dc:creator", author)}`),
       ...(item.summary ? [`      ${tag("description", item.summary)}`] : []),
       ...(item.image ? [`      <media:content url="${absolute(item.image)}" medium="image" />`] : []),
       "    </item>",
@@ -209,7 +220,7 @@ export function rssXml(feed: Feed, site: string | URL): string {
   );
   return [
     '<?xml version="1.0" encoding="UTF-8"?>',
-    '<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:media="http://search.yahoo.com/mrss/">',
+    '<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:media="http://search.yahoo.com/mrss/" xmlns:dc="http://purl.org/dc/elements/1.1/">',
     "  <channel>",
     `    ${tag("title", feed.title)}`,
     `    <link>${absolute(feed.homePath)}</link>`,

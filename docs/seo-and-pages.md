@@ -13,7 +13,9 @@ Each page's settings (Page Settings in the editor, `brim_update_page` over MCP) 
 - Shared links: the preview image, and a title and description of their own, with a preview of the card.
 - Settings: hide from search engines (`noindex`, and the page leaves the sitemap), `nofollow`, and a canonical address.
 
-`<Seo>` also writes the canonical address of every page, `hreflang` links between a page's languages, `<meta name="author">` on an item's page, and on the home page structured data (`WebSite` and `Organization`) once `identity.name` is set: the name, its other spellings from `identity.alternateName`, and the site's profiles elsewhere from the `sameAs` prop. Pass it the links kept in Site Settings, so the owner changes them in one place: `<Seo title={title} sameAs={[facebook, instagram]} />`. Empty ones are left out. See [Site settings and identity](./site-settings.md).
+`<Seo>` also writes the canonical address of every page, `hreflang` links between a page's languages, `max-image-preview:large` on pages search engines may list, and on the home page structured data (`WebSite` and `Organization`) once `identity.name` is set: the name, its other spellings from `identity.alternateName`, and the site's profiles elsewhere from the `sameAs` prop. Pass it the links kept in Site Settings, so the owner changes them in one place: `<Seo title={title} sameAs={[facebook, instagram]} />`. Empty ones are left out. See [Site settings and identity](./site-settings.md).
+
+On an item's page, what neither Page Settings nor the code gives is the item's own: its title, `description`, `image` and `author`. An item of an `article` type also gets `og:type` `article`, its dates and schema.org `Article` data. See [Content types](./content-types.md#articles).
 
 ```astro
 ---
@@ -81,11 +83,11 @@ A type with `feed` gets an RSS 2.0 feed of its newest published items at `/rss/<
 | Option | What it sets |
 | --- | --- |
 | `limit` | How many items (20 by default) |
-| `date` | The date field; by default the type's first one, else when the item was created |
-| `summary` | A `text`, `textarea` or `richtext` field; by default the first `textarea`, then the page description |
+| `date` | The date field; by default `published` (or the first date of a type without it), else when the item was created |
+| `summary` | A `text`, `textarea` or `richtext` field; by default `description` (or the first `textarea` of a type without it), then the page description |
 | `title`, `description` | The feed's own; by default the type's label after the site's name |
 
-The picture is the item's first image field. Private items, items behind a password and items with no page are left out. Every page using `<Seo>` links the feeds of its language so readers find them. A static build writes feeds only when `site` is set.
+The picture is the item's `image` (or the first image field of a type without it), and its authors are named. Private items, items behind a password and items with no page are left out. Every page using `<Seo>` links the feeds of its language so readers find them. A static build writes feeds only when `site` is set.
 
 ## The site's address
 

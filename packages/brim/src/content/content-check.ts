@@ -1,4 +1,6 @@
-import type { ContentType } from "./content-types.ts";
+import { type ContentType, standardField } from "./content-types.ts";
+import { itemDescription } from "./item-head.ts";
+import { itemImage } from "./item-image.ts";
 import type { ItemStore } from "./items.ts";
 import { referenceFields, referencesTo } from "./references.ts";
 import { routeDrawsItems } from "./sitemap.ts";
@@ -7,11 +9,12 @@ import type { StoredNode } from "./types.ts";
 /**
  * `brim check --content`: what the site's content still gets wrong, read from the database rather than the code.
  * Values left from testing or a template (lorem ipsum, example.com, +40 000 000 000), terms of a vocabulary that
- * nothing uses (a category page with no products), and dynamic pages the sitemap cannot list. Warnings only: the
+ * nothing uses (a category page with no products), dynamic pages the sitemap cannot list, and items search engines
+ * and shared links would be told too little of. Warnings only: the
  * owner decides, and some of them are on purpose.
  */
 export interface ContentFinding {
-  rule: "placeholder" | "empty-term" | "unlisted-pages";
+  rule: "placeholder" | "empty-term" | "unlisted-pages" | "search-fields" | "search-empty";
   /** Where, in words a person finds it by: `product/marazzi-art → summary`, `site settings → whatsapp`, `/despre`. */
   where: string;
   message: string;
@@ -98,6 +101,23 @@ export async function checkContent({
     }
   }
 
+  for (const type of contentTypes.filter((candidate) => candidate.component)) findings.push(...searchFields(type));
+  for (const type of contentTypes.filter((candidate) => candidate.component && !candidate.vocabulary)) {
+    for (const item of await items.list(type.key, { publishedOnly: true })) {
+      const missing = [
+        ...(standardField(type, "description") && !itemDescription(type, item) ? ["description"] : []),
+        ...(standardField(type, "image") && !itemImage(type, item) ? ["image"] : []),
+        ...(type.article && standardField(type, "published") && !item.data.published ? ["published date"] : []),
+      ];
+      if (missing.length === 0) continue;
+      findings.push({
+        rule: "search-empty",
+        where: `${type.key}/${item.slug}${item.locale ? ` (${item.locale})` : ""}`,
+        message: `has no ${missing.join(" and no ")} for search engines and shared links`,
+      });
+    }
+  }
+
   // Terms of a vocabulary something points at, which nothing uses yet.
   const used = new Set(contentTypes.flatMap((type) => referenceFields(type).map((field) => field.to)));
   for (const vocabulary of contentTypes.filter((type) => type.vocabulary && used.has(type.key))) {
@@ -126,4 +146,29 @@ export async function checkContent({
     });
   }
   return findings;
+}
+
+/** Fields of a type with pages that search engines will not be given, though they look meant for them. */
+function searchFields(type: ContentType): ContentFinding[] {
+  const found: ContentFinding[] = [];
+  for (const { name } of type.fields) {
+    if (/^(?:seo|meta|og)_/.test(name)) {
+      found.push({
+        rule: "search-fields",
+        where: `${type.key} → ${name}`,
+        message:
+          "every page has its own SEO title, description and preview image (Page Settings): move its values there, then remove this field",
+      });
+    }
+  }
+  for (const name of ["description", "image", "published", "modified", "author"] as const) {
+    const field = type.fields.find((candidate) => candidate.name === name);
+    if (!field || standardField(type, name)) continue;
+    found.push({
+      rule: "search-fields",
+      where: `${type.key} → ${name}`,
+      message: `a ${field.type} field cannot be the item's ${name} for search engines: rename it, or change its type`,
+    });
+  }
+  return found;
 }

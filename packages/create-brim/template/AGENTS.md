@@ -14,6 +14,10 @@ This is an Astro site made editable with Brim.js. Read `README.md` for the layou
   added in the editor or through the site MCP, not written into pages. The type's `component` (e.g.
   `ArticlePage.astro`) is the template of every item's page: elements with `item={item} field="…"` show the item's
   fields; everything else on it is shared by all items, so the owner changes it once.
+- Brim adds `description`, `image`, `author` and `tags` to every type with a `component`, plus `published` with
+  `article: true` (news, blog posts), and `<Seo>` gives them to search engines and shared links. Never add fields that
+  do the same under other names (`summary`, `cover`, `date`, `seo_title`): declare one of these names to change its
+  label or make it required. SEO titles, descriptions and preview images are each page's own settings.
 - Colors come from the `--brim-theme-*` variables in `src/styles/global.css`.
 - The body of an item with a page (article, project, service) is a `blocks` field drawn with `<Blocks>`, so the owner
   adds images, galleries, buttons and videos between paragraphs. `richtext` is for text that stays text (a summary, a

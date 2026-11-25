@@ -4,7 +4,7 @@ import type { Role, User } from "../auth/accounts.ts";
 import { type Permission, REFUSALS, ROLES, can, permissionsOf } from "../auth/permissions.ts";
 import type { HistoryRecord } from "../content/history.ts";
 import type { DraftTarget, ItemContentDraft, NodeDraft } from "../content/drafts.ts";
-import { type ContentType, isSlug, itemPageOf, slugify } from "../content/content-types.ts";
+import { type ContentType, isSlug, itemPageOf, slugify, standardField } from "../content/content-types.ts";
 import { isNodeId, normalizePagePath, pageScope, siteScope, typeScope } from "../content/ids.ts";
 import { FIELD_KIND, applyToItem } from "../content/item-fields.ts";
 import { type Item, parseItem } from "../content/items.ts";
@@ -1513,6 +1513,7 @@ export function createAdminHandler(options: AdminOptions): AdminHandler {
       if (draft.visibility === "published") need(user, "publish");
       await checkReferences(await contentTypes(), brim.items, type, draft);
       const locale = localeOf(body.locale);
+      if (draft.visibility === "published") draft.data = withPublishedDate(type, draft.data);
       // An address made from the title that another item already has gets a number (lake-house-2), as the person
       // asked for no address of their own; one they typed themselves is refused instead, so they choose.
       const typedSlug = typeof body.slug === "string" && body.slug.trim() !== "";
@@ -1610,6 +1611,8 @@ export function createAdminHandler(options: AdminOptions): AdminHandler {
       const moved =
         itemPagePath(type, { ...draft, locale: existing.locale }, locales) !== itemPagePath(type, existing, locales);
       if (moved && existing.visibility === "published") need(user, "publish");
+      if (draft.visibility === "published" && existing.visibility === "private")
+        draft.data = withPublishedDate(type, draft.data);
       const types = await contentTypes();
       await checkReferences(types, brim.items, type, draft);
       await rememberItem(user, existing, "changed");
@@ -1665,7 +1668,16 @@ export function createAdminHandler(options: AdminOptions): AdminHandler {
       const existing = await existingItem(body);
       const visibility = visibilityOf(body.visibility);
       await rememberItem(user, existing, "changed");
-      const item = await brim.items.update(existing, { ...existing, visibility });
+      const publishing = visibility === "published" && existing.visibility === "private";
+      const type = publishing ? (await contentTypes()).find(({ key }) => key === existing.type) : undefined;
+      const data = type ? withPublishedDate(type, existing.data) : existing.data;
+      const item = await brim.items.update(existing, { ...existing, data, visibility });
+      // What waits in the draft is saved over the item later, so it gets the date too.
+      const draft = type && ((await brim.drafts.get("item", item.id)) as ItemContentDraft | undefined);
+      if (type && draft) {
+        const page = (await brim.drafts.all()).find((row) => row.target === "item" && row.key === item.id)?.page ?? "";
+        await brim.drafts.set("item", item.id, { ...draft, data: withPublishedDate(type, draft.data) }, page);
+      }
       await changed(undefined);
       return json({ item: await brim.drafts.overlayItem(item) });
     },
@@ -2091,6 +2103,12 @@ function titleOf(body: Record<string, unknown>): string {
   if (title === "") throw new ValidationError("The title is required.");
   if (title.length > MAX_TITLE) throw new ValidationError("The title is too long.");
   return title;
+}
+
+/** An article's data as it is published: dated today, unless it says a date already. */
+function withPublishedDate(type: ContentType, data: Record<string, unknown>): Record<string, unknown> {
+  if (!type.article || !standardField(type, "published") || data.published) return data;
+  return { ...data, published: new Date().toISOString().slice(0, 10) };
 }
 
 function visibilityOf(input: unknown): Visibility {

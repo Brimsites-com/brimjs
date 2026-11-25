@@ -7,7 +7,8 @@ import config from "virtual:brim/config";
 import { connect } from "../../runtime/connect.ts";
 import { type ContentItem, getContentType, getItems, getTerms } from "../../runtime/content.ts";
 import { tagsOf } from "../../content/tags.ts";
-import { optionLabel, optionsOf } from "../../content/content-types.ts";
+import { optionLabel, optionsOf, standardField } from "../../content/content-types.ts";
+import { itemPicture } from "../../content/item-image.ts";
 import ListingCards from "./ListingCards.astro";
 import { type BrowseState, type FilterValue, browseItems, prefillOf, queryItems } from "./query.ts";
 
@@ -56,9 +57,9 @@ interface Props {
   variation?: "grid" | "list";
   columns?: number;
   gap?: number;
-  /** The image field the card shows; by default the type's first one, `false` for none. */
+  /** The image field the card shows; by default `image`, or the first one of a type without it, `false` for none. */
   image?: string | false;
-  /** The text field the card shows; by default the type's first one, `false` for none. */
+  /** The text field the card shows; by default `description`, or the first one of a type without it, `false` for none. */
   text?: string | false;
   /** The field whose tags the card shows as labels; by default `tags`, `false` for none. */
   tags?: string | false;
@@ -142,25 +143,25 @@ const words = { ...LABELS, ...props.labels };
 const anchor = `listing-${nodeId}`;
 const ownControls = typeof props.controls === "function";
 
-const firstField = (kind: (fieldType: string) => boolean) => type.fields.find((field) => kind(field.type))?.name;
-const imageField =
-  props.image === false || props.showImage === false ? undefined : (props.image ?? firstField((t) => t === "image"));
+const showsText = props.text !== false && props.showDescription !== false;
 const textField =
-  props.text === false || props.showDescription === false
-    ? undefined
-    : (props.text ?? firstField((t) => t === "textarea" || t === "text"));
+  props.text ||
+  (standardField(type, "description") ?? type.fields.find(({ type: kind }) => kind === "textarea" || kind === "text"))
+    ?.name;
 const tagsField = props.tags === false ? undefined : (props.tags ?? "tags");
 const labels = (item: ContentItem): string[] => (tagsField ? tagsOf(item.data[tagsField]) : []);
 const links = props.links ?? props.enableItemLinks ?? Boolean(type.component);
 const showsImage = props.image !== false && props.showImage !== false;
 const custom = Astro.slots.has("default");
+const ownImage = (item: ContentItem): { src: string; alt: string } | undefined => {
+  if (!showsImage) return undefined;
+  return props.image ? (item.data[props.image] as { src: string; alt: string } | undefined) : itemPicture(type, item);
+};
 // A card with no picture of its own takes its item page's preview image, the one its shared links show.
 const previews = new Map<string, string>();
 if (!custom && showsImage) {
   const { content } = await connect(config.databaseUrl, config.authToken);
-  const missing = items.filter(
-    (item) => !(imageField ? (item.data[imageField] as { src?: string } | undefined)?.src : undefined),
-  );
+  const missing = items.filter((item) => !ownImage(item)?.src);
   // One read for every card, not one per card: a long list on a remote database made a round trip for each.
   const seoByPath = missing.length > 0 ? await content.pageSeoSettings() : new Map();
   for (const item of missing) {
@@ -169,12 +170,14 @@ if (!custom && showsImage) {
   }
 }
 const image = (item: ContentItem): { src: string; alt: string } | undefined => {
-  const own = imageField ? (item.data[imageField] as { src: string; alt: string } | undefined) : undefined;
+  const own = ownImage(item);
   if (own?.src) return own;
   const preview = previews.get(item.id);
   return preview ? { src: preview, alt: item.title } : undefined;
 };
-const text = (item: ContentItem) => (textField ? (item.data[textField] as string | undefined) : undefined);
+const text = (item: ContentItem): string | undefined => {
+  return showsText && textField ? (item.data[textField] as string | undefined) : undefined;
+};
 
 const rendered = custom ? await Promise.all(items.map((item) => Astro.slots.render("default", [item]))) : [];
 // What the editor needs to open these items, or add one that lands in this list.

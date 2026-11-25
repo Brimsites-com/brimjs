@@ -72,14 +72,24 @@ export type FieldValue<F extends DeclaredField> = F extends { readonly vocabular
 
 type Simplify<T> = { [K in keyof T]: T[K] } & {};
 
+/** The fields Brim adds to a type, see `defineContentType`. */
+interface AddedFields {
+  description?: string;
+  image?: ImageValue;
+  published?: string;
+  author?: string;
+  tags?: string[];
+}
+
 /**
- * An item's `data` for these fields: required ones always there, the others optional. Every type also has the
- * `author` and `tags` fields Brim adds unless it leaves them out, typed here as optional.
+ * An item's `data` for these fields: required ones always there, the others optional. The fields Brim adds unless a
+ * type leaves them out (`description`, `image`, `published`, `author`, `tags`) are typed here as optional; one the
+ * type declares itself has the type it declares.
  */
 export type FieldsData<Fields extends readonly DeclaredField[]> = Simplify<
   { [F in Fields[number] as F extends { readonly required: true } ? F["name"] : never]: FieldValue<F> } & {
     [F in Fields[number] as F extends { readonly required: true } ? never : F["name"]]?: FieldValue<F>;
-  } & { author?: string; tags?: string[] }
+  } & Omit<AddedFields, Fields[number]["name"]>
 >;
 
 /** The site settings' values for these fields: each one there unless empty, when it is `null` or missing. */
