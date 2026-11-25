@@ -25,6 +25,8 @@ jobs:
           fetch-depth: 0
       - name: The tag is on main
         run: git merge-base --is-ancestor "$GITHUB_SHA" origin/main
+      - name: The packages and the changelog have the tag's version
+        run: node scripts/release.mjs --check "${GITHUB_REF_NAME#v}"
       - uses: actions/setup-node@v6
         with:
           node-version: "24"

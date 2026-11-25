@@ -16,6 +16,7 @@ import { FormStore } from "../src/forms/store.ts";
 import { pageNodes, inlineNodes } from "../src/mcp/page-nodes.ts";
 import type { Brim } from "../src/runtime/connect.ts";
 import { type AdminHandler, createAdminHandler } from "../src/server/handler.ts";
+import { VERSION } from "../src/version.ts";
 
 const ORIGIN = "http://localhost:4321";
 const EMAIL = "owner@example.test";
@@ -169,6 +170,7 @@ describe("protocol", () => {
     const init = (await rpc("initialize", { protocolVersion: "2025-03-26", capabilities: {} })) as any;
     expect(init.result.protocolVersion).toBe("2025-03-26");
     expect(init.result.capabilities.tools).toBeDefined();
+    expect(init.result.serverInfo.version).toBe(VERSION);
     expect(init.result.instructions).toContain("nodeId");
 
     const list = (await rpc("tools/list")) as any;

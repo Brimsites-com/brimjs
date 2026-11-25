@@ -87,6 +87,7 @@ migrations are append-only.
 
 ### Fixed
 
+- The site's MCP says which version of Brim.js it runs (it always said 0.0.0).
 - `item.data.author` (and any field of a name Brim adds) has the type the site declares; a `multiple` reference was
   typed as `string & string[]`.
 - **Every email's subject and sender's name are one clean line**, and every recipient one plain address, checked
