@@ -15,8 +15,8 @@ Their look is the site's. Give them a function child and draw any shape. Each im
 
 ```astro
 ---
-import type { GalleryValue } from "brimjs";
-import { Gallery } from "brimjs/components";
+import type { GalleryValue } from "@brimsites/brimjs";
+import { Gallery } from "@brimsites/brimjs/components";
 const photos = [
   { src: "/images/work-1.jpg", alt: "A kitchen in oak" },
   { src: "/images/work-2.jpg", alt: "A tiled bathroom" },
@@ -53,8 +53,8 @@ A picture with a link, or one your markup puts in a link or a button, keeps doin
 
 ```astro
 ---
-import type { CarouselValue } from "brimjs";
-import { Carousel } from "brimjs/components";
+import type { CarouselValue } from "@brimsites/brimjs";
+import { Carousel } from "@brimsites/brimjs/components";
 const { product } = Astro.props;
 ---
 <!-- A product's photos with thumbnails, from its gallery field, edited on the page -->

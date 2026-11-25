@@ -11,7 +11,7 @@ A form the site shows in more than one place (the footer, the contact page, a pr
 
 ```ts
 // src/forms.ts
-import { defineForm } from "brimjs";
+import { defineForm } from "@brimsites/brimjs";
 
 export const quote = defineForm({
   key: "quote", // names the form for good: its content is kept as the node `form-quote`
@@ -30,7 +30,7 @@ export const quote = defineForm({
 
 ```astro
 ---
-import { Form } from "brimjs/components";
+import { Form } from "@brimsites/brimjs/components";
 import { quote } from "../forms.ts";
 ---
 <Form form={quote} />
@@ -72,7 +72,7 @@ A function child draws the fields in your markup while Brim keeps the form aroun
 
 ```astro
 ---
-import type { FormValue } from "brimjs";
+import type { FormValue } from "@brimsites/brimjs";
 ---
 <Form nodeId="quote" fields={fields}>
   {({ fields, Field }: FormValue) => (
@@ -128,7 +128,7 @@ What the email looks like is the site's code. `src/emails.ts` exports `emails`, 
 
 ```ts
 // src/emails.ts
-import { defineEmails, html } from "brimjs";
+import { defineEmails, html } from "@brimsites/brimjs";
 
 export const emails = defineEmails({
   form: (email) => ({

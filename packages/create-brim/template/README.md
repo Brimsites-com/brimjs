@@ -66,4 +66,4 @@ You can also host it yourself on anything that runs Node: `npm run build`, then 
 
 A deploy carries the code, not the content in `.brim/data.db`: to put what you made locally on the live site, use
 `brimsites restore --content replace --yes` after the first deploy (the CLI: `npm install -g @brimsites/brimsites`). Both ways of hosting, step by step:
-`node_modules/brimjs/skills/brim-hosting/SKILL.md`.
+`node_modules/@brimsites/brimjs/skills/brim-hosting/SKILL.md`.

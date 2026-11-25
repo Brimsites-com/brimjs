@@ -51,7 +51,7 @@ npx brim user add ana@client.com --role editor
 npx brim user role ana@client.com owner
 ```
 
-The rule lives in one place, `ROLE_PERMISSIONS`, exported from `brimjs`, and `GET /admin/api/session` answers the signed-in user's permissions. Users are managed from the command line; see [Users and tokens](./users-and-tokens.md).
+The rule lives in one place, `ROLE_PERMISSIONS`, exported from `@brimsites/brimjs`, and `GET /admin/api/session` answers the signed-in user's permissions. Users are managed from the command line; see [Users and tokens](./users-and-tokens.md).
 
 ## Passwords
 

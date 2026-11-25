@@ -12,7 +12,7 @@ A site has several languages only if its code says so, with Astro's own `i18n` s
 ```js
 // astro.config.mjs
 import { defineConfig } from "astro/config";
-import brim from "brimjs";
+import brim from "@brimsites/brimjs";
 
 export default defineConfig({
   i18n: { defaultLocale: "en", locales: ["en", "ro"] },
@@ -38,8 +38,8 @@ An item is in one language. On its page the language menu opens its translations
 
 ```astro
 ---
-import type { ItemPageProps } from "brimjs";
-import { getTranslations } from "brimjs/content";
+import type { ItemPageProps } from "@brimsites/brimjs";
+import { getTranslations } from "@brimsites/brimjs/content";
 
 const { item: project } = Astro.props as ItemPageProps;
 const translations = await getTranslations("project", project);

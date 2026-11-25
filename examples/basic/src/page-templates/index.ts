@@ -1,4 +1,4 @@
-import { definePageTemplate } from "brimjs";
+import { definePageTemplate } from "@brimsites/brimjs";
 import ServicePage from "./ServicePage.astro";
 
 const service = definePageTemplate({

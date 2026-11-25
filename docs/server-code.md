@@ -12,7 +12,7 @@ It is plain Astro: a file in `src/pages` that exports `GET`, `POST` and so on an
 ```ts
 // src/pages/api/likes.ts → POST /api/likes
 import type { APIRoute } from "astro";
-import { getDatabase, getUser } from "brimjs/server";
+import { getDatabase, getUser } from "@brimsites/brimjs/server";
 
 export const POST: APIRoute = async ({ request }) => {
   const { page } = await request.json();
@@ -31,7 +31,7 @@ export const DELETE: APIRoute = async ({ request }) => {
 };
 ```
 
-## What brimjs/server gives
+## What @brimsites/brimjs/server gives
 
 | Function | What it gives |
 | --- | --- |
@@ -46,7 +46,7 @@ declare what they read by themselves. Undeclared paths keep every parameter; `br
 
 ## Rules
 
-- Read content as on pages, with `getItems` and `getItem` from `brimjs/content`.
+- Read content as on pages, with `getItems` and `getItem` from `@brimsites/brimjs/content`.
 - Secrets come from the environment (`process.env.MY_KEY`), set where the server runs, never written in the code.
 - The addresses `/admin`, `/_brim` and `/uploads` are Brim's.
 - Astro refuses a form posted from another site; an endpoint called by another service should take JSON.

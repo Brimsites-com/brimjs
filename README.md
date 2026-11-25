@@ -7,7 +7,7 @@ Deploy it in one click on [Brimsites](https://dashboard.brimsites.com), the mana
 
 ```astro
 ---
-import { Text, Image, Link } from "brimjs/components";
+import { Text, Image, Link } from "@brimsites/brimjs/components";
 ---
 
 <Text nodeId="hero-title" as="h1">
@@ -21,21 +21,17 @@ import { Text, Image, Link } from "brimjs/components";
 
 ```js
 // astro.config.mjs
-import brim from "brimjs";
+import brim from "@brimsites/brimjs";
 export default defineConfig({ integrations: [brim()] });
 ```
 
 ## Install
 
-Brim.js is the npm package `brimjs`, and a new site starts with `npm create brim@latest` (`create-brim`). A site
-depends on it under its name:
+Brim.js is the npm package `@brimsites/brimjs`, and a new site starts with `npm create brim@latest` (`create-brim`):
 
 ```json
-"dependencies": { "brimjs": "^1.0.0" }
+"dependencies": { "@brimsites/brimjs": "^1.0.0" }
 ```
-
-Versions up to 0.1.79 were published privately as `@brimsites/brimjs`. A site that depends on
-`npm:@brimsites/brimjs@…` changes that to a version of `brimjs`; its imports stay the same.
 
 ## Start a site
 
@@ -43,20 +39,20 @@ Versions up to 0.1.79 were published privately as `@brimsites/brimjs`. A site th
 npm create brim@latest my-site
 ```
 
-`create-brim` makes an Astro project that depends on `brimjs` (`^<version>`): a layout with
+`create-brim` makes an Astro project that depends on `@brimsites/brimjs` (`^<version>`): a layout with
 header and footer, sections in `src/components`, home, about, blog and contact pages, an `article` content type in
 `src/content-types`, theme colors in `src/styles/global.css`, and a `components` page that shows every primitive,
-block and icon. The site is its own project, outside this repository. `--brim ^0.2.0` picks another version.
+block and icon. The site is its own project, outside this repository. `--brim ^1.1.0` picks another version.
 
-To try changes to `brimjs` before they are published, point the site at a local checkout instead:
+To try changes to `@brimsites/brimjs` before they are published, point the site at a local checkout instead:
 
 ```bash
 node packages/create-brim/index.js ../my-site --brim ./packages/brim
 ```
 
-The path becomes a `file:` dependency, so the package manager copies `brimjs` into the site's `node_modules` and the
-site builds as it will with a published version. Run `pnpm install` in the site again after changing `brimjs`. A
-`link:` dependency is not supported: it leaves `brimjs` outside the project, where Astro builds its files as the
+The path becomes a `file:` dependency, so the package manager copies `@brimsites/brimjs` into the site's `node_modules` and the
+site builds as it will with a published version. Run `pnpm install` in the site again after changing `@brimsites/brimjs`. A
+`link:` dependency is not supported: it leaves `@brimsites/brimjs` outside the project, where Astro builds its files as the
 site's own source and the build fails.
 
 ### Starting content
@@ -113,10 +109,10 @@ owner changes them, so the code is the starting content. What lives only in the 
 ## Add Brim to an Astro site you already have
 
 ```bash
-npx brimjs init
+npx @brimsites/brimjs init
 ```
 
-Run it in the project's folder. It adds the `brimjs` dependency and the `brim()` integration to `astro.config`,
+Run it in the project's folder. It adds the `@brimsites/brimjs` dependency and the `brim()` integration to `astro.config`,
 keeps the local database and uploads out of git, and writes a guide for AI coding agents
 (`.claude/skills/brim-convert/SKILL.md`, named in `AGENTS.md`). Nothing on the site changes yet: the site builds and
 looks as before. Then make it editable one element at a time, by hand
@@ -134,7 +130,7 @@ runs everything a Brim.js site needs: the static pages on a CDN, the site's SQLi
 
 The full hosting guide, for people and AI agents, covers both Brimsites and your own server, step by step:
 [`skills/brim-hosting/SKILL.md`](packages/brim/skills/brim-hosting/SKILL.md) (in a site:
-`node_modules/brimjs/skills/brim-hosting/SKILL.md`).
+`node_modules/@brimsites/brimjs/skills/brim-hosting/SKILL.md`).
 
 A deploy carries the code, never the local database: content types arrive (they are code), but the items, edited
 texts, pages and editor users made with `npm run dev` stay in `.brim/data.db` on your computer, and the site keeps
@@ -209,7 +205,7 @@ The site's own pages and endpoints say what they read themselves, wherever they 
 ```astro
 ---
 // src/pages/products.astro, or a component it draws
-import { readsQuery } from "brimjs/server";
+import { readsQuery } from "@brimsites/brimjs/server";
 readsQuery(["sort", "color"]); // or readsQuery("all")
 const sort = Astro.url.searchParams.get("sort");
 ---
@@ -218,7 +214,7 @@ const sort = Astro.url.searchParams.get("sort");
 ```ts
 // src/pages/api/products.ts
 import type { APIRoute } from "astro";
-import { readsQuery } from "brimjs/server";
+import { readsQuery } from "@brimsites/brimjs/server";
 
 export const GET: APIRoute = ({ url }) => {
   readsQuery(["id"]);
@@ -346,7 +342,7 @@ A user's role decides what the editor offers them and what the API, and so the s
 | `editor` | whoever runs its content: the client | change texts, images, links, blocks, SEO, item fields and site settings; upload media; add, publish, unpublish and delete items; add, move and delete pages; read form messages |
 
 A request a role does not allow is refused with a sentence naming the role that can do it. The rule is in one place,
-`ROLE_PERMISSIONS` (exported from `brimjs`), and `GET /admin/api/session` answers the signed-in user's permissions.
+`ROLE_PERMISSIONS` (exported from `@brimsites/brimjs`), and `GET /admin/api/session` answers the signed-in user's permissions.
 
 ### History
 
@@ -418,7 +414,7 @@ Every part is optional and works alone: `resize` by itself suits a CDN in front 
 itself a CDN without resizing. Content keeps the `/uploads/…` addresses whatever is set, so the same database works
 locally, on your server and on a host. `Image`, `ImageGallery`, `Carousel`, `Listing` cards and `Seo` use the public
 address and the `srcset`; the server sends any other request for `/uploads/…` to the public address, except files it
-still has itself. In the site's own markup, `mediaUrl(src)` and `imageSources(src, sizes)` from `brimjs/content` do
+still has itself. In the site's own markup, `mediaUrl(src)` and `imageSources(src, sizes)` from `@brimsites/brimjs/content` do
 the same:
 
 ```astro
@@ -504,7 +500,7 @@ save it.
 
 ```ts
 // src/content-types/index.ts
-import { defineContentType } from "brimjs";
+import { defineContentType } from "@brimsites/brimjs";
 import ProjectPage from "./ProjectPage.astro";
 
 const project = defineContentType({
@@ -555,7 +551,7 @@ A field's `type` is one of `text`, `textarea`, `richtext`, `number`, `boolean`, 
 - **`select` with labelled choices.** A choice is a plain string, or `{ value, label }`: the item saves the value,
   the editor shows the label. Use it when the value goes into an address or a filter and should stay plain
   (`{ value: "ceramica", label: "Ceramică" }`). A page shows the label with `choiceLabel("product", "category",
-  item.data.category)` from `brimjs/content`, or `optionLabel(field, value)` from `brimjs`.
+  item.data.category)` from `@brimsites/brimjs/content`, or `optionLabel(field, value)` from `@brimsites/brimjs`.
 - **`keyvalue`.** A list of rows, each `{ label, value }`: technical details, opening hours, a spec sheet. The owner
   adds, reorders and removes rows in the item form; rows left empty are dropped.
 
@@ -571,8 +567,8 @@ the values the owner picks rather than writes (date, number, select, boolean, ur
 ```astro
 ---
 // src/content-types/ProjectPage.astro
-import type { ItemPageProps } from "brimjs";
-import { Link, Text } from "brimjs/components";
+import type { ItemPageProps } from "@brimsites/brimjs";
+import { Link, Text } from "@brimsites/brimjs/components";
 import Site from "../layouts/Site.astro";
 
 const { item: project } = Astro.props as ItemPageProps;
@@ -634,7 +630,7 @@ and every page shows the change. In the editor its elements say "Shared across t
 
 ```astro
 ---
-import { Shared } from "brimjs/components";
+import { Shared } from "@brimsites/brimjs/components";
 import FaqSection from "../components/FaqSection.astro";
 ---
 <Shared>
@@ -655,7 +651,7 @@ shown in) and a `default` (what a fresh copy shows):
 
 ```ts
 // src/site-settings.ts
-import { defineSiteSettings } from "brimjs";
+import { defineSiteSettings } from "@brimsites/brimjs";
 
 export const siteSettings = defineSiteSettings({
   fields: [
@@ -671,13 +667,13 @@ export const siteSettings = defineSiteSettings({
 
 The owner edits them in **Site Settings** (anyone who may change content; owners also see the form emails and
 redirects there), in each of the site's languages, and every page shows the change at once. Pages read them with
-`getSiteSettings()` from `brimjs/content`, and show their text with `<Setting name="…" />` from
-`brimjs/components`: clicking one in the editor opens Site Settings at that field.
+`getSiteSettings()` from `@brimsites/brimjs/content`, and show their text with `<Setting name="…" />` from
+`@brimsites/brimjs/components`: clicking one in the editor opens Site Settings at that field.
 
 ```astro
 ---
-import { Setting } from "brimjs/components";
-import { getSiteSettings } from "brimjs/content";
+import { Setting } from "@brimsites/brimjs/components";
+import { getSiteSettings } from "@brimsites/brimjs/content";
 const { phone, whatsapp, instagram } = await getSiteSettings();
 ---
 {phone && <a href={`tel:${phone}`}><Setting name="phone" /></a>}
@@ -696,8 +692,8 @@ code reads items with their real types and a misspelt field fails the build inst
 
 ```astro
 ---
-import type { ItemOf, ItemPageProps } from "brimjs";
-import { getItems, getSiteSettings } from "brimjs/content";
+import type { ItemOf, ItemPageProps } from "@brimsites/brimjs";
+import { getItems, getSiteSettings } from "@brimsites/brimjs/content";
 import { siteSettings } from "../site-settings.ts";
 import type { product as Product } from "./product.ts";
 
@@ -725,7 +721,7 @@ are its terms, so the owner adds, renames and pictures them in **Content** like 
 the list. Other types point at its terms with a `reference` field, which keeps the term's slug:
 
 ```ts
-import { defineContentType, defineVocabulary } from "brimjs";
+import { defineContentType, defineVocabulary } from "@brimsites/brimjs";
 
 export const category = defineVocabulary({
   key: "category",
@@ -764,7 +760,7 @@ export const product = defineContentType({
 - A single reference can be part of a `path`; `Listing` takes references as `facets` (showing the terms' titles)
   and finds items by their terms' titles when searching; `filter={{ category: "ceramica" }}` lists one term's items.
 - A page reads the terms an item points at with `getReferences("product", product, "category")` from
-  `brimjs/content`, in the page's language; `getItems("category")` lists them all (a menu of categories).
+  `@brimsites/brimjs/content`, in the page's language; `getItems("category")` lists them all (a menu of categories).
 - `defineVocabulary` is `defineContentType` without the default `author` and `tags` fields; one with pages has
   `description` and `image`.
 
@@ -791,8 +787,8 @@ export const category = defineVocabulary({
 ```astro
 ---
 // src/content-types/CategoryPage.astro: drawn for every term, which it gets like an item's page gets its item.
-import type { ItemPageProps } from "brimjs";
-import { Listing } from "brimjs/components";
+import type { ItemPageProps } from "@brimsites/brimjs";
+import { Listing } from "@brimsites/brimjs/components";
 import type { category } from "./index.ts";
 const { item } = Astro.props as ItemPageProps<typeof category>;
 ---
@@ -812,7 +808,7 @@ videos, buttons, accordions, dividers and maps that the owner adds, moves, chang
 It is the body of an item with a page (an article, a project, a service); `richtext` is for text that should stay
 text (a summary, a bio), marked `// text only` so `brim check` does not suggest blocks for it. A field changed from
 `richtext` to `blocks` keeps what was written: each saved text reads as the field's first block, and the server
-writes it so in the database when it starts. `blocksOf(item.data.body)` from `brimjs` reads a field's blocks either
+writes it so in the database when it starts. `blocksOf(item.data.body)` from `@brimsites/brimjs` reads a field's blocks either
 way, for a table of contents or a reading time.
 `blocks: ["richtext", "image"]` on the field narrows what it offers. The template places the stack:
 
@@ -853,7 +849,7 @@ The owner edits an item's page in one of two modes:
   item, including those added later.
 
 List items with `Listing`, or read them with `getItems("project")` and `getItem("project", slug)` from
-`brimjs/content`. A type without `component` has no page per item. A page written in `src/pages` wins over the
+`@brimsites/brimjs/content`. A type without `component` has no page per item. A page written in `src/pages` wins over the
 template at its address, without the two modes.
 
 ### Listing
@@ -863,7 +859,7 @@ changes what is listed by editing the items, not the listing:
 
 ```astro
 ---
-import { Listing } from "brimjs/components";
+import { Listing } from "@brimsites/brimjs/components";
 ---
 
 <!-- The guides, sorted by title, each as the site draws it -->
@@ -940,7 +936,7 @@ its SEO in the usual page settings.
 
 ```ts
 // src/page-templates/index.ts
-import { definePageTemplate } from "brimjs";
+import { definePageTemplate } from "@brimsites/brimjs";
 import ServicePage from "./ServicePage.astro";
 
 const service = definePageTemplate({
@@ -960,7 +956,7 @@ sections it is made of:
 ```astro
 ---
 // src/page-templates/ServicePage.astro
-import type { TemplatePageProps } from "brimjs";
+import type { TemplatePageProps } from "@brimsites/brimjs";
 import Site from "../layouts/Site.astro";
 import PageHero from "../sections/PageHero.astro";
 import Contact from "../sections/Contact.astro";
@@ -1011,8 +1007,8 @@ with `img`, the attributes of its `<img>`:
 
 ```astro
 ---
-import type { CarouselValue, GalleryValue } from "brimjs";
-import { Carousel, Gallery } from "brimjs/components";
+import type { CarouselValue, GalleryValue } from "@brimsites/brimjs";
+import { Carousel, Gallery } from "@brimsites/brimjs/components";
 ---
 
 <!-- A masonry wall: the gallery gives the images, the site's CSS the columns -->
@@ -1157,7 +1153,7 @@ rich text and the blocks of their body, whatever its case and accents (`stejar` 
 ```astro
 ---
 // src/pages/search.astro
-import { Search } from "brimjs/components";
+import { Search } from "@brimsites/brimjs/components";
 ---
 <Search types={["article", "project"]} labels={{ search: "Caută", button: "Caută", results: "{count} rezultate pentru „{query}”", empty: "Nimic pentru „{query}”." }} />
 ```
@@ -1444,7 +1440,7 @@ once, in `src/forms.ts`, and placed with `form`:
 
 ```ts
 // src/forms.ts
-import { defineForm } from "brimjs";
+import { defineForm } from "@brimsites/brimjs";
 
 export const contact = defineForm({
   key: "contact", // names the form for good: its content is kept as the node `form-contact`
@@ -1566,7 +1562,7 @@ order form names the product), each answer, the visitor's address and where the 
 
 ```ts
 // src/emails.ts
-import { defineEmails, html } from "brimjs";
+import { defineEmails, html } from "@brimsites/brimjs";
 
 export const emails = defineEmails({
   form: (email) => ({
@@ -1650,7 +1646,7 @@ between the `---`) runs on the server on each request.
 ```ts
 // src/pages/api/likes.ts → POST /api/likes
 import type { APIRoute } from "astro";
-import { getDatabase, getUser } from "brimjs/server";
+import { getDatabase, getUser } from "@brimsites/brimjs/server";
 
 export const POST: APIRoute = async ({ request }) => {
   const { page } = await request.json();
@@ -1669,7 +1665,7 @@ export const DELETE: APIRoute = async ({ request }) => {
 };
 ```
 
-`brimjs/server` gives the site's code two things:
+`@brimsites/brimjs/server` gives the site's code two things:
 
 - `getDatabase()`: the site's SQLite database, for tables of the site's own (`query(sql, args)` and
   `batch(statements)`, which runs in one transaction). It is the database Brim keeps the content in, so the
@@ -1677,7 +1673,7 @@ export const DELETE: APIRoute = async ({ request }) => {
 - `getUser(request)`: who is signed in to the editor, or `undefined` for a visitor, for endpoints only the
   owner may call.
 
-Content is read as on pages, with `getItems` and `getItem` from `brimjs/content`. Secrets come from the
+Content is read as on pages, with `getItems` and `getItem` from `@brimsites/brimjs/content`. Secrets come from the
 environment (`process.env.MY_KEY`), set where the server runs, never written in the code. The addresses
 `/admin`, `/_brim` and `/uploads` are Brim's. Astro refuses a form posted from another site; an endpoint
 called by another service should take JSON.
@@ -1757,8 +1753,8 @@ export default defineConfig({
 ```astro
 ---
 // src/content-types/ProjectPage.astro
-import type { ItemPageProps } from "brimjs";
-import { getTranslations } from "brimjs/content";
+import type { ItemPageProps } from "@brimsites/brimjs";
+import { getTranslations } from "@brimsites/brimjs/content";
 
 const { item: project } = Astro.props as ItemPageProps;
 const translations = await getTranslations("project", project); // for a language switcher

@@ -558,7 +558,7 @@ describe("limits on files", () => {
     for (let sent = 0; sent < 20; sent++) expect((await attempt())?.status).toBe(400);
 
     expect((await attempt())?.status).toBe(429);
-  });
+  }, 20_000); // 21 requests in a row: over the 5 s default when the whole suite loads the machine
 });
 
 describe("the name a visitor gave a file", () => {

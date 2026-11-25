@@ -83,7 +83,7 @@ A deploy carries code, never `.brim/data.db`, so the live site keeps the content
 brimsites restore --content replace --yes   # --users all also brings the local editor users
 ```
 
-It keeps a copy of what was there first. `brimsites export` goes the other way. The full guide, for people and agents, ships with the package at `node_modules/brimjs/skills/brim-hosting/SKILL.md`.
+It keeps a copy of what was there first. `brimsites export` goes the other way. The full guide, for people and agents, ships with the package at `node_modules/@brimsites/brimjs/skills/brim-hosting/SKILL.md`.
 
 ## Before going live
 

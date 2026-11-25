@@ -1,4 +1,4 @@
-import { defineSiteSettings } from "brimjs";
+import { defineSiteSettings } from "@brimsites/brimjs";
 
 /** Facts about the whole site its owner changes in Site Settings: read with getSiteSettings(), shown with <Setting>. */
 export const siteSettings = defineSiteSettings({

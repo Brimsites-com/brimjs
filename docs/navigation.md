@@ -13,7 +13,7 @@ A navbar item can be a group: give it `children` (sub-links, two levels deep at 
 
 ```astro
 ---
-import { Navbar } from "brimjs/components";
+import { Navbar } from "@brimsites/brimjs/components";
 ---
 <Navbar nodeId="navbar" logoText="Studio Nord" items={[
   { label: "Products", href: "/products", children: [
@@ -40,7 +40,7 @@ import { Navbar } from "brimjs/components";
 
 ```astro
 ---
-import { MobileMenu, Navbar } from "brimjs/components";
+import { MobileMenu, Navbar } from "@brimsites/brimjs/components";
 ---
 <Navbar nodeId="navbar" items={pages} class="site-header">
   {({ items }) => (
@@ -71,7 +71,7 @@ Style its parts with `:global()`: `.brim-mobile-menu__toggle`, `.brim-mobile-men
 
 ```astro
 ---
-import { Footer } from "brimjs/components";
+import { Footer } from "@brimsites/brimjs/components";
 ---
 <Footer nodeId="footer" groups={[
   { title: "Studio", items: [{ label: "About", href: "/about" }, { label: "Contact", href: "/contact" }] },

@@ -9,7 +9,7 @@ lead: Blocks are richer components. You set their starting content in code and s
 
 ```astro
 ---
-import { Button } from "brimjs/components";
+import { Button } from "@brimsites/brimjs/components";
 ---
 <Button
   nodeId="hero-cta"
@@ -53,8 +53,8 @@ Brim draws a plain row of icons in the text's color. A function child draws anyt
 
 ```astro
 ---
-import type { SocialMediaValue } from "brimjs";
-import { SocialMedia } from "brimjs/components";
+import type { SocialMediaValue } from "@brimsites/brimjs";
+import { SocialMedia } from "@brimsites/brimjs/components";
 const profiles = { instagram: "https://instagram.com/acme", email: "hello@acme.com" };
 ---
 <SocialMedia nodeId="footer-social" mode="profile" profiles={profiles}>
@@ -95,7 +95,7 @@ There no code of the site places each block, so the owner does. Every block has 
 }
 ```
 
-The rhythm is the only space between blocks. The owner's Space above is a step of it (none, small, normal or large), marked `data-space` on the block. `blocks: ["richtext", "image"]` on the field narrows what it offers, and `blocksOf(item.data.body)` from `brimjs` reads a field's blocks, for a table of contents or a reading time.
+The rhythm is the only space between blocks. The owner's Space above is a step of it (none, small, normal or large), marked `data-space` on the block. `blocks: ["richtext", "image"]` on the field narrows what it offers, and `blocksOf(item.data.body)` from `@brimsites/brimjs` reads a field's blocks, for a table of contents or a reading time.
 
 The same image, button or video placed by the site's own code has no layout settings: there the code decides.
 

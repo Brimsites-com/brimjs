@@ -10,10 +10,10 @@ lead: Make an Astro site you already have editable, one element at a time, by ha
 In the project's folder:
 
 ```bash
-npx brimjs init
+npx @brimsites/brimjs init
 ```
 
-It adds the `brimjs` dependency and the `start` and `brim` scripts, adds `brim()` to `astro.config`, declares the site's language (`--lang`, else the layout's `<html lang>`, else `en`), keeps `.brim` and `public/uploads` out of git, runs `git init` when the project is not in git, and writes a conversion guide for coding agents (`.claude/skills/brim-convert/SKILL.md`, named in `AGENTS.md`).
+It adds the `@brimsites/brimjs` dependency and the `start` and `brim` scripts, adds `brim()` to `astro.config`, declares the site's language (`--lang`, else the layout's `<html lang>`, else `en`), keeps `.brim` and `public/uploads` out of git, runs `git init` when the project is not in git, and writes a conversion guide for coding agents (`.claude/skills/brim-convert/SKILL.md`, named in `AGENTS.md`).
 
 The site builds and looks exactly as before. Running it again changes nothing that is set up. A site that sets another Astro adapter keeps it, but the editor, forms and MCP need a Node server.
 

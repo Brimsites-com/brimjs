@@ -18,10 +18,10 @@ const EMAIL = "owner@example.test";
 const PASSWORD = "a long enough password"; // betterleaks:allow (a test account in a temporary database)
 
 beforeAll(() => {
-  // The site imports `brimjs` like any site; this package is linked in as it, as pnpm links it into the examples.
-  const linked = join(siteRoot, "node_modules", "brimjs");
+  // The site imports `@brimsites/brimjs` like any site; this package is linked in as it, as pnpm links it into the examples.
+  const linked = join(siteRoot, "node_modules", "@brimsites/brimjs");
   if (!existsSync(linked)) {
-    mkdirSync(join(siteRoot, "node_modules"), { recursive: true });
+    mkdirSync(join(siteRoot, "node_modules", "@brimsites"), { recursive: true });
     symlinkSync(packageRoot, linked, "dir");
   }
 });

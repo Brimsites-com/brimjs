@@ -1,5 +1,5 @@
 import { defineConfig } from "astro/config";
-import brim from "brimjs";
+import brim from "@brimsites/brimjs";
 
 export default defineConfig({
   // Set the site's address before going live: share links and canonical tags use it.

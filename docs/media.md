@@ -42,7 +42,7 @@ For an item's picture, `<Image bare>` draws only the `<img>` with its `srcset`, 
   loading="lazy" sizes="(max-width: 768px) 100vw, 33vw" />
 ```
 
-In your own markup, `mediaUrl(src)` and `imageSources(src, sizes)` from `brimjs/content` give the public address and the `srcset`:
+In your own markup, `mediaUrl(src)` and `imageSources(src, sizes)` from `@brimsites/brimjs/content` give the public address and the `srcset`:
 
 ```astro
 <img {...imageSources(item.data.image.src, "(max-width: 768px) 100vw, 33vw")} alt={item.data.image.alt} />

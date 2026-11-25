@@ -1,4 +1,4 @@
-# Publishes `brimjs` and `create-brim` on npm when a tag such as v1.0.0 is pushed. It signs in with npm's trusted
+# Publishes `@brimsites/brimjs` and `create-brim` on npm when a tag such as v1.0.0 is pushed. It signs in with npm's trusted
 # publishing (OIDC), so there is no npm token in the repository: each package names this file as its trusted publisher
 # on npmjs.com. Publishing a version that is already there is skipped, so a run that stopped halfway can be run again.
 name: Release
@@ -37,7 +37,7 @@ jobs:
           corepack enable
           npm install --global npm@11.19.1
       - run: pnpm install --frozen-lockfile
-      - run: pnpm --filter brimjs build:editor
+      - run: pnpm --filter @brimsites/brimjs build:editor
       - run: pnpm check-types
       - run: pnpm test
       - run: node scripts/pack-release.mjs "${GITHUB_REF_NAME#v}" "$RUNNER_TEMP/release"
@@ -45,10 +45,11 @@ jobs:
         run: |
           version="${GITHUB_REF_NAME#v}"
           case "$version" in *-*) tag=next ;; *) tag=latest ;; esac
-          for name in brimjs create-brim; do
+          for pair in @brimsites/brimjs:brimsites-brimjs create-brim:create-brim; do
+            name="${pair%%:*}" file="${pair#*:}"
             if npm view "$name@$version" version >/dev/null 2>&1; then
               echo "$name@$version is already on npm."
             else
-              npm publish "$RUNNER_TEMP/release/$name-$version.tgz" --access public --tag "$tag"
+              npm publish "$RUNNER_TEMP/release/$file-$version.tgz" --access public --tag "$tag"
             fi
           done

@@ -11,7 +11,7 @@ Pages written in `src/pages` stay code. The pages an owner adds later are conten
 
 ```ts
 // src/page-templates/index.ts
-import { definePageTemplate } from "brimjs";
+import { definePageTemplate } from "@brimsites/brimjs";
 import ServicePage from "./ServicePage.astro";
 
 const service = definePageTemplate({
@@ -30,7 +30,7 @@ The template is a component that receives the page as `page` (`path`, `title`, `
 ```astro
 ---
 // src/page-templates/ServicePage.astro
-import type { TemplatePageProps } from "brimjs";
+import type { TemplatePageProps } from "@brimsites/brimjs";
 import Site from "../layouts/Site.astro";
 import PageHero from "../components/PageHero.astro";
 import Contact from "../components/Contact.astro";

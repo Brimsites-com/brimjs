@@ -27,7 +27,7 @@ npm create brim@latest my-site -- --name "Studio Nord" --lang en
 | --- | --- |
 | `--name` | The site's name, shown in the navigation and footer |
 | `--lang` | The site's language and default (`en`, `ro`, `de`…) |
-| `--brim` | The `brimjs` dependency: a version (`^0.1.0`) or the path of a local checkout (`./packages/brim`) |
+| `--brim` | The `@brimsites/brimjs` dependency: a version (`^1.0.0`) or the path of a local checkout (`./packages/brim`) |
 | `--no-git` | Leave the new site out of git |
 
 ## Run it
@@ -63,7 +63,7 @@ Once the site runs, the same agent can change content through the [site MCP](./m
 In the project's folder:
 
 ```bash
-npx brimjs init
+npx @brimsites/brimjs init
 ```
 
 It adds the dependency and the `brim()` integration, keeps the database and uploads out of git, and writes a conversion guide for coding agents. Nothing on the site changes until you make elements editable. See [Convert an Astro site](./convert-astro-site.md).

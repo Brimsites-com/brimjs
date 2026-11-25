@@ -10,7 +10,7 @@ lead: Brim components make one piece of a page editable. The nodeId is the contr
 ```astro
 ---
 // src/components/Hero.astro
-import { Text, Image, Link } from "brimjs/components";
+import { Text, Image, Link } from "@brimsites/brimjs/components";
 ---
 
 <Text nodeId="hero-title" as="h1">
@@ -23,7 +23,7 @@ import { Text, Image, Link } from "brimjs/components";
 ```js
 // astro.config.mjs
 import { defineConfig } from "astro/config";
-import brim from "brimjs";
+import brim from "@brimsites/brimjs";
 
 export default defineConfig({ integrations: [brim()] });
 ```
@@ -32,7 +32,7 @@ What you write is the starting content. Once the owner changes an element, their
 
 ## The basic components
 
-All of them come from `brimjs/components`.
+All of them come from `@brimsites/brimjs/components`.
 
 | Component | What the owner can change |
 | --- | --- |
@@ -61,7 +61,7 @@ The richer components (buttons, galleries, forms, videos, listings) are on [Bloc
 ```astro
 ---
 // src/components/Feature.astro
-import { Text } from "brimjs/components";
+import { Text } from "@brimsites/brimjs/components";
 const { id, title } = Astro.props;
 ---
 <Text nodeId={`${id}-title`} as="h2">{title}</Text>
@@ -95,7 +95,7 @@ A section shown on several pages with the same content, like a FAQ or a call to 
 
 ```astro
 ---
-import { Shared } from "brimjs/components";
+import { Shared } from "@brimsites/brimjs/components";
 import Faq from "../components/Faq.astro";
 ---
 <Shared>

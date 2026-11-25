@@ -20,7 +20,7 @@ On an item's page, what neither Page Settings nor the code gives is the item's o
 ```astro
 ---
 // src/layouts/Site.astro
-import { Seo } from "brimjs/components";
+import { Seo } from "@brimsites/brimjs/components";
 const { title } = Astro.props;
 ---
 <html lang="en">
@@ -36,7 +36,7 @@ const { title } = Astro.props;
 ```astro
 ---
 // src/layouts/Site.astro, at the end of <body>
-import { Analytics } from "brimjs/components";
+import { Analytics } from "@brimsites/brimjs/components";
 ---
 <Analytics policyHref="/privacy" />
 <button type="button" data-cookie-settings hidden>Cookie settings</button>

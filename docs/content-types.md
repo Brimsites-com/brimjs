@@ -9,7 +9,7 @@ lead: Repeatable content, such as articles, projects or products, is declared in
 
 ```ts
 // src/content-types/index.ts
-import { defineContentType } from "brimjs";
+import { defineContentType } from "@brimsites/brimjs";
 import ProjectPage from "./ProjectPage.astro";
 
 export const project = defineContentType({
@@ -90,7 +90,7 @@ const [writer] = await getReferences("article", article, "author");
 
 The body of an item with a page (an article, a project, a service) is a `blocks` field, so the owner can add images, galleries and buttons between paragraphs. `richtext` is for text that should stay text, like a summary or a bio; mark it `// text only` so `brim check` does not suggest blocks for it. A field changed from `richtext` to `blocks` keeps what was written.
 
-A `select` choice can carry a label: the item saves the value, the editor and pages show the label. `choiceLabel("product", "category", item.data.category)` from `brimjs/content` gives it on a page. A `keyvalue` field is a list of `{ label, value }` rows:
+A `select` choice can carry a label: the item saves the value, the editor and pages show the label. `choiceLabel("product", "category", item.data.category)` from `@brimsites/brimjs/content` gives it on a page. A `keyvalue` field is a list of `{ label, value }` rows:
 
 ```astro
 <dl>{(item.data.specs ?? []).map((row) => <><dt>{row.label}</dt><dd>{row.value}</dd></>)}</dl>
@@ -103,8 +103,8 @@ The `component` draws the page of every item and receives it as `item`. Elements
 ```astro
 ---
 // src/content-types/ProjectPage.astro
-import type { ItemPageProps } from "brimjs";
-import { Blocks, Field, Text } from "brimjs/components";
+import type { ItemPageProps } from "@brimsites/brimjs";
+import { Blocks, Field, Text } from "@brimsites/brimjs/components";
 import Site from "../layouts/Site.astro";
 
 const { item: project } = Astro.props as ItemPageProps;
@@ -149,7 +149,7 @@ Items come newest first. `ordered: true` lets the owner drag them into order in 
 
 ```astro
 ---
-import { getItem, getItems } from "brimjs/content";
+import { getItem, getItems } from "@brimsites/brimjs/content";
 import { project } from "../content-types/index.ts";
 
 const projects = await getItems(project); // typed by the declaration

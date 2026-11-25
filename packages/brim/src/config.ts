@@ -205,7 +205,7 @@ export interface BrimOptions extends DatabaseOptions {
    * The query parameters pages and routes of the site's own code read, for a host that keeps pages in a CDN
    * (Brimsites): a path, or a pattern where `*` stands for any characters, → the names, or `"all"`.
    * `{ "/api/products": ["sort", "id"], "/shop/*": ["color"], "/legacy/*": "all" }`. Brim's own blocks declare
-   * what they read by themselves; a page can also say it with `readsQuery()` from `brimjs/server`.
+   * what they read by themselves; a page can also say it with `readsQuery()` from `@brimsites/brimjs/server`.
    */
   query?: Record<string, readonly string[] | "all">;
 }

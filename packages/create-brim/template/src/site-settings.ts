@@ -1,4 +1,4 @@
-import { defineSiteSettings } from "brimjs";
+import { defineSiteSettings } from "@brimsites/brimjs";
 
 /**
  * The site's own settings: facts about the whole site its owner changes in Site Settings (or an agent through the

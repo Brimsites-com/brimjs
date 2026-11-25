@@ -1,5 +1,5 @@
 import { defineConfig } from "astro/config";
-import brim from "brimjs";
+import brim from "@brimsites/brimjs";
 
 // Content types are declared in src/content-types/index.ts.
 // The editor offers Brim's own icons and the site's own pack, and the brand's colors first in its color pickers.

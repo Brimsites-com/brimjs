@@ -11,7 +11,7 @@ lead: Listing shows the items of a content type, with filters, search and pages 
 
 ```astro
 ---
-import { Listing } from "brimjs/components";
+import { Listing } from "@brimsites/brimjs/components";
 ---
 <!-- The guides, sorted by title, each as the site draws it -->
 <Listing nodeId="guides" type="doc" filter={{ section: "Guides" }} sort="title">
@@ -65,7 +65,7 @@ Brim draws a form, a line with the count, the cards and the page links, as `.bri
 </Listing>
 ```
 
-`ItemOf<typeof product>` and `BrowseState<ItemOf<typeof product>>` from `brimjs` type the children and `controls`. A static build has no address to read, so it lists every item without the controls.
+`ItemOf<typeof product>` and `BrowseState<ItemOf<typeof product>>` from `@brimsites/brimjs` type the children and `controls`. A static build has no address to read, so it lists every item without the controls.
 
 ## Search
 
@@ -74,7 +74,7 @@ Brim draws a form, a line with the count, the cards and the page links, as `.bri
 ```astro
 ---
 // src/pages/search.astro
-import { Search } from "brimjs/components";
+import { Search } from "@brimsites/brimjs/components";
 ---
 <Search types={["article", "project"]} labels={{ search: "Search", button: "Search", results: "{count} results for “{query}”", empty: "Nothing for “{query}”." }} />
 ```
@@ -87,6 +87,6 @@ The words are in the address (`/search?q=oak`), so any search box of the site ca
 
 Without `types` it searches every type whose items have pages, except vocabularies. `pageSize` (20 by default) splits the results into pages, and `param` renames `q`. A function child draws the results from the state (`SearchState`: `query`, `results` with each one's `title`, `url`, `excerpt`, `type`, `typeLabel` and `item`, `total`, `page`, `pageCount`, `pageHref`).
 
-For your own code, `searchItems` from `brimjs` runs the same matching over items you pass it.
+For your own code, `searchItems` from `@brimsites/brimjs` runs the same matching over items you pass it.
 
 Search needs pages drawn on request (the dev server, the Node server, Brimsites). A static copy shows the box alone.

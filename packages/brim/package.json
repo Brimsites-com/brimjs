@@ -1,5 +1,5 @@
 {
-  "name": "brimjs",
+  "name": "@brimsites/brimjs",
   "version": "1.0.0",
   "description": "Makes Astro sites editable: primitives with stable node ids, content in SQLite, static output.",
   "license": "FSL-1.1-MIT",

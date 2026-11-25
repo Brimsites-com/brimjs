@@ -35,7 +35,7 @@ export function noteQueryReads(names: readonly string[] | "all", bySite = false)
  * the same cached page, and a page reading `?sort=` gets one copy per sort. `"all"` keeps every parameter.
  *
  *   ---
- *   import { readsQuery } from "brimjs/server";
+ *   import { readsQuery } from "@brimsites/brimjs/server";
  *   readsQuery(["sort", "color"]);
  *   const sort = Astro.url.searchParams.get("sort");
  *   ---

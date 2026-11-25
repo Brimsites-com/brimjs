@@ -11,7 +11,7 @@ Facts about the whole site that its owner changes now and then (phone, email, Wh
 
 ```ts
 // src/site-settings.ts
-import { defineSiteSettings } from "brimjs";
+import { defineSiteSettings } from "@brimsites/brimjs";
 
 export const siteSettings = defineSiteSettings({
   fields: [
@@ -23,12 +23,12 @@ export const siteSettings = defineSiteSettings({
 });
 ```
 
-The owner edits them in Site Settings, in each of the site's languages, and every page shows the change at once. Pages read them with `getSiteSettings(siteSettings)` from `brimjs/content`, typed, and show one with `<Setting>`, which opens Site Settings at that field when clicked in the editor:
+The owner edits them in Site Settings, in each of the site's languages, and every page shows the change at once. Pages read them with `getSiteSettings(siteSettings)` from `@brimsites/brimjs/content`, typed, and show one with `<Setting>`, which opens Site Settings at that field when clicked in the editor:
 
 ```astro
 ---
-import { Setting } from "brimjs/components";
-import { getSiteSettings } from "brimjs/content";
+import { Setting } from "@brimsites/brimjs/components";
+import { getSiteSettings } from "@brimsites/brimjs/content";
 import { siteSettings } from "../site-settings.ts";
 const { phone, instagram } = await getSiteSettings(siteSettings);
 ---

@@ -5,12 +5,12 @@ their words, pictures and links in the browser, and the content lives in SQLite.
 
 ```bash
 npm create brim@latest my-site   # a new site
-npx brimjs init                  # in an Astro project you already have
+npx @brimsites/brimjs init                  # in an Astro project you already have
 ```
 
 ```astro
 ---
-import { Text, Image, Link } from "brimjs/components";
+import { Text, Image, Link } from "@brimsites/brimjs/components";
 ---
 
 <Text nodeId="hero-title" as="h1">Websites your clients can edit</Text>

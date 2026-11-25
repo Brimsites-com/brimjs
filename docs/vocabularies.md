@@ -11,7 +11,7 @@ A vocabulary is a content type whose items are its terms, so the owner adds, ren
 
 ```ts
 // src/content-types/index.ts
-import { defineContentType, defineVocabulary } from "brimjs";
+import { defineContentType, defineVocabulary } from "@brimsites/brimjs";
 import ProductPage from "./ProductPage.astro";
 
 export const category = defineVocabulary({
@@ -52,7 +52,7 @@ export const contentTypes = [category, product];
 - A term items still point at cannot be deleted until they point elsewhere.
 - A single reference can be part of a `path`. `Listing` takes references as `facets` and finds items by their terms' titles when searching; `filter={{ category: "ceramics" }}` lists one term's items.
 
-In code, `getReferences("product", product, "category")` from `brimjs/content` reads the terms an item points at, in the page's language, and `getItems("category")` lists them all, for a menu of categories. `getTerms("category")` gives the terms by slug, for labels.
+In code, `getReferences("product", product, "category")` from `@brimsites/brimjs/content` reads the terms an item points at, in the page's language, and `getItems("category")` lists them all, for a menu of categories. `getTerms("category")` gives the terms by slug, for labels.
 
 ## Pages for the terms
 
@@ -78,8 +78,8 @@ export const category = defineVocabulary({
 ```astro
 ---
 // src/content-types/CategoryPage.astro
-import type { ItemPageProps } from "brimjs";
-import { Listing } from "brimjs/components";
+import type { ItemPageProps } from "@brimsites/brimjs";
+import { Listing } from "@brimsites/brimjs/components";
 import type { category } from "./index.ts";
 const { item } = Astro.props as ItemPageProps<typeof category>;
 ---

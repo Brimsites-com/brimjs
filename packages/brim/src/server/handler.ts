@@ -1920,7 +1920,7 @@ export function createAdminHandler(options: AdminOptions): AdminHandler {
       const body = await readFile(new URL(name, assetsDirectory));
       return new Response(body, { headers: { "content-type": contentType, "cache-control": "no-cache" } });
     } catch {
-      return new Response("The editor is not built. Run `pnpm --filter brimjs build:editor`.", { status: 500 });
+      return new Response("The editor is not built. Run `pnpm --filter @brimsites/brimjs build:editor`.", { status: 500 });
     }
   }
 

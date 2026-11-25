@@ -17,7 +17,7 @@ const read = (directory: string, name: string): string => readFileSync(join(dire
 describe("brim init", () => {
   it("adds the integration to configs written the usual ways", () => {
     expect(addIntegration(`import { defineConfig } from "astro/config";\n\nexport default defineConfig({});\n`)).toBe(
-      `import brim from "brimjs";\nimport { defineConfig } from "astro/config";\n\nexport default defineConfig({\n  integrations: [brim()],});\n`,
+      `import brim from "@brimsites/brimjs";\nimport { defineConfig } from "astro/config";\n\nexport default defineConfig({\n  integrations: [brim()],});\n`,
     );
     expect(addIntegration(`export default defineConfig({ integrations: [] });`)).toContain("integrations: [brim()] }");
     expect(addIntegration(`export default defineConfig({ integrations: [mdx(), sitemap()] });`)).toContain(
@@ -28,7 +28,7 @@ describe("brim init", () => {
     );
     expect(addIntegration(`export default { site: "https://x.test" };`)).toContain("integrations: [brim()],");
     // Already there: left as it is. Written in a way that cannot be changed safely: left to the person.
-    const done = `import brim from "brimjs";\nexport default defineConfig({ integrations: [brim()] });`;
+    const done = `import brim from "@brimsites/brimjs";\nexport default defineConfig({ integrations: [brim()] });`;
     expect(addIntegration(done)).toBe(done);
     expect(addIntegration(`export default makeConfig();`)).toBeUndefined();
   });
@@ -48,10 +48,10 @@ describe("brim init", () => {
     expect(first.manual).toEqual([]);
 
     const manifest = JSON.parse(read(directory, "package.json")) as Record<string, Record<string, string>>;
-    expect(manifest.dependencies).toEqual({ astro: "^7.0.0", brimjs: "^1.2.3" });
+    expect(manifest.dependencies).toEqual({ astro: "^7.0.0", "@brimsites/brimjs": "^1.2.3" });
     expect(manifest.devDependencies).toBeUndefined();
     expect(manifest.scripts).toEqual({ dev: "astro dev", start: "brim start", brim: "brim" });
-    expect(read(directory, "astro.config.mjs")).toContain(`import brim from "brimjs";`);
+    expect(read(directory, "astro.config.mjs")).toContain(`import brim from "@brimsites/brimjs";`);
     expect(read(directory, "astro.config.mjs")).toContain("integrations: [brim(), mdx()]");
     expect(read(directory, ".gitignore")).toBe(
       "node_modules\ndist\n# Brim.js: the local database (content, users, form responses) and images uploaded in the editor.\n.brim\npublic/uploads\n",

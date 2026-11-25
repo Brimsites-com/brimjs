@@ -1,4 +1,4 @@
-import type { NavItem } from "brimjs";
+import type { NavItem } from "@brimsites/brimjs";
 
 export const SITE_NAME = "{{siteName}}";
 

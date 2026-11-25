@@ -1,4 +1,4 @@
-import { defineContentType } from "brimjs";
+import { defineContentType } from "@brimsites/brimjs";
 import ArticlePage from "./ArticlePage.astro";
 
 /**

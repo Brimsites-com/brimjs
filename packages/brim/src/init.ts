@@ -14,6 +14,8 @@ const IGNORED = [
   ".brim",
   "public/uploads",
 ];
+/** The name Brim.js is published and imported under. */
+const PACKAGE = "@brimsites/brimjs";
 const AGENTS_MARK = "<!-- brimjs -->";
 const AGENTS_NOTE = `${AGENTS_MARK}
 ## Brim.js
@@ -21,7 +23,7 @@ const AGENTS_NOTE = `${AGENTS_MARK}
 This Astro site is editable with Brim.js: texts, images, links and navigation wrapped in Brim's components carry a
 stable \`nodeId\`, and the owner's edits (stored in SQLite) replace what the code says. Never rename or reuse a
 \`nodeId\`. To make more of the site editable, follow \`.claude/skills/brim-convert/SKILL.md\`; the components and
-their props are documented in \`node_modules/brimjs/README.md\`. While the dev server runs, the site's MCP is at
+their props are documented in \`node_modules/@brimsites/brimjs/README.md\`. While the dev server runs, the site's MCP is at
 \`/admin/mcp\` (token: \`npx brim token add <email>\`): use it to read and change content instead of the database.
 To show the person the editor, run \`npx brim open\` with the dev server running (or open \`/admin/edit\`).
 Never write a password or a token into a file of the project; to let someone sign in, use \`npx brim user link <email>\`.
@@ -38,7 +40,7 @@ or \`npx brim media add <files…>\`) saved in the item's image field; never wri
 What the site is filled from (photos, catalogues, data for an import) stays out of git: keep it in \`import/\` or
 outside the project; the live site gets the uploads with the content (\`brimsites restore\`), never with a deploy.
 To deploy, host or move the site (Brimsites first, or a server of its own), follow
-\`node_modules/brimjs/skills/brim-hosting/SKILL.md\`; a deploy never carries the local \`.brim/data.db\`.
+\`node_modules/@brimsites/brimjs/skills/brim-hosting/SKILL.md\`; a deploy never carries the local \`.brim/data.db\`.
 Working on the site once it is online, ask once whether to download its live content first (\`brimsites export\`,
 local \`.brim\` moved outside the project first), so you work on the site as it is now.
 After the first deploy, offer once to save the live site's MCP (\`brimsites tokens create <site>\`, then
@@ -46,7 +48,7 @@ After the first deploy, offer once to save the live site's MCP (\`brimsites toke
 `;
 
 export interface InitOptions {
-  /** The brimjs dependency to write: a version range, or anything else a package manager accepts. */
+  /** The @brimsites/brimjs dependency to write: a version range, or anything else a package manager accepts. */
   brim?: string | undefined;
   /** `false` leaves a project that is not in git out of it. */
   git?: boolean;
@@ -84,10 +86,10 @@ export async function init(directory: string, options: InitOptions = {}): Promis
   }
 
   let changed = false;
-  if (!manifest.dependencies?.brimjs && !manifest.devDependencies?.brimjs) {
-    manifest.dependencies = { ...manifest.dependencies, brimjs: options.brim ?? `^${VERSION}` };
+  if (!manifest.dependencies?.[PACKAGE] && !manifest.devDependencies?.[PACKAGE]) {
+    manifest.dependencies = { ...manifest.dependencies, [PACKAGE]: options.brim ?? `^${VERSION}` };
     changed = true;
-    result.done.push(`Added brimjs ${manifest.dependencies.brimjs} to package.json.`);
+    result.done.push(`Added ${PACKAGE} ${manifest.dependencies[PACKAGE]} to package.json.`);
   }
   for (const [name, command] of Object.entries({ start: "brim start", brim: "brim" })) {
     if (manifest.scripts?.[name] === undefined) {
@@ -107,7 +109,7 @@ export async function init(directory: string, options: InitOptions = {}): Promis
   if (!configName) {
     await writeFile(
       join(directory, "astro.config.mjs"),
-      `import { defineConfig } from "astro/config";\nimport brim from "brimjs";\n\nexport default defineConfig({\n  ${languageLine(lang)}\n  integrations: [brim()],\n});\n`,
+      `import { defineConfig } from "astro/config";\nimport brim from "@brimsites/brimjs";\n\nexport default defineConfig({\n  ${languageLine(lang)}\n  integrations: [brim()],\n});\n`,
     );
     result.done.push(`Created astro.config.mjs with the brim() integration and the site's language (${lang}).`);
   } else {
@@ -116,7 +118,7 @@ export async function init(directory: string, options: InitOptions = {}): Promis
     const patched = integrated === undefined ? undefined : addLanguage(integrated, lang);
     if (patched === undefined) {
       result.manual.push(
-        `Add Brim to ${configName} yourself: \`import brim from "brimjs";\` and \`brim()\` in \`integrations\`.`,
+        `Add Brim to ${configName} yourself: \`import brim from "@brimsites/brimjs";\` and \`brim()\` in \`integrations\`.`,
       );
     } else if (patched !== source) {
       await writeFile(join(directory, configName), patched);
@@ -181,7 +183,7 @@ export async function init(directory: string, options: InitOptions = {}): Promis
  * config is written in a way this cannot safely change.
  */
 export function addIntegration(source: string): string | undefined {
-  if (/from\s+["']brimjs["']/.test(source)) return source;
+  if (/from\s+["']@brimsites\/brimjs["']/.test(source)) return source;
   const list = /\bintegrations\s*:\s*\[/.exec(source);
   const config = /\bdefineConfig\s*\(\s*\{|export\s+default\s*\{/.exec(source);
   let patched: string;
@@ -198,7 +200,7 @@ export function addIntegration(source: string): string | undefined {
   } else {
     return undefined;
   }
-  return `import brim from "brimjs";\n${patched}`;
+  return `import brim from "@brimsites/brimjs";\n${patched}`;
 }
 
 /** A language code as Astro takes it: `ro`, `en`, `pt-BR`. */

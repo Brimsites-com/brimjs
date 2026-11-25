@@ -67,7 +67,7 @@ function mediaThumbnail(url: string): string | undefined {
 
 /** Where brimjs was installed when the site was built, or where it is installed next to the running server. */
 function editorAssets(): URL {
-  const installed = join(process.cwd(), "node_modules", "brimjs", "editor-dist");
+  const installed = join(process.cwd(), "node_modules", "@brimsites/brimjs", "editor-dist");
   return pathToFileURL(`${existsSync(config.editorAssets) ? config.editorAssets : installed}/`);
 }
 

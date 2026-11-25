@@ -14,7 +14,7 @@ const USAGE = `Usage: npm create brim [folder] [-- --name "Site name"] [--lang <
   --name   The site's name, shown in the navigation and footer.
   --lang   The site's language and its default (ro, en, de…; asked for when left out). Declared from the start,
            a second language can be added later without moving what the owner saved.
-  --brim   The brimjs dependency: a version (^0.1.0), or the path of a brimjs package on this
+  --brim   The @brimsites/brimjs dependency: a version (^1.0.0), or the path of a brimjs package on this
            computer (../brimjs/packages/brim), installed into the site like a published one.
   --no-git Leave the new site out of git (by default it is a repository with a first commit).`;
 

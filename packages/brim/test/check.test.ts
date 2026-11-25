@@ -26,7 +26,7 @@ describe("brim check: reading the source", () => {
       "src/pages/index.astro",
       [
         "---",
-        'import { Text } from "brimjs/components";',
+        'import { Text } from "@brimsites/brimjs/components";',
         'const title = `<Text nodeId="in-frontmatter" />`;',
         "---",
         '<Text nodeId="double" as="h1">A</Text>',
@@ -230,7 +230,7 @@ describe("brim check: images of the content drawn by hand", () => {
     const report = check({
       "src/components/Card.astro": [
         "---",
-        'import { mediaUrl } from "brimjs/content";',
+        'import { mediaUrl } from "@brimsites/brimjs/content";',
         "---",
         '<a href={item.url} class="card">',
         '  {item.data.cover && <img src={mediaUrl(item.data.cover.src)} alt={item.data.cover.alt} loading="lazy" />}',
@@ -259,7 +259,7 @@ describe("brim check: images without sizes", () => {
     const report = check({
       "src/pages/index.astro": [
         "---",
-        'import { Image, Text } from "brimjs/components";',
+        'import { Image, Text } from "@brimsites/brimjs/components";',
         "---",
         '<Image nodeId="hero" src="/hero.jpg" alt="" sizes="100vw" priority />',
         '<Image nodeId="about" src="/about.jpg" alt="" />',
@@ -312,7 +312,7 @@ describe("brim check: image sizes written as numbers", () => {
     const report = check({
       "src/components/Gallery.astro": [
         "---",
-        'import { imageSources } from "brimjs/content";',
+        'import { imageSources } from "@brimsites/brimjs/content";',
         "---",
         "{photos.map((photo) => (",
         "  <img",
@@ -455,7 +455,7 @@ describe("brim check: passwords in files and version control", () => {
 
 describe("brim check: pages written by hand for a vocabulary's terms", () => {
   const types = (category: string) =>
-    `import { defineVocabulary } from "brimjs";\nimport CategoryPage from "./CategoryPage.astro";\n` +
+    `import { defineVocabulary } from "@brimsites/brimjs";\nimport CategoryPage from "./CategoryPage.astro";\n` +
     `export const category = defineVocabulary(${category});\n`;
   const found = (report: ReturnType<typeof checkSite>) =>
     report.findings

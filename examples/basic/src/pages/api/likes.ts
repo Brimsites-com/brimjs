@@ -1,5 +1,5 @@
 import type { APIRoute } from "astro";
-import { getDatabase, getUser } from "brimjs/server";
+import { getDatabase, getUser } from "@brimsites/brimjs/server";
 
 // The site's own server code: a like counter per page, kept in a table of the site's own.
 // On the server it answers every request; a static build writes the GET answer once, as a file.

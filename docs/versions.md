@@ -12,7 +12,7 @@ Changes are listed in [CHANGELOG.md](../CHANGELOG.md). Versions are semantic: on
 A site pins its range in `package.json`:
 
 ```json
-"dependencies": { "brimjs": "^1.0.0" }
+"dependencies": { "@brimsites/brimjs": "^1.0.0" }
 ```
 
 ## The database moves forward by itself

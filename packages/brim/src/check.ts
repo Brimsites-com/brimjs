@@ -413,7 +413,7 @@ function findFixedImageSizes(root: string, sourceFolder: string, add: (finding: 
 }
 
 /** Brim's `Image`, imported under its own name: a site's or Astro's own `Image` component is not it. */
-const BRIM_IMAGE_IMPORT = /import\s*\{[^}]*\bImage\b(?!\s+as\b)[^}]*\}\s*from\s*["']brimjs\/components["']/;
+const BRIM_IMAGE_IMPORT = /import\s*\{[^}]*\bImage\b(?!\s+as\b)[^}]*\}\s*from\s*["']@brimsites\/brimjs\/components["']/;
 /** An `<Image>` tag, to its closing `>` (an arrow function's `=>` inside it does not end it). */
 const IMAGE_TAG = /<Image\b(?:[^>]|(?<==)>)*>/g;
 
@@ -1099,7 +1099,7 @@ function findUndeclaredQueryReads(root: string, sourceFolder: string, add: (find
       rule: "undeclared-query",
       message:
         "reads the request's query without saying which parameters: call readsQuery([\"name\", …]) from " +
-        '"brimjs/server" where it reads them (or declare its route in brim({ query })), so a host caching pages ' +
+        '"@brimsites/brimjs/server" where it reads them (or declare its route in brim({ query })), so a host caching pages ' +
         "keeps exactly those. Until then pages are cached less precisely",
     });
   }

@@ -50,7 +50,7 @@ const ROUTES_MODULE = "virtual:brim/routes";
 const RESOLVED_ROUTES_MODULE = `\0${ROUTES_MODULE}`;
 /**
  * Astro's Node adapter is brimjs's own dependency, so it is found from this file, not from the site. It is
- * loaded by Node itself and only while the config is set up: pages import `brimjs` too, and a bundler that
+ * loaded by Node itself and only while the config is set up: pages import `@brimsites/brimjs` too, and a bundler that
  * could follow an import here would carry the adapter and its build tools into the site's server.
  */
 const NODE_ADAPTER = "@astrojs/node";
@@ -129,7 +129,7 @@ export default function brim(options: BrimOptions = {}): AstroIntegration {
         if (undeclared.length > 0) {
           logger.warn(
             `Reads the query without declaring it: ${undeclared.map(({ file, line }) => `${file}:${line}`).join(", ")}. ` +
-              'Say what it reads with readsQuery() from "brimjs/server" or brim({ query }), so a host can cache pages ' +
+              'Say what it reads with readsQuery() from "@brimsites/brimjs/server" or brim({ query }), so a host can cache pages ' +
               "precisely; until then only declared pages are.",
           );
         }
@@ -227,7 +227,7 @@ export default function brim(options: BrimOptions = {}): AstroIntegration {
             ],
           },
         });
-        addMiddleware({ entrypoint: "brimjs/middleware", order: "pre" });
+        addMiddleware({ entrypoint: "@brimsites/brimjs/middleware", order: "pre" });
         // Every link is fetched as the pointer reaches it (or as it is focused or touched), so the page is there by
         // the time it is clicked. A site that sets `prefetch` itself keeps its own.
         if (config.prefetch === undefined) {
@@ -245,16 +245,16 @@ export default function brim(options: BrimOptions = {}): AstroIntegration {
           const adapter = node?.({ mode: "standalone", bodySizeLimit: MAX_REQUEST_BYTES });
           ownAdapter = adapter !== undefined;
           updateConfig({ output: "server", ...(adapter && { adapter, integrations: [adapter] }) });
-          injectRoute({ pattern: `${ADMIN_PATH}/[...path]`, entrypoint: "brimjs/admin-route", prerender: false });
-          injectRoute({ pattern: `${FORMS_PATH}/[...path]`, entrypoint: "brimjs/forms-route", prerender: false });
-          injectRoute({ pattern: `${UPLOADS_PATH}[...file]`, entrypoint: "brimjs/uploads-route", prerender: false });
+          injectRoute({ pattern: `${ADMIN_PATH}/[...path]`, entrypoint: "@brimsites/brimjs/admin-route", prerender: false });
+          injectRoute({ pattern: `${FORMS_PATH}/[...path]`, entrypoint: "@brimsites/brimjs/forms-route", prerender: false });
+          injectRoute({ pattern: `${UPLOADS_PATH}[...file]`, entrypoint: "@brimsites/brimjs/uploads-route", prerender: false });
         }
         // Pages added from templates and the pages of items answer any address the site's own pages leave free.
         if (pageTemplatesFile || contentTypesFile) {
           // A static build lists their pages (`getStaticPaths`); the server looks each one up, and has no list to ignore.
           injectRoute({
             pattern: "/[...page]",
-            entrypoint: mode === "static" ? "brimjs/template-page-static" : "brimjs/template-page",
+            entrypoint: mode === "static" ? "@brimsites/brimjs/template-page-static" : "@brimsites/brimjs/template-page",
           });
         }
         // The sitemap lists pages by their full address, so a build needs the site's address to write one.
@@ -263,17 +263,17 @@ export default function brim(options: BrimOptions = {}): AstroIntegration {
           ["ts", "js", "xml", "txt"].some((extension) => siteModule(config.srcDir, `pages/${file}.${extension}`));
         if (feeds) {
           // A static build lists its feeds (`getStaticPaths`); the server makes each when it is asked.
-          injectRoute({ pattern: "/rss/[...feed]", entrypoint: mode === "static" ? "brimjs/rss-static" : "brimjs/rss" });
+          injectRoute({ pattern: "/rss/[...feed]", entrypoint: mode === "static" ? "@brimsites/brimjs/rss-static" : "@brimsites/brimjs/rss" });
         }
         // A server answers with its own address when `site` is not set; a static build has only `site` to write.
         const sitemap = !own("sitemap.xml") && (Boolean(site) || mode !== "static" || command !== "build");
         if (!own("sitemap.xml") && !sitemap) {
           logger.warn('No sitemap.xml: set `site` in astro.config (e.g. "https://example.com").');
         }
-        if (sitemap) injectRoute({ pattern: "/sitemap.xml", entrypoint: "brimjs/sitemap" });
+        if (sitemap) injectRoute({ pattern: "/sitemap.xml", entrypoint: "@brimsites/brimjs/sitemap" });
         // Without one, every crawler that asks for it gets the 404 page, drawn by the server each time.
         if (!own("robots.txt") && !existsSync(new URL("robots.txt", config.publicDir))) {
-          injectRoute({ pattern: "/robots.txt", entrypoint: "brimjs/robots" });
+          injectRoute({ pattern: "/robots.txt", entrypoint: "@brimsites/brimjs/robots" });
         }
       },
       // The sitemap, robots.txt and feeds are written once by a static build; the server makes them on each request.
@@ -285,7 +285,7 @@ export default function brim(options: BrimOptions = {}): AstroIntegration {
       "astro:config:done": ({ injectTypes }) => {
         injectTypes({
           filename: "brim.d.ts",
-          content: `declare namespace App { interface Locals { brim: import("brimjs").BrimContext } }`,
+          content: `declare namespace App { interface Locals { brim: import("@brimsites/brimjs").BrimContext } }`,
         });
       },
       "astro:routes:resolved": ({ routes }) => {

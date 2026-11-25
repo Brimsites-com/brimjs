@@ -1,4 +1,4 @@
-import { defineContentType, defineVocabulary } from "brimjs";
+import { defineContentType, defineVocabulary } from "@brimsites/brimjs";
 import PostPage from "./PostPage.astro";
 import ProductPage from "./ProductPage.astro";
 import ProjectPage from "./ProjectPage.astro";
