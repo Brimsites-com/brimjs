@@ -21,6 +21,9 @@ export const ALL: APIRoute = async ({ request, clientAddress }) => {
       captcha: captchaCheck(config.captcha),
       files: siteFormFiles(),
       siteName: config.identity.name,
+      // Written exactly so: Vite replaces the literal `import.meta.env.SITE` when it builds the server.
+      // @ts-expect-error Astro's types for import.meta.env are not part of this package's own check.
+      siteUrl: import.meta.env.SITE as string | undefined,
     }),
   );
   return (

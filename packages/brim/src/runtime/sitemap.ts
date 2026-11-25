@@ -2,7 +2,7 @@ import type { APIRoute } from "astro";
 import config from "virtual:brim/config";
 import routes from "virtual:brim/routes";
 import { sitemapEntries, sitemapXml } from "../content/sitemap.ts";
-import { requestOrigin } from "../server/http.ts";
+import { givenOrigin, requestOrigin } from "../server/http.ts";
 import { connect } from "./connect.ts";
 
 /**
@@ -21,11 +21,14 @@ export const GET: APIRoute = async ({ site, request }) => {
     routes,
     locales: config.locales,
   });
-  // A static build adds this route only when the site's address is set; a server answers with its own.
-  return new Response(
-    sitemapXml(entries, site ?? (config.mode === "server" ? requestOrigin(request) : new URL(request.url).origin)),
-    {
-      headers: { "content-type": "application/xml; charset=utf-8" },
+  // A static build adds this route only when the site's address is set; a server whose address is not set answers
+  // with the one it was asked at, which is the asker's to write: a cache must not hand that answer to anyone else.
+  const given = site ?? givenOrigin();
+  const asked = config.mode === "server" ? requestOrigin(request) : new URL(request.url).origin;
+  return new Response(sitemapXml(entries, given ?? asked), {
+    headers: {
+      "content-type": "application/xml; charset=utf-8",
+      ...(!given && config.mode === "server" && { "cache-control": "no-store" }),
     },
-  );
+  });
 };

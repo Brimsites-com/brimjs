@@ -118,17 +118,20 @@ export async function referencesTo(
 }
 
 /**
- * A term moved to a new slug: the items that pointed at it point at the new one. Answers the items it changed, so the
- * caller can tell what moved (a product whose address holds its category moves too, and its old address redirects).
+ * A term moved to a new slug: the items that pointed at it point at the new one. Answers the items it changed, as they
+ * were and as they are, so the caller can tell what moved (a product whose address holds its category moves too, and
+ * its old address redirects).
  */
 export async function renameReferences(
   types: ContentType[],
   items: ItemStore,
   term: Pick<Item, "type" | "slug">,
   slug: string,
-): Promise<Item[]> {
-  const changed: Item[] = [];
-  for (const { type, field, item } of await referencesTo(types, items, term)) {
+): Promise<{ type: ContentType; before: Item; item: Item }[]> {
+  const changed = new Map<string, { type: ContentType; before: Item; item: Item }>();
+  for (const { type, field, item: before } of await referencesTo(types, items, term)) {
+    // An item that names the term in two fields was changed once already: the second change is made to that.
+    const item = changed.get(before.id)?.item ?? before;
     const declared = type.fields.find((candidate) => candidate.name === field);
     const value = item.data[field];
     const next = Array.isArray(value) ? value.map((entry) => (entry === term.slug ? slug : entry)) : slug;
@@ -138,9 +141,9 @@ export async function renameReferences(
       visibility: item.visibility,
       data: { ...item.data, [field]: declared?.multiple ? [...new Set(next as string[])] : next },
     };
-    changed.push(await items.update(item, draft));
+    changed.set(item.id, { type, before, item: await items.update(item, draft) });
   }
-  return changed;
+  return [...changed.values()];
 }
 
 /** Refuses to delete a term that items still point at, naming a few of them so the owner knows where to look. */

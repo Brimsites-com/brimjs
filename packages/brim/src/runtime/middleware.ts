@@ -1,7 +1,7 @@
 import type { MiddlewareHandler } from "astro";
 import config from "virtual:brim/config";
 import { itemPageOf } from "../content/content-types.ts";
-import { normalizePagePath, pageScope, siteScope, typeScope } from "../content/ids.ts";
+import { normalizePagePath, pageScope, requestedPage, siteScope, typeScope } from "../content/ids.ts";
 import { itemHead } from "../content/item-head.ts";
 import { redirectFor } from "../content/redirects.ts";
 import { requestUser } from "../server/auth.ts";
@@ -57,6 +57,7 @@ export const onRequest: MiddlewareHandler = async (context, next) => {
  */
 async function drawPage(context: Parameters<MiddlewareHandler>[0], next: Parameters<MiddlewareHandler>[1]) {
   const { pathname } = context.url;
+  const address = requestedPage(pathname, context.routePattern);
   const brim = await connect(config.databaseUrl, config.authToken);
   // A site that just turned languages on reads what was saved before as its default language's.
   if (config.locales) await adoptLanguageScopes(brim.db, config.locales.defaultLocale);
@@ -70,15 +71,15 @@ async function drawPage(context: Parameters<MiddlewareHandler>[0], next: Paramet
   // What the owner changes on an item's page belongs to its type's template, shared by every item. A page written
   // in code keeps its own, even at an address under the type's slug. The item's visibility decides who sees it.
   const itemPage =
-    context.routePattern === TEMPLATE_ROUTE ? itemPageOf(config.contentTypes, pathname, config.locales) : undefined;
+    context.routePattern === TEMPLATE_ROUTE ? itemPageOf(config.contentTypes, address, config.locales) : undefined;
   const locale = context.currentLocale;
-  const scope = itemPage ? typeScope(itemPage.type.key, locale) : pageScope(pathname);
+  const scope = itemPage ? typeScope(itemPage.type.key, locale) : pageScope(address);
   const scopes = [siteScope(locale), scope];
 
   const [redirects, user, page, saved, item] = await Promise.all([
     live ? brim.content.redirects() : undefined,
     signedIn ? requestUser(brim, context.request) : undefined,
-    brim.content.page(pathname),
+    brim.content.page(address),
     brim.content.loadNodes(scopes),
     itemPage ? brim.items.bySlug(itemPage.type.key, itemPage.slug, { locale: itemPage.locale }) : undefined,
     // `imageSources` gives uploads their width and height from what the media library measured.
@@ -118,7 +119,7 @@ async function drawPage(context: Parameters<MiddlewareHandler>[0], next: Paramet
   const drawn = reads ? await collectingQueryReads(reads, draw) : await draw();
   // Whoever may edit gets the button: everyone on the dev server, signed-in users on the live site (whose pages are
   // never cached for others, see below). Visitors and a static copy never have it.
-  const response = editing && !context.isPrerendered ? await withEditButton(drawn, context.request, pathname) : drawn;
+  const response = editing && !context.isPrerendered ? await withEditButton(drawn, context.request, address) : drawn;
   // What an editor sees must never be stored and shown to visitors.
   if (signedIn && editing) response.headers.set("cache-control", "private, no-store");
   return reads ? learnWhenDrawn(response, pathname, reads, brim.db) : response;

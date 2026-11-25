@@ -51,7 +51,12 @@ function mailer(): Mailer {
 }
 
 function forms(options: FormsOptions = {}): FormsHandler {
-  return createFormsHandler(brim, { mailer: mailer(), background: (work) => background.push(work), ...options });
+  return createFormsHandler(brim, {
+    mailer: mailer(),
+    siteUrl: ORIGIN,
+    background: (work) => background.push(work),
+    ...options,
+  });
 }
 
 beforeEach(async () => {

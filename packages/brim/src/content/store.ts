@@ -3,7 +3,7 @@ import { assertNodeId, normalizePagePath, pageScope } from "./ids.ts";
 import type { Redirect } from "./redirects.ts";
 import type { PageRecord, SeoSettings, StoredNode, Visibility } from "./types.ts";
 
-/** Kept in brim_meta, as one JSON value each: both are short lists read on every visit. */
+/** Kept in brim_meta, as one JSON value: a short list read on every visit. */
 const REDIRECTS_KEY = "redirects";
 
 /** Reads and writes the owner's content. Source code is never touched. */

@@ -9,7 +9,7 @@ import { migrate } from "../src/db/schema.ts";
 import { type FormsHandler, createFormsHandler } from "../src/forms/handler.ts";
 import { type FormSpec, encodeSpec, openAddress, sealAddress, sign } from "../src/forms/spec.ts";
 import { RateLimiter } from "../src/server/rate-limit.ts";
-import { WORK_BITS, solveWork, workDone } from "../src/forms/work.ts";
+import { WORK_BITS, WORK_WINDOW_SECONDS, solveWork, workDone } from "../src/forms/work.ts";
 import { FormStore } from "../src/forms/store.ts";
 import type { Brim } from "../src/runtime/connect.ts";
 
@@ -114,7 +114,7 @@ describe("the email about a message", () => {
       },
     };
     await brim.accounts.createUser("owner@example.test", "a long password 1", "owner"); // betterleaks:allow
-    forms = createFormsHandler(brim, { mailer: mailer as never });
+    forms = createFormsHandler(brim, { mailer: mailer as never, siteUrl: ORIGIN });
     expect((await submit(await submission())).status).toBe(200);
     const id = (await brim.forms.list())[0]?.id;
     await vi.waitFor(() => expect(sent).toHaveLength(1));
@@ -250,7 +250,8 @@ describe("abuse", () => {
       (await (await request("GET", "/_brim/forms/token")).json()) as { token: string; work: number };
     expect((await work()).work).toBe(WORK_BITS);
     const body = await submission({ trap: "spam" });
-    for (let i = 0; i < 30; i++) await submit(body);
+    const window = Math.floor(Date.now() / 1000 / WORK_WINDOW_SECONDS);
+    await new RateLimiter(brim.db).add(`form:attempts:${window}`, 30, Number.MAX_SAFE_INTEGER, WORK_WINDOW_SECONDS);
     const busy = await work();
     expect(busy.work).toBe(18);
     // A script cannot rewrite the level into its token: the token signs it.
@@ -263,6 +264,22 @@ describe("abuse", () => {
     expect((await work()).work).toBe(18);
     vi.advanceTimersByTime(20 * 60 * 1000);
     expect((await work()).work).toBe(WORK_BITS);
+  });
+
+  it("asks no more of anyone for messages without a good token, nor for more than a few from one address", async () => {
+    const attempts = async () =>
+      Number(
+        (await brim.db.query("SELECT SUM(count) AS n FROM brim_rate_limits WHERE key LIKE 'form:attempts:%'"))[0]?.n ??
+          0,
+      );
+    const body = await submission({ trap: "spam" });
+    for (let i = 0; i < 40; i++) await submit(body);
+    for (let i = 0; i < 40; i++) await submit({ ...body, trap: "", token: undefined });
+    for (let i = 0; i < 40; i++) await submit({ ...body, trap: "", token: `${Date.now() - 5_000}.abc.16.forged` });
+    expect(await attempts()).toBe(0);
+
+    for (let i = 0; i < 8; i++) await submit(await submission());
+    expect(await attempts()).toBe(5);
   });
 
   it("rejects a submission sent faster than a person could fill the form", async () => {

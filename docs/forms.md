@@ -87,7 +87,7 @@ In a form with steps drawn this way, elements with `data-step="0"`, `data-step="
 
 A submission is accepted only when it comes from a page of the site, carries a form description the site signed, a fresh single-use token with the work the visitor's browser did for it, an empty trap field, values that fit the form's fields, and the visitor is within their limit (5 messages to a form in 10 minutes). The site emails at most 300 messages a day; past that, messages are still kept, only not emailed. It keeps at most 5,000 a day. A form's own notification email is sealed in the page, so the page's source never shows it.
 
-The work is a number the page's script finds while the visitor types: one that, after the token, gives a SHA-256 starting with 16 zero bits. A browser needs well under a second; the server checks it with one hash. It needs nothing set up and no third party, and a script that sends many messages pays for every one. While the site is being sent many messages (30 tried in ten minutes, then 100), new tokens ask for four, then sixteen times as much work: a second or two, then several, for a real visitor, and far more for a script that sends thousands. `brim-form` carries `data-working` while the browser works.
+The work is a number the page's script finds while the visitor types: one that, after the token, gives a SHA-256 starting with 16 zero bits. A browser needs well under a second; the server checks it with one hash. It needs nothing set up and no third party, and a script that sends many messages pays for every one. While the site is being sent many messages (30 tried in ten minutes, then 100, five from one address at most), new tokens ask for four, then sixteen times as much work: a second or two, then several, for a real visitor, and far more for a script that sends thousands. `brim-form` carries `data-working` while the browser works.
 
 For more, add a challenge from Cloudflare Turnstile or hCaptcha. The public key goes in the config, the secret in the server's environment:
 
@@ -110,11 +110,13 @@ Forms post to `/_brim/forms`, answered by the dev server and the built server. A
 
 ## Form emails
 
-Each message is also emailed to every user of the roles ticked in Site Settings (the owners by default, the editors too when ticked), to extra addresses set there and to the form's own notification email, ten addresses at most. Reply goes to the first email address the visitor wrote. The message is saved even if the email fails.
+Each message is also emailed to every user of the roles ticked in Site Settings (the owners by default, the editors too when ticked), to extra addresses set there and to the form's own notification email (which only owners and editors change), ten addresses at most. Reply goes to the first email address the visitor wrote. The message is saved even if the email fails.
+
+The links in it go to `BRIM_SITE_URL` or the `site` of `astro.config.mjs`, never to an address taken from the request. A site with neither sends its emails without links; a template then gets `""` for each address.
 
 Who sends, first match wins:
 
-1. The owner's own SMTP server, set in Site Settings → Own email server.
+1. The owner's own SMTP server, set in Site Settings → Own email server. With a password, this server and the next need TLS: port 465, or STARTTLS on any other.
 2. An SMTP server given to the server: `brim({ mail: { smtp, from } })`, or `BRIM_SMTP_URL` and `BRIM_MAIL_FROM`.
 3. A mail service that takes a JSON `POST`: `brim({ mail: { url, token } })`, or `BRIM_MAIL_URL` and `BRIM_MAIL_TOKEN`. A host can send for its sites this way without handing them a mail password.
 

@@ -4165,7 +4165,7 @@ button.cb-badge {
   flex: none;
 }
 
-/* ------------------------------------------- page settings: address and password */
+/* ------------------------------------------- page settings: address */
 .brim-inline-form {
   display: flex;
   gap: 6px;

@@ -87,4 +87,4 @@ The picture is the item's `image` (or the first image field of a type without it
 
 ## The site's address
 
-Set `site` in `astro.config.mjs`, or let the host give it as `BRIM_SITE_URL`, so canonical links, the sitemap, feeds, share images and password-reset links name the address visitors use.
+Set `site` in `astro.config.mjs`, or let the host give it as `BRIM_SITE_URL`, so canonical links, the sitemap, feeds, share images, password-reset links and the links in form emails name the address visitors use.

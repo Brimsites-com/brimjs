@@ -30,20 +30,6 @@ export class RateLimiter {
   }
 
   /**
-   * Whether `limit` attempts were already counted in this window, without counting one. With `allow` called only
-   * for attempts that failed, the ones that succeed use nothing up: visitors who share an address (everyone behind
-   * one proxy) are then not shut out by each other's ordinary use.
-   */
-  async exhausted(key: string, limit: number, windowSeconds: number): Promise<boolean> {
-    const now = Math.floor(Date.now() / 1000);
-    const rows = await this.#db.query("SELECT count FROM brim_rate_limits WHERE key = ? AND window_start = ?", [
-      key,
-      now - (now % windowSeconds),
-    ]);
-    return Number(rows[0]?.count ?? 0) >= limit;
-  }
-
-  /**
    * Gives back an attempt counted with `allow` in this window (one that turned out fine). Counting first and giving
    * back after is what keeps concurrent attempts within the limit: a check that counts only afterwards lets any
    * number of requests sent at once through before the first one is counted.

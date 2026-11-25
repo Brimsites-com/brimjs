@@ -1347,9 +1347,8 @@ its user's role allows (see "Roles").
 `Form` and `Newsletter` keep what visitors send in SQLite; the owner reads it under **Form responses** in
 the content browser. A submission is accepted only when it comes from a page of the site, carries a form
 description the site itself signed, a fresh single-use token with the work the visitor's browser did for it (a
-SHA-256 starting with 16 zero bits, four then sixteen times more while the site is being sent many messages), an
-empty trap field, values that fit the
-form's fields, and the visitor is within their limit (5 messages to a form in 10 minutes). The site emails at most
+SHA-256 starting with 16 zero bits, four then sixteen times more while the site is being sent many messages, of which
+five from one address count), an empty trap field, values that fit the form's fields, and the visitor is within their limit (5 messages to a form in 10 minutes). The site emails at most
 300 messages a day: past that, messages are still kept for the editor, only not emailed, so someone sending from
 many addresses can fill the inbox but never stop real visitors' messages. It keeps at most 5,000 a day. A form's own
 Notification Email goes in the page sealed, so the page's source never shows the owner's address.
@@ -1476,13 +1475,17 @@ still win where it is placed (`<Form form={contact} buttonText="Cere o ofertă" 
 Each message is also emailed, after the visitor has their answer, to every user of the roles chosen in **Site
 Settings** (the editor's account menu, owners only): the owners by default, the editors too when ticked. Writers
 never get them, since their role cannot read form messages in the editor either. It also goes to the addresses in
-Site Settings and to the form's own _Notification Email_, each address once and ten at most. "Reply" goes to the
-first email address the visitor wrote. The message is saved even if the email fails.
+Site Settings and to the form's own _Notification Email_, which only owners and editors change, each address once and
+ten at most. "Reply" goes to the first email address the visitor wrote. The message is saved even if the email fails.
+
+The links in it go to `BRIM_SITE_URL` or the `site` of `astro.config.mjs`, never to an address taken from the request,
+which whoever writes could choose. A site with neither sends its emails without links.
 
 Who sends, first match wins:
 
 1. **The owner's own SMTP server**, set in Site Settings → _Own email server_. Its password is stored in the
-   site's database and never sent back to the editor.
+   site's database and never sent back to the editor. With a password, this server and the next need TLS: port 465,
+   or STARTTLS on any other.
 2. **An SMTP server given to the server**: `brim({ mail: { smtp: "smtps://user:pass@host:465", from: "Site <no-reply@example.com>" } })`, <!-- betterleaks:allow -->
    or `BRIM_SMTP_URL` and `BRIM_MAIL_FROM`, read when the server starts and winning over the config.
 3. **A mail service**: `brim({ mail: { url, token } })`, or `BRIM_MAIL_URL` and `BRIM_MAIL_TOKEN`. The

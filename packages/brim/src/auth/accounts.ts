@@ -319,7 +319,8 @@ function assertRole(role: string): asserts role is Role {
   if (!ROLE_NAMES.includes(role as Role)) throw new Error('The role is "owner", "editor" or "writer".');
 }
 
-function normalizeEmail(email: string): string {
+/** An email as accounts are kept and found by: every spelling of it that signs in is this one. */
+export function normalizeEmail(email: string): string {
   return email.trim().toLowerCase();
 }
 

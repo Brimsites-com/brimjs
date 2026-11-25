@@ -62,7 +62,7 @@ To put local content on your server, stop it and copy `.brim/data.db` and `publi
 npm run build:static   # or BRIM_OUTPUT=static astro build
 ```
 
-Writes plain files for any static host, with the content as it is at build time, without the editor, the MCP, forms, search, passwords or redirects. Edit locally, build again and upload. `brim({ output: "static" })` does the same from the config.
+Writes plain files for any static host, with the content as it is at build time, without the editor, the MCP, forms, search or redirects. Edit locally, build again and upload. `brim({ output: "static" })` does the same from the config.
 
 ## Brimsites
 
@@ -87,6 +87,6 @@ It keeps a copy of what was there first. `brimsites export` goes the other way. 
 
 ## Before going live
 
-- Set `site` in `astro.config.mjs` to the public address. Canonical tags, share links, the sitemap, feeds and password-reset links use it.
+- Set `site` in `astro.config.mjs` to the public address. Canonical tags, share links, the sitemap, feeds, password-reset links and the links in form emails use it.
 - Run `npx brim check` and, with the site running, `npx brim check --content` for values left from testing.
 - Give the site a way to send email, so form messages and Forgot password reach people.

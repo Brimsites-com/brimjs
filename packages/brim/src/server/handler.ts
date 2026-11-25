@@ -1,6 +1,7 @@
 import { AsyncLocalStorage } from "node:async_hooks";
+import { createHash } from "node:crypto";
 import { readFile } from "node:fs/promises";
-import type { Role, User } from "../auth/accounts.ts";
+import { type Role, type User, normalizeEmail } from "../auth/accounts.ts";
 import { type Permission, REFUSALS, ROLES, can, permissionsOf } from "../auth/permissions.ts";
 import type { HistoryRecord } from "../content/history.ts";
 import type { DraftTarget, ItemContentDraft, NodeDraft } from "../content/drafts.ts";
@@ -18,8 +19,17 @@ import { ValidationError, parseNodeValue, parseSeo } from "../content/validate.t
 import { parseRedirects, redirectsAfterMove } from "../content/redirects.ts";
 import { generatePassword } from "../auth/password.ts";
 import type { Brim } from "../runtime/connect.ts";
-import { HttpError, assertSameOrigin, json, publicOrigin, readBytes, readJson, requestOrigin } from "./http.ts";
-import { itemPathSegments } from "../content/item-path.ts";
+import {
+  HttpError,
+  assertSameOrigin,
+  isLocalHost,
+  json,
+  publicOrigin,
+  readBytes,
+  readJson,
+  requestOrigin,
+} from "./http.ts";
+import { itemPathFields, itemPathSegments } from "../content/item-path.ts";
 import { type LocaleConfig, itemPagePath, localeOfPath, pathInLocale, storedLocale } from "./locales.ts";
 import { RateLimiter } from "./rate-limit.ts";
 import { SESSION_COOKIE, bearerToken, requestUser, sessionCookies } from "./auth.ts";
@@ -61,6 +71,7 @@ import {
   assertUnused,
   checkReferences,
   isReferenced,
+  referencesTo,
   renameReferences,
 } from "../content/references.ts";
 import { applySeed, exportSeed, planSeed } from "../content/seed.ts";
@@ -293,8 +304,10 @@ export function createAdminHandler(options: AdminOptions): AdminHandler {
       need(user, scope.startsWith("type:") ? "templates" : "content");
       const before = record.before as { kind: string; value: unknown } | null;
       await rememberNode(user, scope, nodeId, record.page, before ? "changed" : "reset", true);
-      if (before) await brim.content.saveNode(scope, nodeId, before.kind, before.value);
-      else await brim.content.resetNode(scope, nodeId);
+      if (before) {
+        const value = await allowedSettings(user, scope, nodeId, before.kind, before.value, false);
+        await brim.content.saveNode(scope, nodeId, before.kind, value);
+      } else await brim.content.resetNode(scope, nodeId);
       return;
     }
     if (record.target === "item") {
@@ -309,9 +322,7 @@ export function createAdminHandler(options: AdminOptions): AdminHandler {
         if (current.visibility !== item.visibility) need(user, "publish");
         // Putting a published item back at its old address moves it for visitors, as editing its slug would.
         const type = await contentType(current.type);
-        const from = itemPagePath(type, current, locales);
-        const to = itemPagePath(type, { ...item, locale: current.locale }, locales);
-        if (from !== to && current.visibility === "published") need(user, "publish");
+        await needForMove(user, type, current, item);
         await rememberItem(user, current, "changed", [], true);
         await brim.items.update(current, {
           slug: item.slug,
@@ -373,8 +384,7 @@ export function createAdminHandler(options: AdminOptions): AdminHandler {
       .find((value) => /^https?:\/\//.test(value));
     if (configured) return new URL(configured).origin;
     const origin = requestOrigin(request);
-    const host = new URL(origin).hostname;
-    if (host === "localhost" || host === "127.0.0.1" || host === "[::1]" || host.endsWith(".localhost")) return origin;
+    if (isLocalHost(new URL(origin).hostname)) return origin;
     throw new HttpError(501, "Set `site` in astro.config.mjs so password links point at your site.");
   }
 
@@ -554,19 +564,39 @@ export function createAdminHandler(options: AdminOptions): AdminHandler {
   }
 
   /**
-   * A term moved to a new slug: its translations, which share its slug, move with it, and the items pointing at it
-   * (in every language) follow, once no item keeps the old slug.
+   * Moving a published item to a new address changes what visitors see, so it takes a role that may publish, whichever
+   * way it moves: its slug, another value its address holds, or the slug of a term it, or a published item, is under.
    */
+  async function needForMove(
+    user: User,
+    type: ContentType,
+    live: Item,
+    next: Pick<Item, "slug" | "data">,
+  ): Promise<void> {
+    if (can(user, "publish")) return;
+    const to = itemPagePath(type, { ...live, slug: next.slug, data: next.data }, locales);
+    if (live.visibility === "published" && to !== itemPagePath(type, live, locales)) need(user, "publish");
+    const types = await contentTypes();
+    if (next.slug === live.slug || !isReferenced(types, type.key)) return;
+    const translations = live.translationOf === null ? await brim.items.translations(live) : [];
+    const under = (await referencesTo(types, brim.items, live)).filter(({ type: of, field }) =>
+      itemPathFields(of).includes(field),
+    );
+    const moving = [...translations.filter(({ slug }) => slug === live.slug), ...under.map(({ item }) => item)];
+    if (moving.some(({ visibility }) => visibility === "published")) need(user, "publish");
+  }
+
   /**
    * What follows an item to its new address when its slug (or a value in its path) changes: its page's search
-   * settings, and, for a published item, a redirect from the old address, so links and search results that
-   * point there still arrive.
+   * settings, what the owner placed on its page when that is written in code, and, for a published item, a redirect
+   * from the old address, so links and search results that point there still arrive.
    */
   async function itemMoved(type: ContentType, existing: Item, item: Item): Promise<void> {
     const from = normalizePagePath(itemPagePath(type, existing, locales));
     const to = normalizePagePath(itemPagePath(type, item, locales));
     if (from === to) return;
     await brim.content.movePageSettings(from, to);
+    if (!type.component) await brim.content.moveNodes(pageScope(from), pageScope(to));
     const redirects = await brim.content.redirects();
     if (existing.visibility === "published") {
       await brim.content.setRedirects(redirectsAfterMove(redirects, from, to));
@@ -594,6 +624,10 @@ export function createAdminHandler(options: AdminOptions): AdminHandler {
     return true;
   }
 
+  /**
+   * A term moved to a new slug: its translations, which share its slug, move with it, and the items pointing at it
+   * (in every language) follow, once no item keeps the old slug.
+   */
   async function termMoved(types: ContentType[], type: ContentType, existing: Item, item: Item): Promise<void> {
     if (item.slug === existing.slug || !isReferenced(types, type.key)) return;
     if (existing.translationOf === null) {
@@ -601,13 +635,12 @@ export function createAdminHandler(options: AdminOptions): AdminHandler {
         if (translation.id === existing.id || translation.slug !== existing.slug) continue;
         const moved = await brim.items.update(translation, { ...translation, slug: item.slug });
         await itemMoved(type, translation, moved);
-        if (!type.component) {
-          await brim.content.moveNodes(ownPageScope(type, translation, locales), ownPageScope(type, moved, locales));
-        }
       }
     }
     if (!(await brim.items.list(type.key)).some((other) => other.slug === existing.slug)) {
-      await renameReferences(types, brim.items, existing, item.slug);
+      for (const changed of await renameReferences(types, brim.items, existing, item.slug)) {
+        await itemMoved(changed.type, changed.before, changed.item);
+      }
     }
   }
 
@@ -626,12 +659,12 @@ export function createAdminHandler(options: AdminOptions): AdminHandler {
       const next = applyToItem(await contentType(live.type), existing, field, kind, value);
       return json({ nodeId, kind, ...(await draftItem(user, live, next, pagePathOf(body))) });
     }
-    const existing = live;
-    await rememberItem(user, existing, "changed");
-    const item = await brim.items.update(
-      existing,
-      applyToItem(await contentType(existing.type), existing, field, kind, value),
-    );
+    const type = await contentType(live.type);
+    const next = applyToItem(type, live, field, kind, value);
+    await needForMove(user, type, live, next);
+    await rememberItem(user, live, "changed");
+    const item = await brim.items.update(live, next);
+    await itemMoved(type, live, item);
     await changed(undefined);
     return json({ nodeId, kind, item });
   }
@@ -655,6 +688,36 @@ export function createAdminHandler(options: AdminOptions): AdminHandler {
   }
 
   /**
+   * A block's settings as this user may save them: one their role may not change (`permission` in its schema) stays
+   * as it was, whatever was sent. The editor sends a block's settings whole, the code's own among them, so a value
+   * that differs from the saved one does not mean somebody changed it.
+   */
+  async function allowedSettings(
+    user: User,
+    scope: string,
+    nodeId: string,
+    kind: string,
+    value: unknown,
+    draft: boolean,
+  ): Promise<unknown> {
+    const properties = Object.hasOwn(blockDefinitions, kind) ? blockDefinitions[kind]?.schema.properties : undefined;
+    const kept = Object.entries(properties ?? {}).filter(
+      ([, { permission }]) => permission !== undefined && !can(user, permission),
+    );
+    if (kept.length === 0) return value;
+    const drafted = draft ? ((await brim.drafts.get("node", `${scope}\n${nodeId}`)) as NodeDraft | undefined) : undefined;
+    const saved = (await brim.content.loadNodes([scope])).find((node) => node.nodeId === nodeId);
+    const current = drafted && "reset" in drafted ? undefined : (drafted ?? saved);
+    const before = (current?.kind === kind ? current.value : {}) as Record<string, unknown>;
+    const settings = { ...(value as Record<string, unknown>) };
+    for (const [name] of kept) {
+      if (Object.hasOwn(before, name)) settings[name] = before[name];
+      else delete settings[name];
+    }
+    return settings;
+  }
+
+  /**
    * Writes one draft and answers with the change, so the editor can take it back (`before`) and make it again
    * (`after`); `null` is no draft, the saved content. `drafts` counts the changes nobody has saved yet.
    */
@@ -674,8 +737,7 @@ export function createAdminHandler(options: AdminOptions): AdminHandler {
 
   /** An item's content held back as a draft; who can see it is never drafted. Answers with the item as previewed. */
   async function draftItem(user: User, live: Item, next: ItemContentDraft, page: string) {
-    // Moving a published item to a new address changes what visitors see once saved.
-    if (next.slug !== live.slug && live.visibility === "published") need(user, "publish");
+    await needForMove(user, await contentType(live.type), live, next);
     const content: ItemContentDraft = { slug: next.slug, title: next.title, data: next.data };
     const same = content.slug === live.slug && content.title === live.title && sameJson(content.data, live.data);
     const answer = await writeDraft("item", live.id, same ? undefined : content, page);
@@ -689,21 +751,20 @@ export function createAdminHandler(options: AdminOptions): AdminHandler {
       if (rest.length > 0 || !isNodeId(nodeId) || !/^(page:|site|type:)/.test(scope)) {
         throw new HttpError(400, "This is not an element of the site.");
       }
+      assertElement(nodeId);
       if (scope.startsWith("type:")) need(user, "templates");
       if (value === null) return undefined;
       const draft = value as Record<string, unknown>;
       if (draft.reset === true) return { reset: true };
       const kind = requireString(draft.kind, "kind");
-      return { kind, value: nodeValueOf(kind, draft.value) };
+      return { kind, value: await allowedSettings(user, scope, nodeId, kind, nodeValueOf(kind, draft.value), true) };
     }
     if (target === "item") {
       const live = await existingItem({ id: key });
       if (value === null) return undefined;
-      const parsed = parseItem(await contentType(live.type), {
-        ...(value as Record<string, unknown>),
-        visibility: live.visibility,
-      });
-      if (parsed.slug !== live.slug && live.visibility === "published") need(user, "publish");
+      const type = await contentType(live.type);
+      const parsed = parseItem(type, { ...(value as Record<string, unknown>), visibility: live.visibility });
+      await needForMove(user, type, live, parsed);
       return { slug: parsed.slug, title: parsed.title, data: parsed.data };
     }
     if (target === "seo") return value === null ? undefined : parseSeo(value);
@@ -735,13 +796,10 @@ export function createAdminHandler(options: AdminOptions): AdminHandler {
           if (existing) {
             const content = row.value as ItemContentDraft;
             const type = await contentType(existing.type);
-            if (content.slug !== existing.slug && existing.visibility === "published") need(user, "publish");
+            await needForMove(user, type, existing, content);
             await rememberItem(user, existing, "changed", [], true);
             const item = await brim.items.update(existing, { ...content, visibility: existing.visibility });
             await itemMoved(type, existing, item);
-            if (!type.component && item.slug !== existing.slug) {
-              await brim.content.moveNodes(ownPageScope(type, existing, locales), ownPageScope(type, item, locales));
-            }
             await termMoved(await contentTypes(), type, existing, item);
           }
         } else {
@@ -811,18 +869,15 @@ export function createAdminHandler(options: AdminOptions): AdminHandler {
 
       // Every attempt is counted before the password is checked, so attempts sent all at once cannot pass the limit
       // together; one that signs in correctly is given back, so it uses up nobody's attempts.
-      const keys = [`login:address:${info.clientAddress}`, `login:email:${email.toLowerCase()}`];
       const counted: string[] = [];
-      let within = true;
-      for (const key of keys) {
-        counted.push(key);
-        if (!(await rateLimiter.allow(key, LOGIN_ATTEMPTS, LOGIN_WINDOW_SECONDS))) within = false;
-      }
       const giveBack = async () => {
         for (const key of counted) await rateLimiter.release(key, LOGIN_WINDOW_SECONDS);
       };
-      if (!within) {
-        // A refused attempt was not tried: it is given back, so waiting out the window is enough.
+      for (const key of loginKeys(info, email)) {
+        counted.push(key);
+        if (await rateLimiter.allow(key, LOGIN_ATTEMPTS, LOGIN_WINDOW_SECONDS)) continue;
+        // A refused attempt was not tried: it is given back, so waiting out the window is enough. Nothing after it is
+        // counted, so an address past its limit leaves no row for each email it goes on to name.
         await giveBack();
         throw new HttpError(429, "Too many sign-in attempts. Try again in a few minutes.");
       }
@@ -845,7 +900,7 @@ export function createAdminHandler(options: AdminOptions): AdminHandler {
      */
     "POST /password/forgot": async (request, info) => {
       const body = await readJson(request);
-      const email = requireString(body.email, "email").trim().toLowerCase();
+      const email = normalizeEmail(requireString(body.email, "email"));
       if (!(await rateLimiter.allow(`reset:address:${info.clientAddress}`, RESET_ASKS_PER_ADDRESS, RESET_WINDOW_SECONDS))) {
         throw new HttpError(429, "Too many requests. Try again in an hour.");
       }
@@ -858,7 +913,7 @@ export function createAdminHandler(options: AdminOptions): AdminHandler {
         sent: true,
         message: "If this email has an account here, a link to set a new password is on its way.",
       });
-      if (!(await rateLimiter.allow(`reset:email:${email}`, RESET_ASKS_PER_EMAIL, RESET_WINDOW_SECONDS))) return answer;
+      if (!(await rateLimiter.allow(`reset:email:${emailKey(email)}`, RESET_ASKS_PER_EMAIL, RESET_WINDOW_SECONDS))) return answer;
       const mailer = options.mailer;
       void (async () => {
         const reset = await brim.accounts.createResetToken(email);
@@ -904,7 +959,7 @@ export function createAdminHandler(options: AdminOptions): AdminHandler {
       const body = await readJson(request);
       const current = requireString(body.current, "current");
       const password = requireString(body.password, "password"); // betterleaks:allow
-      const keys = [`login:address:${info.clientAddress}`, `login:email:${user.email}`];
+      const keys = loginKeys(info, user.email);
       for (const key of keys) {
         if (!(await rateLimiter.allow(key, LOGIN_ATTEMPTS, LOGIN_WINDOW_SECONDS))) {
           throw new HttpError(429, "Too many attempts. Try again in a few minutes.");
@@ -1150,7 +1205,7 @@ export function createAdminHandler(options: AdminOptions): AdminHandler {
     "GET /emails/form": async (request) => {
       // It shows the newest message a visitor sent, so it asks for what reading the messages asks for.
       const user = await allowed(request, "responses");
-      const origin = publicOrigin(request);
+      const origin = publicOrigin(request, options.siteUrl);
       // A role that cannot read messages (a writer) sees the example, never a visitor's words.
       const newest = can(user, "responses") ? (await brim.forms.list())[0] : undefined;
       const page = newest ? formPage(newest.form) : "/produse/exemplu";
@@ -1196,7 +1251,7 @@ export function createAdminHandler(options: AdminOptions): AdminHandler {
       if (kind !== "added" && kind !== "role" && kind !== "reset") {
         throw new ValidationError('The kind is "added", "role" or "reset".');
       }
-      const origin = publicOrigin(request);
+      const origin = publicOrigin(request, options.siteUrl);
       const example = { ...owner, email: "ana@example.com", role: "editor" as const };
       const email = accountEmail(origin, kind, example, owner, kind === "role" ? undefined : "example", kind === "role" ? "writer" : undefined);
       return emailPreview(request, await accountMessage(email));
@@ -1208,7 +1263,7 @@ export function createAdminHandler(options: AdminOptions): AdminHandler {
      */
     "GET /emails/confirmation": async (request) => {
       await currentUser(request);
-      const origin = publicOrigin(request);
+      const origin = publicOrigin(request, options.siteUrl);
       const query = new URL(request.url).searchParams;
       const settings = await mailSettings.get();
       const email: ConfirmationEmail = {
@@ -1259,7 +1314,7 @@ export function createAdminHandler(options: AdminOptions): AdminHandler {
       }
       const settings = await mailSettings.get();
       if (!options.mailer) throw new HttpError(501, "Email is not set up for this site.");
-      await options.mailer.send(settings, testNotice(new URL(publicOrigin(request)).host, settings, user.email));
+      await options.mailer.send(settings, testNotice(new URL(publicOrigin(request, options.siteUrl)).host, settings, user.email));
       return json({ sentTo: user.email });
     },
 
@@ -1578,9 +1633,7 @@ export function createAdminHandler(options: AdminOptions): AdminHandler {
       assertTermSlug(await contentTypes(), existing, draft.slug);
       // Publishing, unpublishing and moving a published item to a new address change what visitors see at once.
       if (draft.visibility !== existing.visibility) need(user, "publish");
-      const moved =
-        itemPagePath(type, { ...draft, locale: existing.locale }, locales) !== itemPagePath(type, existing, locales);
-      if (moved && existing.visibility === "published") need(user, "publish");
+      await needForMove(user, type, existing, draft);
       if (draft.visibility === "published" && existing.visibility === "private")
         draft.data = withPublishedDate(type, draft.data);
       const types = await contentTypes();
@@ -1591,10 +1644,6 @@ export function createAdminHandler(options: AdminOptions): AdminHandler {
       await termMoved(types, type, existing, item);
       // Saved as a whole from its form: what was drafted of it is settled.
       await brim.drafts.set("item", existing.id, undefined, "");
-      // On a page written in code, what the owner placed on the item's page follows it to its new address.
-      if (!type.component && itemPagePath(type, item, locales) !== itemPagePath(type, existing, locales)) {
-        await brim.content.moveNodes(ownPageScope(type, existing, locales), ownPageScope(type, item, locales));
-      }
       await changed(undefined);
       return json({ item });
     },
@@ -1731,10 +1780,11 @@ export function createAdminHandler(options: AdminOptions): AdminHandler {
         }
         return saveToItem(user, body, nodeId, kind, body.value as Record<string, unknown>);
       }
-      const value = nodeValueOf(kind, body.value);
-      if (body.item !== undefined) return saveToItem(user, body, nodeId, kind, value as Record<string, unknown>);
+      const sent = nodeValueOf(kind, body.value);
+      if (body.item !== undefined) return saveToItem(user, body, nodeId, kind, sent as Record<string, unknown>);
       if (body.scope === "template") need(user, "templates");
       const scope = await scopeOf(body, path);
+      const value = await allowedSettings(user, scope, nodeId, kind, sent, body.draft === true);
       if (body.draft === true) {
         return json({ nodeId, kind, value, ...(await writeDraft("node", `${scope}\n${nodeId}`, { kind, value }, path)) });
       }
@@ -2045,6 +2095,16 @@ function sessionCookie(request: Request, token: string, maxAgeSeconds: number, p
   return `${SESSION_COOKIE}=${token}; Path=${path}; Max-Age=${maxAgeSeconds}; HttpOnly; SameSite=Lax${secure}`;
 }
 
+/** An email in the name of a limit: as accounts know it, and hashed, so what was typed is neither kept nor long. */
+function emailKey(email: string): string {
+  return createHash("sha256").update(normalizeEmail(email)).digest("hex").slice(0, 32);
+}
+
+/** What wrong passwords are counted by: the visitor's address first, then the account. */
+function loginKeys(info: RequestInfo, email: string): string[] {
+  return [`login:address:${info.clientAddress}`, `login:email:${emailKey(email)}`];
+}
+
 /** `text` is a primitive with its own value shape, though BrimCMS also had a block by that name. */
 function isPrimitive(kind: string): boolean {
   return kind === "text";
@@ -2102,9 +2162,16 @@ function ownPageScope(type: ContentType, item: Pick<Item, "slug" | "locale" | "d
   return pageScope(itemPagePath(type, item, locales));
 }
 
+/** Site Settings are kept beside the elements but checked field by field: they are not saved as an element. */
+function assertElement(nodeId: string): void {
+  if (nodeId !== SITE_SETTINGS_NODE) return;
+  throw new HttpError(400, "Site Settings are changed in Site Settings, or with brim_set_site_settings.");
+}
+
 function nodeIdOf(body: Record<string, unknown>): string {
   const nodeId = requireString(body.nodeId, "nodeId");
   if (!isNodeId(nodeId)) throw new HttpError(400, `"${nodeId}" is not a valid nodeId.`);
+  assertElement(nodeId);
   return nodeId;
 }
 
