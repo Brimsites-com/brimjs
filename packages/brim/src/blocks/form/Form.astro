@@ -143,14 +143,17 @@ const confirm = confirmTo && {
   message: text(settings.confirmationMessage, 5000),
   ...(settings.confirmationAnswers === true && { answers: true }),
 };
-const signed = await signForm({
-  form: `${Astro.url.pathname}#${nodeId}`,
-  title,
-  fields,
-  consentRequired,
-  ...(notify && { notify }),
-  ...(confirm && { confirm }),
-});
+const signed = await signForm(
+  {
+    form: `${Astro.url.pathname}#${nodeId}`,
+    title,
+    fields,
+    consentRequired,
+    ...(notify && { notify }),
+    ...(confirm && { confirm }),
+  },
+  Astro.locals.brim.preview,
+);
 const info = plainText(settings.infoText);
 const consentLink =
   typeof settings.consentLinkUrl === "string" && /^(https?:\/\/|\/(?!\/))/i.test(settings.consentLinkUrl)

@@ -3,11 +3,11 @@ import type { Database } from "../db/database.ts";
 import { MIN_PASSWORD_LENGTH, generatePassword, hashPassword, verifyPassword } from "./password.ts";
 
 /**
- * An owner manages the site; an editor runs its content; a writer changes words and pictures only.
+ * An owner manages the site; an editor runs its content.
  * What each may do is in `permissions.ts`.
  */
-export type Role = "owner" | "editor" | "writer";
-const ROLE_NAMES: readonly Role[] = ["owner", "editor", "writer"];
+export type Role = "owner" | "editor";
+const ROLE_NAMES: readonly Role[] = ["owner", "editor"];
 
 export interface User {
   id: string;
@@ -316,7 +316,7 @@ export class Accounts {
 }
 
 function assertRole(role: string): asserts role is Role {
-  if (!ROLE_NAMES.includes(role as Role)) throw new Error('The role is "owner", "editor" or "writer".');
+  if (!ROLE_NAMES.includes(role as Role)) throw new Error('The role is "owner" or "editor".');
 }
 
 /** An email as accounts are kept and found by: every spelling of it that signs in is this one. */

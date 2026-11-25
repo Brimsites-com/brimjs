@@ -299,7 +299,7 @@ Users are managed from the command line; there is no users screen in the editor.
 ```bash
 pnpm brim user add ana@example.com --role editor
 pnpm brim user list                          # role, tokens, since when; --json for scripts
-pnpm brim user role ana@example.com editor   # owner, editor or writer; a site always keeps one owner
+pnpm brim user role ana@example.com editor   # owner or editor; a site always keeps one owner
 pnpm brim user password ana@example.com      # signs them out: open sessions and access tokens end
 pnpm brim user remove ana@example.com        # also deletes their sessions and tokens
 pnpm brim info --json                        # what the database holds: users, pages, items, media, responses
@@ -340,11 +340,10 @@ false` leaves telling them to the caller. The emails are the site's to write, in
 
 A user's role decides what the editor offers them and what the API, and so the site MCP, lets them do:
 
-| Role     | For                                  | May                                                                                                       |
-| -------- | ------------------------------------ | --------------------------------------------------------------------------------------------------------- |
-| `owner`  | whoever builds and runs the site     | everything below, plus the templates of content types, Site Settings and redirects                       |
-| `editor` | whoever runs its content: the client | everything a writer may, plus publish and unpublish, delete items, add, move and delete pages, read forms |
-| `writer` | someone who only writes              | change texts, images, links, blocks, SEO and item fields; upload media; add items, which stay private     |
+| Role     | For                                  | May                                                                                                                                                                             |
+| -------- | ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `owner`  | whoever builds and runs the site     | everything below, plus the templates of content types, users, redirects and the email in Site Settings                                                                          |
+| `editor` | whoever runs its content: the client | change texts, images, links, blocks, SEO, item fields and site settings; upload media; add, publish, unpublish and delete items; add, move and delete pages; read form messages |
 
 A request a role does not allow is refused with a sentence naming the role that can do it. The rule is in one place,
 `ROLE_PERMISSIONS` (exported from `brimjs`), and `GET /admin/api/session` answers the signed-in user's permissions.
@@ -1408,12 +1407,11 @@ Forms are the one place where anyone at all writes to the site, so a file is tak
   its disk: in `form-files/` beside the database (`.brim/form-files`), which nothing serves. Every file is sealed
   (AES-256-GCM) with a key made from the forms secret in the site's database, so the stored bytes alone are
   unreadable, and a file changed where it is stored is refused.
-- **Who reads it.** Someone signed in whose role may read form messages (owner, editor; never a writer), from the
-  message in **Form responses**, through `GET /admin/api/responses/<message id>/files/<file id>`. It is always a
-  download (`Content-Disposition: attachment`), with `X-Content-Type-Options: nosniff`, a
-  `Content-Security-Policy` that forbids everything, and `Cache-Control: no-store`. The owner's email names each
-  file with that link; files are never attached to an email. The MCP's `brim_list_form_responses` lists a file's
-  name, type and size, never its content.
+- **Who reads it.** Someone signed in whose role may read form messages (owner, editor), from the message in **Form
+  responses**, through `GET /admin/api/responses/<message id>/files/<file id>`. It is always a download
+  (`Content-Disposition: attachment`), with `X-Content-Type-Options: nosniff`, a `Content-Security-Policy` that
+  forbids everything, and `Cache-Control: no-store`. The owner's email names each file with that link; files are never
+  attached to an email. The MCP's `brim_list_form_responses` lists a file's name, type and size, never its content.
 - **How long.** As long as its message: deleting a message in Form responses deletes its files at once, for good.
   Form messages are not part of the history, so neither they nor their files come back with Restore. An export or
   a restore of the site's content (`brimsites export`, `brimsites restore`) carries the database, so the messages
@@ -1473,10 +1471,9 @@ still win where it is placed (`<Form form={contact} buttonText="Cere o ofertă" 
 ### Form emails
 
 Each message is also emailed, after the visitor has their answer, to every user of the roles chosen in **Site
-Settings** (the editor's account menu, owners only): the owners by default, the editors too when ticked. Writers
-never get them, since their role cannot read form messages in the editor either. It also goes to the addresses in
-Site Settings and to the form's own _Notification Email_, which only owners and editors change, each address once and
-ten at most. "Reply" goes to the first email address the visitor wrote. The message is saved even if the email fails.
+Settings** (the editor's account menu, owners only): the owners by default, the editors too when ticked. It also goes
+to the addresses in Site Settings and to the form's own _Notification Email_, each address once and ten at most.
+"Reply" goes to the first email address the visitor wrote. The message is saved even if the email fails.
 
 The links in it go to `BRIM_SITE_URL` or the `site` of `astro.config.mjs`, never to an address taken from the request,
 which whoever writes could choose. A site with neither sends its emails without links.
@@ -1530,6 +1527,8 @@ Anyone can type someone else's address in a form, so a confirmation is built not
 - **One email, to one address**: the value of the chosen `email` field, after it was checked as a single plain
   address. The form's description is signed, so a visitor can neither add a confirmation to a form nor change its
   words or its field. A template cannot change the recipient either.
+- **Only saved words are the site's to send.** In the editor's preview, where the form may be a draft nobody saved,
+  it is signed without its confirmation and its Notification Email.
 - **Only for a message that was kept.** A message refused by any check (the token, the challenge, a limit, an
   answer), or caught by the trap field, is never confirmed.
 - **Limits of its own**: 3 confirmations a day to one address (however it is capitalised), 10 a day caused by one
@@ -1614,10 +1613,9 @@ export const emails = defineEmails({
 - A template that throws sends Brim's own email, and the reason is in the server's log: no message is lost.
 - Email clients read inline styles and simple tables, not the site's CSS or scripts.
 - **See it while writing it:** `/admin/api/emails/form` (signed in) shows the email for the newest message received,
-  or an example, as it would be sent (always the example for a writer, who cannot read messages);
-  `/admin/api/emails/confirmation` shows the confirmation with an example subject and message (`?subject=` and
-  `?message=` try others); `?text` shows the subject and text version. In `npx astro dev` a change to
-  `src/emails.ts` shows on reload, and in the next email.
+  or an example, as it would be sent; `/admin/api/emails/confirmation` shows the confirmation with an example subject
+  and message (`?subject=` and `?message=` try others); `?text` shows the subject and text version. In `npx astro dev`
+  a change to `src/emails.ts` shows on reload, and in the next email.
 
 The emails people get about their access to the site are written the same way: `userAdded` when an owner adds them,
 `roleChanged` when their role changes, `accessReset` when an owner resets their access. Each is given the site, the
@@ -1887,7 +1885,7 @@ Working:
 - Forms asked in steps, files from visitors kept privately (see "Files from visitors") and a confirmation email to
   the visitor (see "A confirmation for the visitor").
 - Icon packs: the site chooses which icons the editor offers (see "Icons").
-- Roles (`owner`, `editor`, `writer`) checked by the API and the MCP, and a history of content changes with restore.
+- Roles (`owner`, `editor`) checked by the API and the MCP, and a history of content changes with restore.
 - `brim init` for an Astro site that already exists, with a conversion guide for AI coding agents.
 - Server code of the site's own: endpoints with the site's database and the editor's sign-in (see "Server code").
 

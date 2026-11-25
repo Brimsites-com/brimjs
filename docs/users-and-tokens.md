@@ -13,13 +13,13 @@ npx brim user add ana@example.com --role editor
 npx brim user link ana@example.com   # a one-time sign-in link instead of a password
 ```
 
-There is no users screen in the editor. Owners run everything, editors run the content and writers only write; the API and the site MCP enforce it. See [Editing and handover](./editing.md) for the full table.
+There is no users screen in the editor. Owners run everything and editors run the content; the API and the site MCP enforce it. See [Editing and handover](./editing.md) for the full table.
 
 ## Commands
 
 | Command | What it does |
 | --- | --- |
-| `brim user add <email> [--role owner\|editor\|writer]` | Create a user; the password is asked for or read from stdin |
+| `brim user add <email> [--role owner\|editor]` | Create a user; the password is asked for or read from stdin |
 | `brim user list [--json]` | Users with their role and tokens |
 | `brim user role <email> <role>` | Change a role; a site always keeps one owner |
 | `brim user link <email>` | A link that signs them in once, within two minutes |

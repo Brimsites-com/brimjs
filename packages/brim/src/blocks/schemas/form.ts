@@ -292,8 +292,6 @@ export const form: BlockDefinition = {
         title: "Notification Email",
         type: "string",
         widget: "text",
-        // Whoever is in it gets every message: a role that may not read the messages may not put itself there.
-        permission: "responses",
         placeholder: "hello@example.com",
         default: "",
         description:

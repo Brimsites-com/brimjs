@@ -90,14 +90,14 @@ describe("the users API", () => {
     const call = site();
     const owner = await signedIn("owner");
     // A host's dashboard calls with an owner's token.
-    const added = await call("POST", "/users", owner.token, { email: "Ana@Example.test", role: "writer" });
+    const added = await call("POST", "/users", owner.token, { email: "Ana@Example.test", role: "editor" });
     expect(added.status).toBe(201);
     const answer = (await added.json()) as {
       user: { email: string; role: string };
       password: string; // betterleaks:allow
       emailed: boolean;
     };
-    expect(answer).toMatchObject({ user: { email: "ana@example.test", role: "writer" }, emailed: true });
+    expect(answer).toMatchObject({ user: { email: "ana@example.test", role: "editor" }, emailed: true });
     expect(answer.password).toMatch(/^[a-z2-9]{5}(-[a-z2-9]{5}){3}$/);
     expect(await brim.accounts.authenticate("ana@example.test", answer.password)).toBeTruthy();
 
@@ -106,7 +106,7 @@ describe("the users API", () => {
     expect(message.to).toEqual(["ana@example.test"]);
     expect(message.subject).toBe("You can now edit cozy.example");
     expect(message.fromName).toBe("cozy.example");
-    expect(message.text).toContain("owner@example.test added you to cozy.example as a writer");
+    expect(message.text).toContain("owner@example.test added you to cozy.example as an editor");
     expect(message.text).toContain("within 7 days");
     expect(message.text).toContain("The editor: https://cozy.example/admin/edit");
     // Never the password itself.
@@ -143,14 +143,14 @@ describe("the users API", () => {
   it("emails a role change, and nothing when the role stays", async () => {
     const call = site();
     const owner = await signedIn("owner");
-    await brim.accounts.createUser("ana@example.test", PASSWORD, "writer");
-    const same = await call("PUT", "/users", owner.cookie, { email: "ana@example.test", role: "writer" });
+    await brim.accounts.createUser("ana@example.test", PASSWORD, "owner");
+    const same = await call("PUT", "/users", owner.cookie, { email: "ana@example.test", role: "owner" });
     expect(await same.json()).toMatchObject({ emailed: false });
     const changed = await call("PUT", "/users", owner.cookie, { email: "ana@example.test", role: "editor" });
     expect(await changed.json()).toMatchObject({ user: { role: "editor" }, emailed: true });
     expect(sent).toHaveLength(1);
     expect(sent[0]!.subject).toBe("Your role on cozy.example is now editor");
-    expect(sent[0]!.text).toContain("from writer to editor");
+    expect(sent[0]!.text).toContain("from owner to editor");
     expect(sent[0]!.text).not.toContain("#reset=");
     expect((await call("PUT", "/users", owner.cookie, { email: "nobody@example.test", role: "editor" })).status).toBe(
       404,
@@ -180,7 +180,7 @@ describe("the users API", () => {
   it("lists and removes users", async () => {
     const call = site();
     const owner = await signedIn("owner");
-    await brim.accounts.createUser("ana@example.test", PASSWORD, "writer");
+    await brim.accounts.createUser("ana@example.test", PASSWORD, "editor");
     const listed = (await (await call("GET", "/users", owner.cookie)).json()) as { users: { email: string }[] };
     expect(listed.users.map((user) => user.email)).toEqual(["owner@example.test", "ana@example.test"]);
     expect((await call("DELETE", "/users", owner.cookie, { email: "ana@example.test" })).status).toBe(200);
@@ -244,8 +244,8 @@ describe("the site's account emails", () => {
     expect(sent[0]!.html).toMatch(/^<a href="https:\/\/cozy\.example\/admin\/edit#reset=[\w-]+">Alege parola<\/a>$/);
 
     // Without a template of its own for a role change, the site sends Brim's.
-    await call("PUT", "/users", owner.cookie, { email: "ana@example.test", role: "writer" });
-    expect(sent[1]!.subject).toBe("Your role on cozy.example is now writer");
+    await call("PUT", "/users", owner.cookie, { email: "ana@example.test", role: "owner" });
+    expect(sent[1]!.subject).toBe("Your role on cozy.example is now owner");
   });
 
   it("fall back to Brim's own when the site's template fails", async () => {

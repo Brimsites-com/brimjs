@@ -198,7 +198,6 @@ export function passwordResetNotice(site: string, settings: MailSettings, to: st
 export const ROLE_DESCRIPTIONS: Record<Role, string> = {
   owner: "manage everything: content, pages, settings and users",
   editor: "write, publish, add pages and read the messages sent through the forms",
-  writer: "change words and pictures",
 };
 
 /**

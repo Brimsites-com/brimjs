@@ -113,63 +113,6 @@ describe("signing in", () => {
   });
 });
 
-describe("a form's notification addresses", () => {
-  const form = (value: Record<string, unknown>, more: Record<string, unknown> = {}) => ({
-    path: "/contact",
-    nodeId: "contact-form",
-    scope: "page",
-    kind: "form",
-    value,
-    ...more,
-  });
-  const saved = async () =>
-    (await brim.content.loadNodes(["page:/contact"]))[0]?.value as Record<string, unknown> | undefined;
-
-  it("stay as they were when a role that may not read the messages saves the form", async () => {
-    const owner = await userWith("owner");
-    const writer = await userWith("writer");
-    expect(
-      (await api("PUT", "/nodes", writer, form({ buttonText: "Go", notificationEmail: "w@evil.test" }))).status,
-    ).toBe(200);
-    expect(await saved()).toEqual({ buttonText: "Go" });
-
-    await api("PUT", "/nodes", owner, form({ notificationEmail: "sales@example.test" }));
-    await api("PUT", "/nodes", writer, form({ buttonText: "Send it", notificationEmail: "w@evil.test" }));
-    expect(await saved()).toEqual({ buttonText: "Send it", notificationEmail: "sales@example.test" });
-    // Leaving it out is no way to remove it either.
-    await api("PUT", "/nodes", writer, form({ buttonText: "Send" }));
-    expect(await saved()).toEqual({ buttonText: "Send", notificationEmail: "sales@example.test" });
-  });
-
-  it("are not slipped into a draft, an undone change or an older version for someone else to save", async () => {
-    const owner = await userWith("owner");
-    const writer = await userWith("writer");
-    await api("PUT", "/nodes", owner, form({ notificationEmail: "old@example.test" }));
-    await api("PUT", "/nodes", owner, form({ notificationEmail: "sales@example.test" }));
-
-    await api("PUT", "/nodes", writer, form({ buttonText: "Go", notificationEmail: "w@evil.test" }, { draft: true }));
-    const value = { kind: "form", value: { buttonText: "Go!", notificationEmail: "w@evil.test" } };
-    await api("PUT", "/drafts", writer, {
-      target: "node",
-      key: "page:/contact\ncontact-form",
-      value,
-      path: "/contact",
-    });
-    await api("POST", "/drafts/save", owner, {});
-    expect(await saved()).toEqual({ buttonText: "Go!", notificationEmail: "sales@example.test" });
-
-    const change = (await brim.history.list()).find((entry) => entry.title === "contact-form");
-    expect((await api("POST", "/history/restore", writer, { id: change!.id })).status).toBe(200);
-    expect((await saved())?.notificationEmail).toBe("sales@example.test");
-  });
-
-  it("are set by an editor, who may read the messages", async () => {
-    const editor = await userWith("editor");
-    await api("PUT", "/nodes", editor, form({ notificationEmail: "team@example.test" }));
-    expect(await saved()).toEqual({ notificationEmail: "team@example.test" });
-  });
-});
-
 describe("Site Settings", () => {
   it("are not saved, reset or drafted as an element, past their own checks", async () => {
     const owner = await userWith("owner");
@@ -194,75 +137,7 @@ describe("an item that changes its address", () => {
   ) => brim.items.create(type, { title: slug, slug, visibility, data });
   const term = (slug: string, visibility: "published" | "private" = "published") =>
     create("category", slug, {}, visibility);
-  const slugOf = async (id: string) => (await brim.items.get(id))?.slug;
   const dataOf = async (id: string) => (await brim.items.get(id))?.data;
-
-  it("is moved by a writer in none of the ways there are, when visitors see it", async () => {
-    const owner = await userWith("owner");
-    const writer = await userWith("writer");
-    const [lamps] = [await term("lamps"), await term("chairs")];
-    const data = { category: "lamps", kind: "new" };
-    const item = await create("product", "arc", data);
-    const whole = { id: item.id, title: "arc", slug: "arc", visibility: "published" };
-    const field = {
-      path: "/shop/lamps/new/arc",
-      nodeId: "kind",
-      scope: "page",
-      kind: "field",
-      item: item.id,
-      field: "kind",
-      value: { value: "used" },
-    };
-    const moved = { slug: "arc", title: "arc", data: { ...data, kind: "used" } };
-
-    expect((await api("PUT", "/items", writer, { ...whole, data: moved.data })).status).toBe(403);
-    expect((await api("PUT", "/items", writer, { ...whole, data: moved.data, draft: true, path: "/" })).status).toBe(
-      403,
-    );
-    expect((await api("PUT", "/nodes", writer, field)).status).toBe(403);
-    expect((await api("PUT", "/nodes", writer, { ...field, draft: true })).status).toBe(403);
-    expect(
-      (await api("PUT", "/drafts", writer, { target: "item", key: item.id, value: moved, path: "/" })).status,
-    ).toBe(403);
-    // Not by saving what an owner only drafted, either.
-    await api("PUT", "/items", owner, { ...whole, data: moved.data, draft: true, path: "/" });
-    expect(await (await api("POST", "/drafts/save", writer, {})).json()).toMatchObject({ saved: 0, failed: [{}] });
-    expect(await dataOf(item.id)).toEqual(data);
-    // Nor by renaming a private term that a published item is under.
-    await api("PUT", "/items/visibility", owner, { id: lamps.id, visibility: "private" });
-    const renamed = { id: lamps.id, title: "lamps", slug: "lights", visibility: "private", data: {} };
-    expect((await api("PUT", "/items", writer, renamed)).status).toBe(403);
-    expect(await slugOf(lamps.id)).toBe("lamps");
-  });
-
-  it("is changed by a writer where that moves nothing", async () => {
-    const writer = await userWith("writer");
-    await term("lamps");
-    const data = { category: "lamps", kind: "new" };
-    const item = await create("product", "arc", data);
-    const draft = await create("product", "draft", data, "private");
-
-    const change = {
-      id: item.id,
-      title: "Arc lamp",
-      slug: "arc",
-      visibility: "published",
-      data: { ...data, also: "lamps" },
-    };
-    expect((await api("PUT", "/items", writer, change)).status).toBe(200);
-    expect((await api("PUT", "/items", writer, { ...change, title: "Arc", draft: true, path: "/" })).status).toBe(200);
-    const private_ = {
-      id: draft.id,
-      title: "draft",
-      slug: "moved",
-      visibility: "private",
-      data: { ...data, kind: "used" },
-    };
-    expect((await api("PUT", "/items", writer, private_)).status).toBe(200);
-    const unused = await term("unused", "private");
-    const renamed = { id: unused.id, title: "unused", slug: "renamed", visibility: "private", data: {} };
-    expect((await api("PUT", "/items", writer, renamed)).status).toBe(200);
-  });
 
   it("keeps its page's search settings and redirects the old address, however it moved", async () => {
     const owner = await userWith("owner");

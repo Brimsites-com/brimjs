@@ -18,8 +18,7 @@ export interface SmtpServer {
 }
 
 /**
- * The roles whose users can be emailed form messages: those who may read them in the editor. A writer cannot, so
- * emailing them the messages would hand them what their role keeps from them.
+ * The roles whose users can be emailed form messages: those who may read them in the editor.
  */
 export const NOTIFIABLE_ROLES: readonly Role[] = ROLES.filter((role) => permissionsOf(role).includes("responses"));
 

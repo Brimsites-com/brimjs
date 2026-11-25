@@ -24,13 +24,16 @@ interface Props {
 const { nodeId, scope = "site", ...source } = Astro.props;
 const settings = Astro.locals.brim.settings(newsletter, nodeId, scope, source);
 
-const signed = await signForm({
-  // The same sign-up appears on every page, so it is one form wherever it is filled in.
-  form: scope === "site" ? `#${nodeId}` : `${Astro.url.pathname}#${nodeId}`,
-  title: String(settings.formName || "Newsletter"),
-  fields: [{ name: "email", label: "Email", type: "email", required: true }],
-  consentRequired: false,
-});
+const signed = await signForm(
+  {
+    // The same sign-up appears on every page, so it is one form wherever it is filled in.
+    form: scope === "site" ? `#${nodeId}` : `${Astro.url.pathname}#${nodeId}`,
+    title: String(settings.formName || "Newsletter"),
+    fields: [{ name: "email", label: "Email", type: "email", required: true }],
+    consentRequired: false,
+  },
+  Astro.locals.brim.preview,
+);
 const description = plainText(settings.description);
 const disclaimer = plainText(settings.disclaimer);
 ---

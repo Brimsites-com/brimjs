@@ -48,7 +48,5 @@ export interface SchemaProperty {
   step?: number;
   /** Shown only while these other settings have these values. */
   showWhen?: Record<string, unknown>;
-  /** What a role needs to change it, beyond `content`. Saved by any other, it stays as it was. */
-  permission?: "responses";
   [extra: string]: unknown;
 }

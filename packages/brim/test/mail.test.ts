@@ -308,8 +308,7 @@ describe("a form message", () => {
     warn.mockRestore();
   });
 
-  it("goes to every user of the roles Site Settings chose, never to writers", async () => {
-    await brim.accounts.createUser("writer@example.test", PASSWORD, "writer");
+  it("goes to every user of the roles Site Settings chose, leaving out a role it does not know", async () => {
     const site = admin();
     const cookie = await signIn(site);
     const saved = await call(site, "PUT", "/admin/api/mail", {

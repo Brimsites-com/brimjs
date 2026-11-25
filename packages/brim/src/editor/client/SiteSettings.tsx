@@ -319,9 +319,6 @@ function OwnerSettings({
                 }
               />
             ))}
-            <p className="brim-sidebar-note">
-              Writers are never emailed form messages: their role cannot read them in the editor either.
-            </p>
             <TextWidget
               label="Also send to"
               description="More addresses that get every message, separated by commas."

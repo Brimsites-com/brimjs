@@ -62,7 +62,7 @@ export function loadSiteInfo(): Promise<SiteInfo> {
 
 export interface User {
   email: string;
-  role: "owner" | "editor" | "writer";
+  role: "owner" | "editor";
   /** What the role allows, as the server lists it (see `auth/permissions.ts`); the server checks each request. */
   permissions: Permission[];
 }
@@ -281,7 +281,7 @@ export interface SmtpServerView {
 /** The site's email settings, and who sends: the site's own server, the server's setup, the host, or nobody. */
 export interface MailSettings {
   /** The roles whose users all get every form message: owners, editors. */
-  notifyRoles: ("owner" | "editor" | "writer")[];
+  notifyRoles: ("owner" | "editor")[];
   /** Whether owners are among them; for clients from before roles could be chosen. */
   notifyOwners: boolean;
   notify: string[];
@@ -291,7 +291,7 @@ export interface MailSettings {
 }
 
 export interface MailSettingsUpdate {
-  notifyRoles: ("owner" | "editor" | "writer")[];
+  notifyRoles: ("owner" | "editor")[];
   notify: string[] | string;
   senderName: string;
   /** An empty password keeps the saved one. */

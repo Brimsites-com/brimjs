@@ -108,8 +108,8 @@ describe("ordering items through the admin API", () => {
       drafts: new DraftStore(db),
       accounts: new Accounts(db),
     };
-    await brim.accounts.createUser("writer@example.test", PASSWORD, "writer");
-    token = await brim.accounts.createToken("writer@example.test", "test");
+    await brim.accounts.createUser("editor@example.test", PASSWORD, "editor");
+    token = await brim.accounts.createToken("editor@example.test", "test");
     admin = createAdminHandler({
       brim,
       assetsDirectory: new URL("../editor-dist/", import.meta.url),

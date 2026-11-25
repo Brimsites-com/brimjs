@@ -111,7 +111,7 @@ async function drawPage(context: Parameters<MiddlewareHandler>[0], next: Paramet
           locales: config.locales,
         })
       : undefined;
-  context.locals.brim = new BrimContext(scope, locale, nodes, editing, seo, head);
+  context.locals.brim = new BrimContext(scope, locale, nodes, editing, seo, head, preview);
   // What the page reads of its address's query, noted while it is drawn (its blocks, `readsQuery`), so the server
   // can tell a host which parameters each page reads (see `QueryReads`). Only for pages a visitor gets on the server.
   const reads = signedIn && context.request.method === "GET" ? new QueryCollector() : undefined;

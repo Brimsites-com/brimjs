@@ -27,6 +27,8 @@ export class BrimContext {
   readonly seo: SeoSettings;
   /** On an item's page, what the item says about itself: the page's head when neither the owner nor the code does. */
   readonly itemHead: ItemHead | undefined;
+  /** True when the values are the editor's preview: the drafts nobody saved yet, over what is saved. */
+  readonly preview: boolean;
 
   constructor(
     pageScope: string,
@@ -35,10 +37,12 @@ export class BrimContext {
     editing = false,
     seo: SeoSettings = {},
     itemHead?: ItemHead,
+    preview = false,
   ) {
     this.editing = editing;
     this.seo = seo;
     this.itemHead = itemHead;
+    this.preview = preview;
     this.#pageScope = pageScope;
     this.#siteScope = siteScope(locale);
     for (const node of nodes) this.#nodes.set(key(node.scope, node.nodeId), node);

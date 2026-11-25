@@ -28,9 +28,9 @@ migrations are append-only.
   by its name (no SVG, HTML, archives or programs, whatever a field says); 8 MB a file, 5 files and 10 MB a message,
   30 MB a visitor and 500 MB a site a day; stored only after the message passed every check, under a generated name,
   sealed with a key of the site's database, outside everything the site serves. Only a signed-in owner or editor
-  downloads one (`GET /admin/api/responses/<id>/files/<file id>`, always an attachment, never cached); writers
-  cannot. The owner's email links to each file and attaches none; `brim_list_form_responses` lists name, type and
-  size. Files are deleted with their message. See "Files from visitors" in the README.
+  downloads one (`GET /admin/api/responses/<id>/files/<file id>`, always an attachment, never cached). The owner's
+  email links to each file and attaches none; `brim_list_form_responses` lists name, type and size. Files are deleted
+  with their message. See "Files from visitors" in the README.
 - **A confirmation email for the visitor**, off until the owner turns it on per form (**Confirmation Email** in the
   side panel: the email field, a subject, a message), or the code starts it on (`confirmationEmail` in `defineForm`).
   One email to the one address of the chosen email field, only for a message that was kept, without repeating what
@@ -89,6 +89,12 @@ migrations are append-only.
 
 - **Passwords on pages** (Page Settings, `password` of `brim_update_page` and `PUT /admin/api/pages`, `protected` in
   the pages listed). A page that had one is open to everyone after the update: make it private first, or remove it.
+- **The role `writer`.** A site has owners and editors. A writer could change every text of the live site but not
+  publish a new page, which is not what the name says. Before updating, give each writer another role
+  (`brim user role <email> editor`, who also publishes, deletes and reads form messages) or remove them. An account
+  still on it signs in and sees the editor, private pages included, but changes nothing and reads no form message
+  until an owner gives it a role. `/admin/api/users` and the CLI refuse `writer`: a host whose dashboard offers it
+  takes it out. The database's schema does not change.
 
 ### Fixed
 
@@ -97,13 +103,12 @@ migrations are append-only.
   typed as `string & string[]`.
 - **Every email's subject and sender's name are one clean line**, and every recipient one plain address, checked
   where emails leave the site: a line end in a subject written by a template can no longer reach a mail server.
-- **A writer no longer sees a visitor's message in the email preview** (`/admin/api/emails/form` showed the newest
-  message to anyone signed in; a role that cannot read messages now sees the example).
 - **A private page stays private with `.html` after its address.** Astro draws `/about` for `/about.html` too (pages
   with a parameter always, every page with `build.format: "file"`), where Brim looked up a page nobody had made
   private. What the owner saved for a page now shows at either address.
-- **A writer cannot have a form's messages emailed to themselves.** A form's `notificationEmail` is changed by the roles
-  that read its messages (owners, editors); when a writer saves the form it stays as it was, whatever is sent.
+- **A draft thrown away leaves no form that sends email.** A form drawn in the editor's preview, where it may be a
+  draft nobody saved, is signed without its confirmation and its notification address. A form's signature does not
+  expire: a draft's, kept, emailed its words to anyone for as long as the site ran.
 - **Links in form emails never follow the request's `Host`.** They go to `BRIM_SITE_URL` or the config's `site`. A site
   with neither sends emails without links, naming the site by its `identity.name`, and says so once in the log; on
   localhost nothing changes. In a template the addresses are then `""`.
@@ -112,7 +117,6 @@ migrations are append-only.
 - **An item that moves takes everything along, whichever way it moves.** A field in its address set on its page, or a
   term in its address renamed, left its search settings (a page hidden from search engines showed again) and the
   redirect from its old address behind. An item naming the term in two fields kept the old one in the first.
-- **A writer cannot move a published item** through a draft, a field set on its page or a term in its address either.
 - **A form's work is raised only by messages with a good token, five from one address at most.** Anyone could raise it
   for every visitor with posts that cost them nothing.
 - **Site Settings are not saved as an element** (`PUT /admin/api/nodes` with `site-settings`), past their own checks.
