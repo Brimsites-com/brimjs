@@ -4,7 +4,7 @@ Makes Astro sites editable. You write pages in Astro with components that carry 
 their words, pictures and links in the browser, and the content lives in SQLite.
 
 ```bash
-npm create brim@latest my-site   # a new site
+npm create @brimsites/brim@latest my-site   # a new site
 npx @brimsites/brimjs init                  # in an Astro project you already have
 ```
 

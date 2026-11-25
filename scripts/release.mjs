@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Sets the version of `@brimsites/brimjs` and `create-brim`, which are always released together:
+ * Sets the version of `@brimsites/brimjs` and `@brimsites/create-brim`, which are always released together:
  *
  *   pnpm release 1.0.1     writes it in both package.json files; its notes must be in CHANGELOG.md
  *   pnpm release --check [1.0.1]   checks that both packages have that version, and the changelog its notes

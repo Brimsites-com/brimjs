@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Packs `@brimsites/brimjs` and `create-brim` as they are published on npm, at the version their package.json says:
+ * Packs `@brimsites/brimjs` and `@brimsites/create-brim` as they are published on npm, at the version their package.json says:
  *
  *   node scripts/pack-release.mjs 1.0.0 <empty folder>
  *
@@ -28,7 +28,7 @@ if (readdirSync(out).length > 0) throw new Error(`${out} is not empty.`);
 for (const name of PACKAGES) {
   execFileSync("pnpm", ["pack", "--pack-destination", out], { cwd: dirname(manifestPath(name)), stdio: "inherit" });
 }
-// pnpm names the tarball of @brimsites/brimjs brimsites-brimjs-<version>.tgz.
-for (const file of ["brimsites-brimjs", "create-brim"]) {
+// pnpm names the tarball of @brimsites/<name> brimsites-<name>-<version>.tgz.
+for (const file of ["brimsites-brimjs", "brimsites-create-brim"]) {
   if (!readdirSync(out).includes(`${file}-${version}.tgz`)) throw new Error(`${file}-${version}.tgz was not made.`);
 }

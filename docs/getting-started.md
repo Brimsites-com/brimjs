@@ -12,7 +12,7 @@ Node.js 22.23.4 or newer, and npm, pnpm or any package manager.
 ## Create a site
 
 ```bash
-npm create brim@latest my-site
+npm create @brimsites/brim@latest my-site
 ```
 
 It makes a new Astro project: a layout with header and footer, sections in `src/components`, home, about, blog and contact pages, an `article` content type, a landing page template, site settings for your contact details, theme colors, and a `components` page that shows every component, block and icon. The project is a git repository with a first commit.
@@ -20,7 +20,7 @@ It makes a new Astro project: a layout with header and footer, sections in `src/
 The folder, the site's name and its language are asked for when you leave them out. To skip the questions, pass them after `--`:
 
 ```bash
-npm create brim@latest my-site -- --name "Studio Nord" --lang en
+npm create @brimsites/brim@latest my-site -- --name "Studio Nord" --lang en
 ```
 
 | Option | What it does |

@@ -27,7 +27,7 @@ export default defineConfig({ integrations: [brim()] });
 
 ## Install
 
-Brim.js is the npm package `@brimsites/brimjs`, and a new site starts with `npm create brim@latest` (`create-brim`):
+Brim.js is the npm package `@brimsites/brimjs`, and a new site starts with `npm create @brimsites/brim@latest` (`@brimsites/create-brim`):
 
 ```json
 "dependencies": { "@brimsites/brimjs": "^1.0.0" }
@@ -36,7 +36,7 @@ Brim.js is the npm package `@brimsites/brimjs`, and a new site starts with `npm 
 ## Start a site
 
 ```bash
-npm create brim@latest my-site
+npm create @brimsites/brim@latest my-site
 ```
 
 `create-brim` makes an Astro project that depends on `@brimsites/brimjs` (`^<version>`): a layout with
@@ -1716,7 +1716,7 @@ brim({
 ## Languages
 
 A site has several languages only if its code says so, with Astro's own `i18n` setting. A new site declares its
-own language from the start (`npm create brim` asks for it, `brim init` takes `--lang` or the layout's
+own language from the start (`npm create @brimsites/brim` asks for it, `brim init` takes `--lang` or the layout's
 `<html lang>`), so adding a second one later is one more code in `locales`. With one language, the editor shows
 nothing about languages.
 

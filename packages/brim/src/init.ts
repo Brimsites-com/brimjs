@@ -81,7 +81,7 @@ export async function init(directory: string, options: InitOptions = {}): Promis
   };
   if (!manifest.dependencies?.astro && !manifest.devDependencies?.astro) {
     throw new Error(
-      "This project does not depend on astro. Brim.js makes Astro sites editable; start a new one with `npm create brim`.",
+      "This project does not depend on astro. Brim.js makes Astro sites editable; start a new one with `npm create @brimsites/brim`.",
     );
   }
 

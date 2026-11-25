@@ -6,5 +6,5 @@ append-only.
 
 ## 1.0.0
 
-The first release, published on npm as `@brimsites/brimjs` (with `create-brim` to start a site). What it does is in
+The first release, published on npm as `@brimsites/brimjs` (with `@brimsites/create-brim`, `npm create @brimsites/brim`, to start a site). What it does is in
 the [README](README.md) and at https://brimjs.com/docs.

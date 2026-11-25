@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // Copies the template into a new folder and fills in the site's name.
-// Plain JavaScript with no dependencies, so `npm create brim` runs it straight from the registry.
+// Plain JavaScript with no dependencies, so `npm create @brimsites/brim` runs it straight from the registry.
 import { spawnSync } from "node:child_process";
 import { cp, mkdir, readdir, readFile, rename, stat, writeFile } from "node:fs/promises";
 import { homedir } from "node:os";
@@ -8,7 +8,7 @@ import { basename, join, relative, resolve } from "node:path";
 import { createInterface } from "node:readline/promises";
 import { fileURLToPath } from "node:url";
 
-const USAGE = `Usage: npm create brim [folder] [-- --name "Site name"] [--lang <code>] [--brim <version or path>] [--no-git]
+const USAGE = `Usage: npm create @brimsites/brim [folder] [-- --name "Site name"] [--lang <code>] [--brim <version or path>] [--no-git]
 
   folder   Where to create the site (asked for when left out).
   --name   The site's name, shown in the navigation and footer.

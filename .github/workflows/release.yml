@@ -1,4 +1,4 @@
-# Publishes `@brimsites/brimjs` and `create-brim` on npm when a tag such as v1.0.0 is pushed. It signs in with npm's trusted
+# Publishes `@brimsites/brimjs` and `@brimsites/create-brim` on npm when a tag such as v1.0.0 is pushed. It signs in with npm's trusted
 # publishing (OIDC), so there is no npm token in the repository: each package names this file as its trusted publisher
 # on npmjs.com. Publishing a version that is already there is skipped, so a run that stopped halfway can be run again.
 name: Release
@@ -45,7 +45,7 @@ jobs:
         run: |
           version="${GITHUB_REF_NAME#v}"
           case "$version" in *-*) tag=next ;; *) tag=latest ;; esac
-          for pair in @brimsites/brimjs:brimsites-brimjs create-brim:create-brim; do
+          for pair in @brimsites/brimjs:brimsites-brimjs @brimsites/create-brim:brimsites-create-brim; do
             name="${pair%%:*}" file="${pair#*:}"
             if npm view "$name@$version" version >/dev/null 2>&1; then
               echo "$name@$version is already on npm."
