@@ -49,7 +49,7 @@ beforeAll(async () => {
   const brim = await connect(databaseUrl);
   await brim.accounts.createUser(EMAIL, PASSWORD, "owner");
   await brim.content.setPageVisibility("/about", "private");
-  const data = { summary: "A house by the lake" };
+  const data = { description: "A house by the lake" };
   await brim.items.create("project", { title: "Lake House", slug: "lake-house", visibility: "published", data });
   await brim.items.create("project", { title: "Secret Villa", slug: "secret-villa", visibility: "private", data });
   await brim.items.create("product", {
@@ -62,7 +62,7 @@ beforeAll(async () => {
     title: "Bent Chair",
     slug: "bent-chair",
     visibility: "published",
-    data: { category: "chairs", summary: "Steam-bent ash" },
+    data: { category: "chairs", description: "Steam-bent ash" },
   });
   await brim.content.createPage("/services/lawn-care", "service", "Lawn care", "published");
   await brim.content.createPage("/services/draft", "service", "Draft service", "private");
@@ -526,7 +526,7 @@ describe("built server", () => {
       const unbound = { path: "/projects/lake-house", nodeId: "project-year", kind: "field", value: { value: 1 } };
       expect((await send("PUT", "/admin/api/nodes", unbound, { cookie })).status).toBe(422);
     } finally {
-      await brim.items.update(lake, { ...lake, data: { summary: "A house by the lake" } });
+      await brim.items.update(lake, { ...lake, data: { description: "A house by the lake" } });
     }
   });
 

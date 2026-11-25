@@ -4,6 +4,7 @@ import type { BlockDefinition } from "../blocks/types.ts";
 import { type BlockLayout, layoutOf } from "../content/block-layout.ts";
 import { blocksOf } from "../content/block-values.ts";
 import type { ItemBinding } from "../content/item-fields.ts";
+import type { ItemHead } from "../content/item-head.ts";
 import type { NodeKind, NodeValues, SeoSettings, StoredNode } from "../content/types.ts";
 
 /**
@@ -24,10 +25,8 @@ export class BrimContext {
   readonly #stacks = new Map<string, ItemBinding>();
   /** The owner's SEO settings for this page. */
   readonly seo: SeoSettings;
-  /** On an item's page, the item's own picture: the preview image when neither the owner nor the code set one. */
-  readonly itemImage: string | undefined;
-  /** On an item's page, the item's author: the page's `<meta name="author">` when the code gives none. */
-  readonly itemAuthor: string | undefined;
+  /** On an item's page, what the item says about itself: the page's head when neither the owner nor the code does. */
+  readonly itemHead: ItemHead | undefined;
 
   constructor(
     pageScope: string,
@@ -35,13 +34,11 @@ export class BrimContext {
     nodes: StoredNode[],
     editing = false,
     seo: SeoSettings = {},
-    itemImage?: string,
-    itemAuthor?: string,
+    itemHead?: ItemHead,
   ) {
     this.editing = editing;
     this.seo = seo;
-    this.itemImage = itemImage;
-    this.itemAuthor = itemAuthor;
+    this.itemHead = itemHead;
     this.#pageScope = pageScope;
     this.#siteScope = siteScope(locale);
     for (const node of nodes) this.#nodes.set(key(node.scope, node.nodeId), node);

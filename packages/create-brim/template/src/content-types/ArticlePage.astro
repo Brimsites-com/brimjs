@@ -5,17 +5,18 @@ import Site from "../layouts/Site.astro";
 import type { article as Article } from "./article.ts";
 
 /**
- * The template of every article: Brim draws it at /blog/<address> with the article as `item`. The title, summary,
- * author, cover and the blocks of its body (text, images, videos…) are the article's, edited on its page; the rest
+ * The template of every article: Brim draws it at /blog/<address> with the article as `item`. The title,
+ * description, author, image and the blocks of its body (text, images, videos…) are the article's, edited on its page; the rest
  * is the template, changed once for all articles.
  */
 // Typed from the fields article.ts declares: a misspelt field fails the build instead of showing nothing.
 const { item: article } = Astro.props as ItemPageProps<typeof Article>;
-const { summary, cover, published, author } = article.data;
+const { description, image, published, author } = article.data;
 const date = published ? new Date(published).toLocaleDateString("en", { dateStyle: "long" }) : undefined;
 ---
 
-<Site title={article.title} description={summary}>
+{/* The page's title, description, image and author for search engines are the article's own. */}
+<Site>
   <article class="section">
     <div class="container article">
       <Link nodeId="article-back" href="/blog" class="article__back">
@@ -34,12 +35,12 @@ const date = published ? new Date(published).toLocaleDateString("en", { dateStyl
       <Text nodeId="article-title" item={article} field="title" as="h1">
         {article.title}
       </Text>
-      <Text nodeId="article-summary" item={article} field="summary" class="lead">
-        {summary}
+      <Text nodeId="article-description" item={article} field="description" class="lead">
+        {description}
       </Text>
-      {cover && (
+      {image && (
         <div class="article__cover">
-          <Image nodeId="article-cover" item={article} field="cover" src={cover.src} alt={cover.alt} />
+          <Image nodeId="article-image" item={article} field="image" src={image.src} alt={image.alt} />
         </div>
       )}
       <Blocks nodeId="article-body" item={article} field="body" class="article__body" />

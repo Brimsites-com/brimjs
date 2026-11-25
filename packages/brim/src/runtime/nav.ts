@@ -1,3 +1,4 @@
+import { imageField } from "../content/item-image.ts";
 import { type ItemLinks, itemLink } from "../content/menus.ts";
 import { type ContentItem, getContentType, getItems } from "./content.ts";
 
@@ -7,6 +8,6 @@ import { type ContentItem, getContentType, getItems } from "./content.ts";
  */
 export const itemLinks: ItemLinks = async (key) => {
   const type = getContentType(key);
-  const images = type.fields.filter((field) => field.type === "image").map((field) => field.name);
-  return ((await getItems(key)) as ContentItem[]).map((item) => itemLink(item, images));
+  const image = imageField(type);
+  return ((await getItems(key)) as ContentItem[]).map((item) => itemLink(item, image ? [image] : []));
 };

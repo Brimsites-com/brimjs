@@ -1,0 +1,26 @@
+---
+import type { ItemPageProps } from "brimjs";
+import { Blocks, Field, Image, Text } from "brimjs/components";
+import { getReferences } from "brimjs/content";
+import Site from "../layouts/Site.astro";
+
+// The template of every post: Brim draws it at /journal/<address> with the post as `item`. The head is the post's own.
+const { item: post } = Astro.props as ItemPageProps;
+const { description, image } = post.data as { description?: string; image?: { src: string; alt: string } };
+const writers = await getReferences("post", post, "author");
+---
+
+<Site>
+  <Text nodeId="post-title" item={post} field="title" as="h1">
+    {post.title}
+  </Text>
+  <p>
+    <Field nodeId="post-published" item={post} field="published" />
+    {writers.map((writer) => <span>{writer.title}</span>)}
+  </p>
+  <Text nodeId="post-description" item={post} field="description">
+    {description}
+  </Text>
+  {image && <Image nodeId="post-image" item={post} field="image" src={image.src} alt={image.alt} />}
+  <Blocks nodeId="post-body" item={post} field="body" />
+</Site>

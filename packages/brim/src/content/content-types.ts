@@ -138,9 +138,28 @@ export interface ContentType {
   path?: string;
   fields: ContentField[];
   /**
+   * An item with a page (`component`) has a description by default: a `textarea` field `description`, first in the
+   * form, that the page gives search engines and shared links when Page Settings say nothing else. `false` leaves
+   * it out. A field named `description` in `fields` takes its place: a label of its own ("Summary"), `required`.
+   */
+  description?: boolean;
+  /**
+   * An item with a page has a main picture by default: an `image` field `image`, shown when the page is shared.
+   * `false` leaves it out. A field named `image` in `fields` takes its place.
+   */
+  image?: boolean;
+  /**
+   * The items are articles (news, blog posts): pages search engines are told were written by someone, on a date.
+   * Adds a `date` field `published`, filled in when an item is first published, and `<Seo>` writes schema.org
+   * `Article` data on the item's page from its title, description, image, author and dates. A `date` field named
+   * `modified`, when declared, says when the article was last revised.
+   */
+  article?: boolean;
+  /**
    * Every item has an author by default: a text field `author`, added after the declared fields, that the item's
-   * page gives search engines as `<meta name="author">`. `false` leaves it out, for items nobody signs (team
-   * members, products). A field named `author` in `fields` takes its place, e.g. a `select` of the site's writers.
+   * page gives as `<meta name="author">` and in an article's data. `false` leaves it out, for items nobody signs
+   * (team members, products). A field named `author` in `fields` takes its place: a `select` of the site's writers,
+   * or a vocabulary of them.
    */
   author?: boolean;
   /** Set by `defineVocabulary`: a list of terms other types point at, which the editor lists as such. */
@@ -178,11 +197,11 @@ export interface FeedOptions {
   title?: string;
   /** What the feed is about, shown by feed readers. */
   description?: string;
-  /** A `date` field that says when an item was published; by default the first one, else when it was created. */
+  /** A `date` field that says when an item was published; by default `published`, else the first one, else its creation. */
   date?: string;
   /**
-   * A `text`, `textarea` or `richtext` field that sums an item up; by default the first `textarea`, then the
-   * description set for the item's page, then the first `richtext` field's opening.
+   * A `text`, `textarea` or `richtext` field that sums an item up; by default `description` (or the first `textarea`
+   * of a type without it), then the description set for the item's page, then the first `richtext` field's opening.
    */
   summary?: string;
   /** How many of the newest items the feed holds; 20 by default. */
@@ -191,15 +210,56 @@ export interface FeedOptions {
 
 const KEY = /^[a-z][a-z0-9_]*$/;
 
+/** The field an item with a page has unless its type says `description: false`. */
+export const DESCRIPTION_FIELD: ContentField = {
+  name: "description",
+  label: "Description",
+  type: "textarea",
+  help: "A sentence or two. Shown in search results and on shared links.",
+};
+/** The field an item with a page has unless its type says `image: false`. */
+export const IMAGE_FIELD: ContentField = {
+  name: "image",
+  label: "Image",
+  type: "image",
+  help: "The main picture. Shown when the page is shared.",
+};
+/** The field an item of an `article` type has. */
+export const PUBLISHED_FIELD: ContentField = {
+  name: "published",
+  label: "Published",
+  type: "date",
+  help: "Filled in when it is first published.",
+};
 /** The field every item has unless its type says `author: false`; its value is a name, as readers see it. */
 export const AUTHOR_FIELD: ContentField = { name: "author", label: "Author", type: "text" }; // betterleaks:allow (a field definition, not a secret)
 /** The field every item has unless its type says `tags: false`: a list of short words to find and filter it by. */
 export const TAGS_FIELD: ContentField = { name: "tags", label: "Tags", type: "tags" };
 
 /**
+ * What a field of a standard name must be for Brim to read it. One of another type is the site's own: it works as
+ * declared, and search engines are not given it.
+ */
+const STANDARD_TYPES: Record<string, readonly FieldType[]> = {
+  description: ["textarea", "text"],
+  image: ["image"],
+  published: ["date"],
+  modified: ["date"],
+  author: ["text", "select", "reference", "tags"],
+};
+
+/** The type's field of a standard name, when it is of a type Brim can read; `undefined` otherwise. */
+export function standardField(
+  type: Pick<ContentType, "fields">,
+  name: "description" | "image" | "published" | "modified" | "author",
+): ContentField | undefined {
+  return type.fields.find((field) => field.name === name && STANDARD_TYPES[name]?.includes(field.type));
+}
+
+/**
  * Declares a content type. Mistakes in the declaration fail here, at startup, not when content is saved.
- * The type it returns has the `author` and `tags` fields among its fields, unless it said `author: false` or
- * `tags: false`, or declared a field of that name itself.
+ * The type it returns has the fields Brim adds among its own: `description` and `image` (with a page), `published`
+ * (an `article`), `author` and `tags`, unless it said `false` to one or declared a field of that name itself.
  */
 export function defineContentType<const Fields extends readonly ContentFieldInput[]>(
   input: Omit<ContentTypeInput, "fields"> & { fields: Fields },
@@ -232,15 +292,24 @@ export function defineContentType<const Fields extends readonly ContentFieldInpu
       throw new Error(`Field "${field.name}" in "${type.key}" offers "${unknown}", which is not a block it can hold.`);
     names.add(field.name);
   }
-  checkItemPath(type);
-  if (typeof type.feed === "object") checkFeed(type, type.feed);
+  if (type.article && !type.component)
+    throw new Error(`Content type "${type.key}" is made of articles, which have a page each: give it a component.`);
   if (type.component !== undefined && typeof type.component !== "function")
     throw new Error(`The component of content type "${type.key}" must be an Astro component.`);
-  const added = [
-    ...(type.author !== false && !names.has(AUTHOR_FIELD.name) ? [AUTHOR_FIELD] : []),
-    ...(type.tags !== false && !names.has(TAGS_FIELD.name) ? [TAGS_FIELD] : []),
+  const missing = (field: ContentField, wanted: boolean): ContentField[] =>
+    wanted && !names.has(field.name) ? [field] : [];
+  const hasPage = type.component !== undefined;
+  type.fields = [
+    ...missing(DESCRIPTION_FIELD, hasPage && type.description !== false),
+    ...missing(IMAGE_FIELD, hasPage && type.image !== false),
+    ...type.fields,
+    ...missing(PUBLISHED_FIELD, type.article === true),
+    ...missing(AUTHOR_FIELD, type.author !== false),
+    ...missing(TAGS_FIELD, type.tags !== false),
   ];
-  return added.length > 0 ? { ...type, fields: [...type.fields, ...added] } : type;
+  checkItemPath(type);
+  if (typeof type.feed === "object") checkFeed(type, type.feed);
+  return type;
 }
 
 function checkOptions(type: ContentType, field: ContentField): void {
@@ -296,16 +365,6 @@ export function defineVocabulary<const Fields extends readonly ContentFieldInput
   type: Omit<ContentTypeInput, "vocabulary" | "fields"> & { fields: Fields },
 ): ContentType & Typed<FieldsData<Fields>> {
   return defineContentType({ author: false, tags: false, ...type, vocabulary: true });
-}
-
-/**
- * The item's author as a name, for `<meta name="author">`: the `author` field when it holds text. Nothing when the
- * type has no author or the item has none filled in.
- */
-export function itemAuthor(type: ContentType, item: { data: Record<string, unknown> }): string | undefined {
-  if (!type.fields.some((field) => field.name === AUTHOR_FIELD.name)) return undefined;
-  const value = item.data[AUTHOR_FIELD.name];
-  return typeof value === "string" && value.trim() !== "" ? value.trim() : undefined;
 }
 
 function checkFeed(type: ContentType, feed: FeedOptions): void {

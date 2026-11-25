@@ -1,4 +1,5 @@
 import { defineContentType, defineVocabulary } from "brimjs";
+import PostPage from "./PostPage.astro";
 import ProductPage from "./ProductPage.astro";
 import ProjectPage from "./ProjectPage.astro";
 
@@ -10,8 +11,9 @@ const project = defineContentType({
   component: ProjectPage,
   feed: { description: "New work from the studio." }, // the RSS feed at /rss/projects.xml
   fields: [
-    { name: "summary", label: "Summary", type: "textarea", required: true },
-    { name: "cover", label: "Cover image", type: "image" },
+    // The description and the picture every item with a page has, labelled as this site calls them.
+    { name: "description", label: "Summary", type: "textarea", required: true },
+    { name: "image", label: "Cover image", type: "image" },
     { name: "location", label: "Location", type: "text" },
     { name: "year", label: "Year", type: "number" },
     { name: "story", label: "Story", type: "richtext" },
@@ -39,7 +41,7 @@ const product = defineContentType({
       ],
       required: true,
     },
-    { name: "summary", label: "Summary", type: "textarea" },
+    { name: "description", label: "Summary", type: "textarea" },
     { name: "specs", label: "Specifications", type: "keyvalue" },
     { name: "released", label: "Released", type: "date" },
     // Terms of the materials vocabulary below: offered as you type, and added to it from the product's form.
@@ -50,5 +52,28 @@ const product = defineContentType({
 // A list the owner keeps: materials are items, renamed and added in Content or straight from a product.
 const material = defineVocabulary({ key: "material", label: "Materials", singular: "Material", slug: "materials", fields: [] });
 
+// Articles: Brim adds their description, image, date, author and tags, and tells search engines about them.
+const post = defineContentType({
+  key: "post",
+  label: "Journal",
+  singular: "Post",
+  slug: "journal",
+  component: PostPage,
+  article: true,
+  feed: true,
+  fields: [
+    { name: "author", label: "Written by", vocabulary: "writer" },
+    { name: "body", label: "Body", type: "blocks" },
+  ],
+});
+
+const writer = defineVocabulary({
+  key: "writer",
+  label: "Writers",
+  singular: "Writer",
+  slug: "writers",
+  fields: [{ name: "profile", label: "Profile", type: "url" }],
+});
+
 /** Brim reads this list; a change shows up in the editor and the pages without restarting. */
-export const contentTypes = [project, product, material];
+export const contentTypes = [project, product, material, post, writer];

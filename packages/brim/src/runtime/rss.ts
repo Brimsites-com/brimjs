@@ -15,6 +15,7 @@ export const GET: APIRoute = async ({ params, site, url }) => {
   if (!address) return new Response(null, { status: 404 });
   const { content, items } = await connect(config.databaseUrl, config.authToken);
   const feed = await buildFeed(address, {
+    types: config.contentTypes,
     content,
     items,
     routes,

@@ -5,10 +5,10 @@ import Site from "../layouts/Site.astro";
 
 // The template of every project: Brim draws it at /projects/<address> with the project as `item`.
 const { item: project } = Astro.props as ItemPageProps;
-const { summary, cover, location, story } = project.data;
+const { description, image, location, story } = project.data;
 ---
 
-<Site title={`${project.title} — Acme Studio`} description={summary}>
+<Site title={`${project.title} — Acme Studio`} description={description}>
   {/* From the site's own icon pack, added in astro.config.mjs. */}
   <Icon nodeId="project-icon" scope="site" icon="brand:spark" />
   <Text nodeId="project-title" item={project} field="title" as="h1">
@@ -18,9 +18,9 @@ const { summary, cover, location, story } = project.data;
     {location && `${location} · `}
     <Field nodeId="project-year" item={project} field="year" />
   </p>
-  {cover && <img src={cover.src} alt={cover.alt} width="640" />}
-  <Text nodeId="project-summary" item={project} field="summary">
-    {summary}
+  {image && <img src={image.src} alt={image.alt} width="640" />}
+  <Text nodeId="project-summary" item={project} field="description">
+    {description}
   </Text>
   <Link nodeId="project-back" href="/">
     ← All projects

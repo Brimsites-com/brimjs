@@ -27,6 +27,7 @@ import {
 } from "./icons.tsx";
 import { ItemForm, type ItemLanguages } from "./ItemForm.tsx";
 import { hasTag, rankTags, sameTag, tagsOf } from "../../content/tags.ts";
+import { itemImage } from "../../content/item-image.ts";
 import { itemPagePath } from "../../server/locales.ts";
 import { itemLocale, translationsOf, useSiteLocales } from "./languages.ts";
 import { Menu } from "./Menu.tsx";
@@ -1023,11 +1024,9 @@ function typeKind(typeLabel: string): "folder" | "page" | "custom" {
   return typeLabel === "Page" ? "page" : "custom";
 }
 
-/** The first image an item has, for its card. */
+/** The item's own picture, for its card. */
 function coverOf(entry: Entry): string | undefined {
-  const field = entry.type?.fields.find((candidate) => candidate.type === "image");
-  const image = field && entry.item ? (entry.item.data[field.name] as { src?: string } | undefined) : undefined;
-  return image?.src;
+  return entry.type && entry.item ? itemImage(entry.type, entry.item) : undefined;
 }
 
 function TypeIcon({ entry }: { entry: Entry }): ReactNode {

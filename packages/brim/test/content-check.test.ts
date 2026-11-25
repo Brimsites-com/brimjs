@@ -87,9 +87,39 @@ describe("brim check --content", () => {
       ["placeholder", "product/art → summary"],
       ["placeholder", "site settings → whatsapp"],
       ["placeholder", "page:/contact → contact-email.text"],
+      ["search-empty", "product/art"],
       ["empty-term", "category/mozaic"],
       ["unlisted-pages", "/oferte/[slug]"],
     ]);
-    expect(findings[3]?.message).toMatch(/its page lists nothing/);
+    expect(findings[3]?.message).toBe("has no description and no image for search engines and shared links");
+    expect(findings[4]?.message).toMatch(/its page lists nothing/);
+  });
+
+  it("reports fields that look meant for search engines but are not given to them", async () => {
+    const db = openDatabase(":memory:");
+    await migrate(db);
+    const post = defineContentType({
+      key: "post",
+      label: "Posts",
+      singular: "Post",
+      slug: "posts",
+      component: () => "",
+      article: true,
+      fields: [
+        { name: "seo_title", label: "SEO title", type: "text" },
+        { name: "image", label: "Images", type: "gallery" },
+      ],
+    });
+    const findings = await checkContent({
+      contentTypes: [post],
+      items: new ItemStore(db),
+      nodes: [],
+      settings: [],
+      patterns: [],
+    });
+    expect(findings.map(({ rule, where }) => [rule, where])).toEqual([
+      ["search-fields", "post → seo_title"],
+      ["search-fields", "post → image"],
+    ]);
   });
 });

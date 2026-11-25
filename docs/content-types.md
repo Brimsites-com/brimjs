@@ -20,9 +20,7 @@ export const project = defineContentType({
   component: ProjectPage, // the template of every project's page: /projects/<address>
   feed: true, // an RSS feed at /rss/projects.xml
   fields: [
-    { name: "summary", label: "Summary", type: "textarea", required: true },
     { name: "year", label: "Year", type: "number" },
-    { name: "cover", label: "Cover image", type: "image" },
     { name: "content", label: "Content", type: "blocks" },
   ],
 });
@@ -34,10 +32,46 @@ Brim loads this file itself, so a new type or field shows up in the editor and o
 
 Every item also has a title and an address. A new item whose title another item has gets a number in its address (`lake-house-2`). Items come newest first, unless the type is `ordered` (below).
 
-## Author and tags
+## The fields Brim adds
 
-- Brim adds a text field `author` after the declared ones. The item's page gives it to search engines as `<meta name="author">`. `author: false` leaves it out, for items nobody signs; a field named `author` in `fields` takes its place.
-- Brim adds a `tags` field after the author, edited as chips that offer the tags the type's other items already have. `Listing` filters on them (`filter={{ tags: "garden" }}`). `tags: false` leaves them out; a field named `tags` takes their place, for example with fixed `options`.
+| Field | Added to | Left out with | What it is for |
+| --- | --- | --- | --- |
+| `description` | types with a `component` | `description: false` | Search results, shared links, cards, RSS |
+| `image` | types with a `component` | `image: false` | Shared links, cards, menus, RSS |
+| `published` | types with `article: true` | | The article's date; filled in when it is first published |
+| `author` | every type | `author: false` | `<meta name="author">`, the article's data, RSS |
+| `tags` | every type | `tags: false` | Filtering |
+
+The names are the same on every site, so templates, agents and search engines know what each is; the labels are yours. Declare a field of that name to change its label, make it required or pick its type:
+
+```ts
+fields: [
+  { name: "description", label: "Summary", type: "textarea", required: true },
+  { name: "author", label: "Written by", vocabulary: "writer" },
+]
+```
+
+- `<Seo>` reads them by itself on an item's page. Leave its `title` and `description` out there; what the code or the owner (Page Settings) gives comes first.
+- `description` is a `textarea` or `text` field, `image` an `image`, `published` and `modified` a `date`, `author` a `text`, `select`, `tags` or reference field. One of another type works as declared, but search engines are not given it; `brim check --content` says so.
+- SEO title, SEO description and preview image are not fields: every page has them in Page Settings (beside the item's fields, on its page). Do not declare `seo_title` or the like.
+- `tags` is edited as chips that offer the tags the type's other items already have. `Listing` filters on them (`filter={{ tags: "garden" }}`). `tags: false` leaves them out; a field named `tags` takes their place, for example with fixed `options`.
+
+## Articles
+
+`article: true` is for items that are written by someone on a date: news, blog posts, guides. It adds `published`, and `<Seo>` writes schema.org `Article` data on each item's page: its headline, description, picture, author and dates, with the site as its publisher.
+
+- Only what the item says is written, so it agrees with the page. Show the author and the date on the template: search engines compare them.
+- `published` is the day an item is first published, unless it already has a date; the owner can change it. A date still to come is not given to search engines.
+- Declare `{ name: "modified", label: "Updated", type: "date" }` to say when an article was last revised. The last save does not count: a corrected comma is not a revision.
+- An author who points at a vocabulary (`vocabulary: "writer"`) is named by the term's title and linked to its page, or to its first `url` field. A private one is not named. Several are a `multiple` reference. An author with the site's own name is the organization.
+
+```astro
+---
+const [writer] = await getReferences("article", article, "author");
+---
+<Field nodeId="article-date" item={article} field="published" />
+{writer && <p>By {writer.title}</p>}
+```
 
 ## Field types
 

@@ -15,9 +15,9 @@ const post = defineContentType({
   component: () => "",
   feed: true,
   fields: [
-    { name: "excerpt", label: "Excerpt", type: "textarea" },
+    { name: "description", label: "Excerpt", type: "textarea" },
     { name: "published", label: "Published on", type: "date" },
-    { name: "cover", label: "Cover", type: "image" },
+    { name: "image", label: "Cover", type: "image" },
     { name: "body", label: "Body", type: "richtext" },
   ],
 });
@@ -45,6 +45,7 @@ async function feedOf(locale = "", options: { siteName?: string; withLocales?: b
   const withLocales = options.withLocales ?? false;
   const address = feedAddresses([post], withLocales ? locales : undefined).find((feed) => feed.locale === locale)!;
   return buildFeed(address, {
+    types: [post, project],
     content,
     items,
     routes,
@@ -77,8 +78,8 @@ describe("feed addresses", () => {
 
 describe("the items of a feed", () => {
   it("lists published items newest first by their date field, with summary and picture", async () => {
-    await create("older", { published: "2026-01-05", excerpt: "First words." });
-    await create("newer", { published: "2026-03-01", cover: { src: "/uploads/spring.jpg", alt: "" } });
+    await create("older", { published: "2026-01-05", description: "First words.", author: "Ana Pop" });
+    await create("newer", { published: "2026-03-01", image: { src: "/uploads/spring.jpg", alt: "" } });
     await create("draft", { published: "2026-04-01" }, { visibility: "private" });
 
     const feed = await feedOf("", { siteName: "Studio" });
@@ -87,6 +88,7 @@ describe("the items of a feed", () => {
     expect(feed.items.map((item) => item.path)).toEqual(["/blog/newer", "/blog/older"]);
     expect(feed.items[0]?.image).toBe("/uploads/spring.jpg");
     expect(feed.items[1]?.summary).toBe("First words.");
+    expect(feed.items.map((item) => item.authors)).toEqual([[], ["Ana Pop"]]);
     expect(feed.items[1]?.published.toISOString()).toBe("2026-01-05T00:00:00.000Z");
   });
 
@@ -125,9 +127,9 @@ describe("the items of a feed", () => {
     const note = defineContentType({ key: "note", label: "Notes", singular: "Note", slug: "notes", fields: [], feed: true });
     await items.create("note", { title: "Garden", slug: "garden", visibility: "published", data: {} });
     const address = feedAddresses([note], undefined)[0]!;
-    expect((await buildFeed(address, { content, items, routes })).items).toEqual([]);
+    expect((await buildFeed(address, { types: [note], content, items, routes })).items).toEqual([]);
     const coded = { pages: [], patterns: ["/notes/[slug]"] };
-    expect((await buildFeed(address, { content, items, routes: coded })).items.map((item) => item.path)).toEqual([
+    expect((await buildFeed(address, { types: [note], content, items, routes: coded })).items.map((item) => item.path)).toEqual([
       "/notes/garden",
     ]);
   });
@@ -135,7 +137,7 @@ describe("the items of a feed", () => {
 
 describe("the feed's XML", () => {
   it("is RSS 2.0 with full addresses and escaped text", async () => {
-    await create("tea", { published: "2026-02-10", excerpt: "Tea & <cake>", cover: { src: "/uploads/a b.jpg", alt: "" } });
+    await create("tea", { published: "2026-02-10", description: "Tea & <cake>", author: "Ana & Ion", image: { src: "/uploads/a b.jpg", alt: "" } });
     const xml = rssXml(await feedOf(), "https://example.com");
 
     expect(xml).toMatch(/^<\?xml version="1.0" encoding="UTF-8"\?>\n<rss version="2.0"/);
@@ -144,6 +146,7 @@ describe("the feed's XML", () => {
     expect(xml).toContain("<link>https://example.com/blog/tea</link>");
     expect(xml).toContain("<pubDate>Tue, 10 Feb 2026 00:00:00 GMT</pubDate>");
     expect(xml).toContain("<description>Tea &#38; &#60;cake&#62;</description>");
+    expect(xml).toContain("<dc:creator>Ana &#38; Ion</dc:creator>");
     expect(xml).toContain('<media:content url="https://example.com/uploads/a%20b.jpg" medium="image" />');
     expect(xml).not.toMatch(/&(?!#\d+;)/);
     expect(xml.match(/<item>/g)).toHaveLength(1);

@@ -74,7 +74,7 @@ beforeAll(async () => {
     noindex: true,
     nofollow: true,
   });
-  const data = { summary: "A house by the lake" };
+  const data = { description: "A house by the lake" };
   const content = [
     { id: "b1", type: "richtext", value: { blocks: [{ tag: "p", children: ["Built on the shore in 2024."] }] } },
     { id: "b2", type: "image", value: { url: "/shore.jpg", alt: "The shore", shape: "circle" } },
@@ -91,12 +91,12 @@ beforeAll(async () => {
     slug: "pine-cabin",
     visibility: "published",
     data: {
-      summary: "A cabin in the pines",
-      cover: { src: "/uploads/pine.jpg", alt: "The cabin" },
+      description: "A cabin in the pines",
+      image: { src: "/uploads/pine.jpg", alt: "The cabin" },
       tags: ["Pines", "Wood"],
     },
   });
-  // Lake House has no cover: its card takes the preview image its page's shared links show.
+  // Lake House has no image: its card takes the preview image its page's shared links show.
   await store.setPageSeo("/projects/lake-house", { image: "/uploads/lake-share.jpg" });
   await store.saveNode(typeScope("project"), "project-title", "text", { text: "", as: "h2" });
   await store.createPage("/services/lawn-care", "service", "Lawn care", "published");
@@ -108,6 +108,20 @@ beforeAll(async () => {
   await store.setPagePassword("/services/members", await hashPassword("members-only"));
   await store.createPage("/services/copy", "service", "Copy", "published");
   await store.setPageSeo("/services/copy", { canonical: "/services/lawn-care" });
+
+  const writer = { title: "Ana Pop", slug: "ana-pop", visibility: "published" as const };
+  await items.create("writer", { ...writer, data: { profile: "https://ana.example/" } });
+  await items.create("writer", { title: "Ion Ascuns", slug: "ion", visibility: "private", data: {} });
+  const post = (slug: string, postData: Record<string, unknown>) =>
+    items.create("post", { title: `Post ${slug}`, slug, visibility: "published", data: postData });
+  await post("spring", {
+    description: "What grows first </script>",
+    image: { src: "/uploads/spring.jpg", alt: "" },
+    published: "2026-03-01",
+    author: "ana-pop",
+  });
+  await post("bare", { author: "ion" });
+  await store.setPageSeo("/journal/bare", { noindex: true });
 
   // What the media library measured: the team photo is a portrait. The cabin was uploaded before sizes were kept:
   // the build measures its file in the uploads folder. An image whose file is nowhere must not stop the build.
@@ -317,6 +331,42 @@ describe("static build", () => {
     expect(html).toContain('<meta name="twitter:image" content="https://acme.test/uploads/share.jpg">');
     // The editor's own copy of the settings never reaches the public site.
     expect(html).not.toContain("brim-seo");
+  });
+
+  it("gives an article's page its own title, description, picture and author, and search engines its data", () => {
+    const html = page("journal/spring/index.html");
+    expect(html).toContain("<title>Post spring</title>");
+    expect(html).toContain('<meta name="description" content="What grows first </script>">');
+    expect(html).toContain('<meta name="author" content="Ana Pop">');
+    expect(html).toContain('<meta name="robots" content="max-image-preview:large">');
+    expect(html).toContain('<meta property="og:type" content="article">');
+    expect(html).toContain('<meta property="article:published_time" content="2026-03-01">');
+    const scripts = [...html.matchAll(/<script type="application\/ld\+json">(.*?)<\/script>/g)];
+    expect(scripts.map((match) => JSON.parse(match[1]!))).toEqual([
+      {
+        "@context": "https://schema.org",
+        "@type": "Article",
+        headline: "Post spring",
+        description: "What grows first </script>",
+        image: ["https://acme.test/uploads/spring.jpg"],
+        datePublished: "2026-03-01",
+        author: [{ "@type": "Person", name: "Ana Pop", url: "https://ana.example/" }],
+        publisher: { "@type": "Organization", name: "Acme Studio", url: "https://acme.test/" },
+        mainEntityOfPage: "https://acme.test/journal/spring",
+      },
+    ]);
+  });
+
+  it("says nothing of an article that its item does not, nor names an author nobody can see", () => {
+    const html = page("journal/bare/index.html");
+    expect(html).not.toContain('name="author"');
+    expect(html).not.toContain("article:published_time");
+    expect(html).toContain('<meta name="robots" content="noindex">');
+    const data = JSON.parse(/<script type="application\/ld\+json">(.*?)<\/script>/.exec(html)![1]!);
+    expect(Object.keys(data)).toEqual(["@context", "@type", "headline", "publisher", "mainEntityOfPage"]);
+    // An item that is not an article is a page like any other.
+    expect(page("projects/lake-house/index.html")).toContain('<meta property="og:type" content="website">');
+    expect(page("projects/lake-house/index.html")).not.toContain('"@type":"Article"');
   });
 
   it("lists published items and builds a page for each", () => {

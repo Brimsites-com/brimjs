@@ -833,8 +833,11 @@ export function Editor({ user, onSignedOut }: { user: User; onSignedOut: () => v
       await finishTextEdit();
       // Who can see the item changes at once; its unsaved content stays in the draft.
       let saved: Item | undefined;
-      const id = itemPage.item.id;
-      if (await run(api.setItemVisibility(id, visibility).then((answer) => (saved = answer.item)))) itemSaved(saved);
+      const { id, data } = itemPage.item;
+      if (!(await run(api.setItemVisibility(id, visibility).then((answer) => (saved = answer.item))))) return;
+      itemSaved(saved);
+      // An article published for the first time is given its date, which its page may show.
+      if (saved && saved.data.published !== data.published) redraw(selected?.dataset.brimNode);
     } else if (await run(api.setVisibility(path, visibility))) setPages((await api.pages()).pages);
   }
 
