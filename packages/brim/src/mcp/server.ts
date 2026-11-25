@@ -1,4 +1,5 @@
 import { HttpError, readBytes } from "../server/http.ts";
+import { VERSION } from "../version.ts";
 import { INSTRUCTIONS, TOOLS, type ToolContext } from "./tools.ts";
 
 /**
@@ -8,7 +9,7 @@ import { INSTRUCTIONS, TOOLS, type ToolContext } from "./tools.ts";
 const PROTOCOL_VERSIONS = ["2025-06-18", "2025-03-26", "2024-11-05"];
 /** A call carries at most an item or a page element; the API it reaches takes 64 KB each. */
 const MAX_BODY_BYTES = 1024 * 1024;
-const SERVER_INFO = { name: "brimjs", title: "Brim.js site", version: "0.0.0" };
+const SERVER_INFO = { name: "brimjs", title: "Brim.js site", version: VERSION };
 
 interface Message {
   jsonrpc?: unknown;
