@@ -423,7 +423,7 @@ still has itself. In the site's own markup, `mediaUrl(src)` and `imageSources(sr
 the same:
 
 ```astro
-<img {...imageSources(item.data.cover.src, "(max-width: 768px) 100vw, 33vw")} alt={item.data.cover.alt} />
+<img {...imageSources(item.data.image.src, "(max-width: 768px) 100vw, 33vw")} alt={item.data.image.alt} />
 ```
 
 Brim measures every upload, so `imageSources`, a gallery's `image.img` and Brim's own images also give the `<img>`
@@ -431,13 +431,13 @@ its `width` and `height`: the browser keeps the picture's place, in its own shap
 does not jump as photos load. Leave `width` and `height` out of the markup (`brim check` warns about a number written
 there, the same for every photo) and give the image `height: auto` where the CSS sets its width.
 
-For an item's picture, `<Image bare item={item} field="cover" … />` is better still: the same `<img>` and `srcset`,
+For an item's picture, `<Image bare item={item} field="image" … />` is better still: the same `<img>` and `srcset`,
 and the owner replaces the picture from the page, in a template as in every card of a `Listing` (it is saved into
 the card's item, so one `nodeId` serves the whole list). `brim check` warns about `<img src={mediaUrl(…)}>`, which
 sends every visitor the full upload:
 
 ```astro
-<Image bare nodeId="product-card-image" item={item} field="cover" src="" alt="" class="card__image" loading="lazy"
+<Image bare nodeId="product-card-image" item={item} field="image" src="" alt="" class="card__image" loading="lazy"
   sizes="(max-width: 768px) 100vw, 33vw" />
 ```
 
@@ -586,8 +586,8 @@ const { item: project } = Astro.props as ItemPageProps;
   <Text nodeId="project-title" item={project} field="title" as="h1">
     {project.title}
   </Text>
-  <Text nodeId="project-summary" item={project} field="summary">
-    {project.data.summary}
+  <Text nodeId="project-description" item={project} field="description">
+    {project.data.description}
   </Text>
 </Site>
 ```
@@ -766,7 +766,8 @@ export const product = defineContentType({
   and finds items by their terms' titles when searching; `filter={{ category: "ceramica" }}` lists one term's items.
 - A page reads the terms an item points at with `getReferences("product", product, "category")` from
   `brimjs/content`, in the page's language; `getItems("category")` lists them all (a menu of categories).
-- `defineVocabulary` is `defineContentType` without the default `author` and `tags` fields.
+- `defineVocabulary` is `defineContentType` without the default `author` and `tags` fields; one with pages has
+  `description` and `image`.
 
 **Pages for the terms, when you want them.** A vocabulary has no pages until it is given a `component` (and usually
 a `path`); materials, brands or colours can stay a plain list. Product categories usually want one:
@@ -883,7 +884,7 @@ import { Listing } from "brimjs/components";
   otherwise, unless given. Empty values go last.
 - `limit`, and `exclude` (an item's id, or several).
 - Without a function, a plain card per item: `variation` (`grid` or `list`), `columns`, `gap`, the `image` and `text`
-  fields it shows (by default the type's first ones, `false` for none), the field whose tags it shows as labels
+  fields it shows (by default `image` and `description`, or the first ones of a type without them, `false` for none), the field whose tags it shows as labels
   (`tags`, by default `tags`, `false` for none), `links` (by default when the type has pages) and
   `imageAspectRatio`. The labels are `.brim-listing__tag`, for the site to restyle.
 
@@ -903,7 +904,7 @@ applies first, so a category page can offer the brands of its own products:
   filter={{ category: "ceramica" }}
   sort="order"
   facets={["brand", "tags"]}
-  search={["title", "summary", "brand", "specs"]}
+  search={["title", "description", "brand", "specs"]}
   pageSize={12}
   labels={{ search: "Caută", apply: "Aplică", reset: "Resetează", results: "{count} produse", next: "Înainte", previous: "Înapoi" }}
 />
@@ -1302,7 +1303,8 @@ field it names must exist with the right type, or the site stops at startup with
 - **Date**: the `date` field (by default `published`, or the first one of a type without it), else when the item was created.
 - **Summary**: the `summary` field (`text`, `textarea` or `richtext`); by default `description` (or the first `textarea`
   of a type without it), then the description set in the item's Page Settings, then the opening of the first `richtext` field.
-- **Picture**: the item's first image field, as `media:content`.
+- **Picture**: the item's `image` (or the first image field of a type without it), as `media:content`.
+- **Authors**: the names of the item's `author`, as `dc:creator`.
 - **Title**: `title`, by default the type's label after the site's name (`Acme Studio · Blog`).
 
 Every page that uses `Seo` links the feeds of its language with `<link rel="alternate" type="application/rss+xml">`,

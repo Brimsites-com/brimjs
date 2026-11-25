@@ -29,7 +29,7 @@ import { Listing } from "brimjs/components";
 | `order` | `ascending` or `descending`; descending for `created` and `updated` by default, ascending otherwise |
 | `limit`, `exclude` | How many, and an item id (or several) to leave out |
 
-Without a function child Brim draws a plain card per item: `variation` (`grid` or `list`), `columns`, `gap`, the `image` and `text` fields it shows, the `tags` it shows as labels (`.brim-listing__tag`), `links` and `imageAspectRatio`.
+Without a function child Brim draws a plain card per item: `variation` (`grid` or `list`), `columns`, `gap`, the `image` and `text` fields it shows (by default `image` and `description`, or the first ones of a type without them), the `tags` it shows as labels (`.brim-listing__tag`), `links` and `imageAspectRatio`.
 
 Visitors see published items; in the editor private ones show too. Selecting a listing in the editor shows how many items it lists, opens them, and adds a new one with the fields its `filter` asks for already filled in, so the new item lands in the listing it was added from.
 
