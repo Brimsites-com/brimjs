@@ -4,6 +4,21 @@ What changed in Brim.js, newest first. Versions are semantic: only a major versi
 and config, and says so here under **Changed**; a minor version adds, a patch version fixes. Database migrations are
 append-only.
 
+## 1.0.3
+
+### Changed
+
+- **The starter opens with a welcome page**: that Brim.js is installed, and the four things to do first. Its samples are
+  shorter and say what is true of a new site.
+
+### Fixed
+
+- **A form could not be sent again after a refused attempt** without reloading the page: each new attempt was refused
+  as too fast. A wrong answer, or a hurried first try, now only costs that try.
+- The words on the starter's buttons could not be read: its rule for links took their color. Its rules for bare
+  elements now sit in a layer below Brim's. A site made with 1.0.0 to 1.0.2 changes `a { color: inherit }` in
+  `src/styles/global.css` to `a:not([class*="brim-"]) { color: inherit }`.
+
 ## 1.0.2
 
 ### Fixed

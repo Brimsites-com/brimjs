@@ -1,0 +1,89 @@
+---
+import { Text } from "@brimsites/brimjs/components";
+
+/** What to do first, in order, each with the command or the file it is about. */
+interface Props {
+  id: string;
+  title: string;
+  steps: { title: string; text: string; code: string }[];
+}
+
+const { id, title, steps } = Astro.props;
+---
+
+<section class="section">
+  <div class="container">
+    <Text nodeId={`${id}-title`} as="h2">
+      {title}
+    </Text>
+    <ol class="steps">
+      {steps.map((step, index) => (
+        <li class="step">
+          <Text nodeId={`${id}-${index + 1}-title`} as="h3">
+            {step.title}
+          </Text>
+          <Text nodeId={`${id}-${index + 1}-text`} class="step__text">
+            {step.text}
+          </Text>
+          <code class="step__code">{step.code}</code>
+        </li>
+      ))}
+    </ol>
+  </div>
+</section>
+
+<style>
+  .steps {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 26rem), 1fr));
+    gap: 2.5rem 3rem;
+    margin: 2.5rem 0 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .step {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--brim-theme-light2);
+  }
+
+  /* The pixel B's four colors, one for each step. */
+  .step::before {
+    content: "";
+    width: 1rem;
+    height: 1rem;
+    margin-bottom: 1rem;
+    background: #ff923a;
+  }
+
+  .step:nth-child(4n + 2)::before {
+    background: #ff6928;
+  }
+
+  .step:nth-child(4n + 3)::before {
+    background: #ff4629;
+  }
+
+  .step:nth-child(4n + 4)::before {
+    background: #ff2f3b;
+  }
+
+  .step :global(.step__text) {
+    margin: 0 0 1rem;
+    color: var(--brim-theme-dark1);
+  }
+
+  .step__code {
+    max-width: 100%;
+    margin-top: auto;
+    padding: 0.6rem 0.9rem;
+    border-radius: 0.5rem;
+    background: var(--brim-theme-dark2);
+    color: #f7f7f8;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+</style>

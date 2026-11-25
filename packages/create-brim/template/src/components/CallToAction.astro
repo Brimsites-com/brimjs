@@ -11,7 +11,7 @@ interface Props {
 const { id, title, text, cta } = Astro.props;
 ---
 
-<section class="section">
+<section class="section call-to-action-band">
   <div class="container call-to-action">
     <Text nodeId={`${id}-title`} as="h2">
       {title}
@@ -24,10 +24,22 @@ const { id, title, text, cta } = Astro.props;
 </section>
 
 <style>
+  .call-to-action-band {
+    background: var(--brim-theme-accent);
+    color: var(--brim-theme-accent-contrast);
+  }
+
   .call-to-action {
     display: grid;
-    justify-items: center;
+    justify-items: start;
     gap: 1rem;
-    text-align: center;
+  }
+
+  .call-to-action :global(:is(h2, p)) {
+    margin: 0;
+  }
+
+  .call-to-action :global(.lead) {
+    color: inherit;
   }
 </style>

@@ -1,0 +1,71 @@
+---
+import { Button, Image, Text } from "@brimsites/brimjs/components";
+
+/** The first thing a new site shows. Replace it with the site's own opening; Hero.astro is a plain one to start from. */
+---
+
+<section class="welcome">
+  <div class="container">
+    <Text nodeId="welcome-title" as="h1" class="welcome__title">
+      You have installed Brim.js.
+    </Text>
+    <div class="welcome__row">
+      <Text nodeId="welcome-lead" class="lead">
+        This is your site. Open the editor, click this sentence and type over it: what you save is live at once, and
+        the code stays as it is.
+      </Text>
+      <div class="welcome__actions">
+        <Button nodeId="welcome-edit" text="Open the editor" url="/admin/edit" variant="accent" size="lg" />
+        <Button nodeId="welcome-docs" text="Read the docs" url="https://brimjs.org/docs" variant="light-1" size="lg" />
+      </div>
+    </div>
+    <div class="welcome__picture">
+      <Image
+        nodeId="welcome-image"
+        src="/images/brim.svg"
+        alt="Brim, drawn in orange pixels"
+        width="1080"
+        height="380"
+        sizes="(max-width: 75rem) 100vw, 72rem"
+      />
+    </div>
+  </div>
+</section>
+
+<style>
+  .welcome {
+    padding-top: clamp(3rem, 8vw, 6rem);
+  }
+
+  .welcome :global(.welcome__title) {
+    max-width: 14ch;
+  }
+
+  .welcome__row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 22rem), 1fr));
+    align-items: end;
+    gap: 1.5rem 3rem;
+    margin-top: 1.5rem;
+  }
+
+  .welcome__row :global(.lead) {
+    margin: 0;
+  }
+
+  .welcome__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+
+  .welcome__picture {
+    margin-top: clamp(2.5rem, 6vw, 4.5rem);
+  }
+
+  .welcome__picture :global(img) {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+</style>

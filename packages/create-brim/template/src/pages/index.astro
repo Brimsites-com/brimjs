@@ -1,49 +1,45 @@
 ---
-import { Listing, Text } from "@brimsites/brimjs/components";
 import CallToAction from "../components/CallToAction.astro";
-import Features from "../components/Features.astro";
-import Hero from "../components/Hero.astro";
+import Steps from "../components/Steps.astro";
+import Welcome from "../components/Welcome.astro";
 import Site from "../layouts/Site.astro";
 import { SITE_NAME } from "../components/navigation.ts";
 ---
 
-<Site title={SITE_NAME} description="A site written in Astro and edited in the browser.">
-  <Hero
-    id="home-hero"
-    eyebrow="Welcome"
-    title="A website you can change yourself"
-    lead="Every text, image and link on this page can be edited at /admin/edit. The layout stays in code."
-    cta={{ text: "See the components", url: "/components" }}
-    image={{ src: "/images/hero.svg", alt: "Colorful abstract shapes" }}
-  />
+<Site title={SITE_NAME} description="A new site, made with Brim.js.">
+  <Welcome />
 
-  <Features
-    id="home-features"
-    title="What this starter includes"
-    features={[
-      { icon: "home", title: "Pages in Astro", text: "Write pages and sections as Astro components in src." },
-      { icon: "settings", title: "Edited in place", text: "Owners change texts, images and settings on the page." },
+  <Steps
+    id="home-steps"
+    title="Start here."
+    steps={[
       {
-        icon: "star",
-        title: "Static output",
-        text: "The build is plain HTML and CSS, with JavaScript only where needed.",
+        title: "Make your account",
+        text: "The editor asks who you are. Run this once, in the project's folder.",
+        code: "npx brim user add you@example.com",
+      },
+      {
+        title: "Change this page",
+        text: "Sign in, click any text, picture or button, and save.",
+        code: "/admin/edit",
+      },
+      {
+        title: "Change the design",
+        text: "Every section is an Astro component. Save the file and the page follows.",
+        code: "src/pages/index.astro",
+      },
+      {
+        title: "Put your agent to work",
+        text: "It reads AGENTS.md before it builds, and edits the content through the site's own MCP.",
+        code: "/admin/mcp",
       },
     ]}
   />
 
-  <section class="section">
-    <div class="container">
-      <Text nodeId="home-articles-title" as="h2">
-        Latest articles
-      </Text>
-      <Listing nodeId="home-articles" type="article" columns={3} maxItems={3} />
-    </div>
-  </section>
-
   <CallToAction
     id="home-cta"
-    title="Have a project in mind?"
-    text="Tell us about it and we will get back to you within two working days."
-    cta={{ text: "Get in touch", url: "/contact" }}
+    title="Now make it yours."
+    text="This page is only here to say hello. Replace it, or tell your agent what site you have in mind."
+    cta={{ text: "See every component", url: "/components" }}
   />
 </Site>

@@ -1,6 +1,6 @@
 ---
 import type { FooterValue } from "@brimsites/brimjs";
-import { Footer, Setting, SocialMedia } from "@brimsites/brimjs/components";
+import { Footer, Setting } from "@brimsites/brimjs/components";
 import { getSiteSettings } from "@brimsites/brimjs/content";
 import { siteSettings } from "../site-settings.ts";
 import { SITE_NAME, pages } from "./navigation.ts";
@@ -29,11 +29,6 @@ const groups = [
             <Setting name="phone" />
           </a>
         )}
-        <SocialMedia
-          nodeId="footer-social"
-          mode="profile"
-          profiles={{ instagram: "https://instagram.com", linkedin: "https://linkedin.com" }}
-        />
       </div>
       {groups.map((group) => (
         <section>
@@ -64,15 +59,19 @@ const groups = [
     gap: 2rem;
   }
 
+  .site-footer :global(.stack > *) {
+    display: block;
+    margin-top: 0.25rem;
+  }
+
   .site-footer__brand {
     font-size: 1.125rem;
     color: var(--brim-theme-background);
   }
 
   .site-footer__title {
-    font-size: 0.8125rem;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
+    font-size: 1rem;
+    letter-spacing: 0;
     color: var(--brim-theme-background);
   }
 

@@ -16,6 +16,10 @@ const { title, description } = Astro.props;
 <html lang={Astro.currentLocale ?? "{{lang}}"}>
   <head>
     <meta charset="utf-8" />
+    {/* Before any other style: what global.css says of bare elements gives way to Brim's blocks. */}
+    <style is:inline>
+      @layer base, brim;
+    </style>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <Seo title={title} description={description} />

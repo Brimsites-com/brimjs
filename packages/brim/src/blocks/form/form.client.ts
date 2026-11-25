@@ -282,8 +282,10 @@ class BrimForm extends HTMLElement {
       const success = this.querySelector<HTMLElement>(".brim-form__success");
       if (success) success.hidden = false;
     } catch (failure) {
-      // A token is good for one attempt; the next one gets a fresh token, and a fresh challenge.
+      // A token is good for one attempt; the next one gets a fresh token, and a fresh challenge. It is asked for now, not
+      // when they send again: the server refuses a token it has only just given.
       this.#token = undefined;
+      this.#requestToken().catch(() => (this.#token = undefined));
       this.#resetCaptcha();
       if (error) {
         error.textContent = failure instanceof Error ? failure.message : "Something went wrong. Please try again.";

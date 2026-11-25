@@ -1,53 +1,41 @@
 ---
-import { Accordion, ImageGallery, RichText, Text } from "@brimsites/brimjs/components";
+import { Accordion, RichText, Text } from "@brimsites/brimjs/components";
 import Site from "../layouts/Site.astro";
-
-const photos = [
-  { url: "/images/hero.svg", alt: "Colorful abstract shapes", title: "Studio" },
-  { url: "/images/hero.svg", alt: "Colorful abstract shapes", title: "Workshop" },
-  { url: "/images/hero.svg", alt: "Colorful abstract shapes", title: "Garden" },
-];
 ---
 
-<Site title="About" description="Who we are and how we work.">
+<Site title="About" description="Who is behind this site.">
   <section class="section">
     <div class="container stack">
-      <Text nodeId="about-eyebrow" class="eyebrow">
-        About
-      </Text>
       <Text nodeId="about-title" as="h1">
-        A small team with a clear way of working
+        Say who you are.
       </Text>
       <RichText nodeId="about-body" class="lead">
-        <p>We plan carefully, build in small steps and keep you in the loop the whole time.</p>
-        <h2>How we work</h2>
-        <ul>
-          <li>We agree on the goal and the pages first.</li>
-          <li>We build the site and show it to you every week.</li>
-          <li>You edit the content yourself once it is live.</li>
-        </ul>
+        <p>This page is yours to write. Open it in the editor, click this paragraph and start typing.</p>
+        <p>One sentence on what you do and one on who you do it for is a good beginning.</p>
       </RichText>
     </div>
   </section>
 
   <section class="section section--tinted">
     <div class="container">
-      <Text nodeId="about-gallery-title" as="h2">
-        Where we work
+      <Text nodeId="about-faq-title" as="h2">
+        Questions you may have
       </Text>
-      <ImageGallery nodeId="about-gallery" images={photos} columns={3} />
-    </div>
-  </section>
-
-  <section class="section">
-    <div class="container">
-      <Text nodeId="about-faq-title" as="h2">Questions</Text>
       <Accordion
         nodeId="about-faq"
         items={[
-          { title: "How long does a site take?", content: "Most sites are live in two to four weeks." },
-          { title: "Can I edit it myself?", content: "Yes. Texts, images, links and settings change in the browser." },
-          { title: "Where is it hosted?", content: "Anywhere that serves static files." },
+          {
+            title: "Can I change everything here myself?",
+            content: "Every text, picture and link, in the browser. The layout stays in code, so an edit cannot break it.",
+          },
+          {
+            title: "Where is what I write kept?",
+            content: "In one SQLite file, .brim/data.db, and the pictures in public/uploads. Both stay out of git.",
+          },
+          {
+            title: "Where can I host it?",
+            content: "Anywhere Node runs. A static copy works on any host, without the editor and forms.",
+          },
         ]}
       />
     </div>

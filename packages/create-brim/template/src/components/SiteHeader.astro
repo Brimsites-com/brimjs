@@ -8,7 +8,7 @@ import { SITE_NAME, pages } from "./navigation.ts";
 const current = (href: string) => (href === Astro.url.pathname ? "page" : undefined);
 ---
 
-<Navbar nodeId="navbar" logoText={SITE_NAME} items={pages} class="site-header">
+<Navbar nodeId="navbar" logo={{ src: "/favicon.svg", alt: "" }} logoText={SITE_NAME} items={pages} class="site-header">
   {({ logo, logoText, items }: NavbarValue) => (
     <div class="container site-header__inner">
       <a class="site-header__brand" href="/">
@@ -62,6 +62,12 @@ const current = (href: string) => (href === Astro.url.pathname ? "page" : undefi
     font-weight: 700;
     font-size: 1.125rem;
     text-decoration: none;
+    white-space: nowrap;
+  }
+
+  .site-header__brand img {
+    width: auto;
+    height: 2rem;
   }
 
   .site-header__links {

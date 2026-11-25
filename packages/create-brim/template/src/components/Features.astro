@@ -11,7 +11,7 @@ interface Props {
 const { id, title, features } = Astro.props;
 ---
 
-<section class="section section--tinted">
+<section class="section">
   <div class="container">
     <Text nodeId={`${id}-title`} as="h2">
       {title}
@@ -39,15 +39,15 @@ const { id, title, features } = Astro.props;
   }
 
   .feature {
-    padding: 1.75rem;
-    border-radius: var(--site-radius);
-    background: var(--brim-theme-background);
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--brim-theme-light2);
   }
 
   .feature :global(.feature__icon) {
     padding: 0.6rem;
     border-radius: var(--site-radius);
-    background: var(--brim-theme-light1);
+    background: var(--brim-theme-accent);
+    color: var(--brim-theme-accent-contrast);
   }
 
   .feature h3 {

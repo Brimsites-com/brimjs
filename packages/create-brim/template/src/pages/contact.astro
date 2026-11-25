@@ -1,27 +1,24 @@
 ---
-import { Form, Map, Text } from "@brimsites/brimjs/components";
+import { Form, Text } from "@brimsites/brimjs/components";
 import Site from "../layouts/Site.astro";
 
 // Messages are checked against abuse and saved; the owner reads them under "Form responses" in the editor.
 // On a host that only serves static files, forms need the Brim server part to receive messages.
 ---
 
-<Site title="Contact" description="Write to us or visit the studio.">
+<Site title="Contact" description="Write to us.">
   <section class="section">
     <div class="container contact">
       <div class="stack">
         <Text nodeId="contact-title" as="h1">
-          Get in touch
+          Say hello.
         </Text>
         <Text nodeId="contact-lead" class="lead">
-          Tell us what you need. We answer every message.
+          This form already works: messages are kept in the editor, under Form responses.
         </Text>
-        <Form nodeId="contact-form" formName="Contact" />
       </div>
-      <Map
-        nodeId="contact-map"
-        points={[{ lat: 46.7712, lng: 23.6236, title: "Studio", address: "Piața Unirii, Cluj-Napoca" }]}
-      />
+      {/* Turn the consent box on (showConsent) once the site has a privacy page to link. */}
+      <Form nodeId="contact-form" formName="Contact" showConsent={false} />
     </div>
   </section>
 </Site>
