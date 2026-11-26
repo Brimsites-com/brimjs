@@ -85,4 +85,43 @@ describe("built server of a site whose pages are files", () => {
       expect(answer.headers.get("cache-control"), path).toBe("no-store");
     }
   });
+
+  it("says how long a CDN keeps robots.txt and the sitemap when the site's address is set", async () => {
+    const port = await new Promise<number>((resolve, reject) => {
+      const probe = createServer().on("error", reject);
+      probe.listen(0, "127.0.0.1", () => {
+        const { port: free } = probe.address() as { port: number };
+        probe.close(() => resolve(free));
+      });
+    });
+    const named = spawn(process.execPath, [join(folder, "dist", "server", "entry.mjs")], {
+      env: {
+        ...process.env,
+        HOST: "127.0.0.1",
+        PORT: String(port),
+        BRIM_DATABASE_URL: databaseUrl, // betterleaks:allow (a temporary test database)
+        BRIM_SITE_URL: "https://example.test",
+      },
+      stdio: "ignore",
+    });
+    try {
+      const at = `http://127.0.0.1:${port}`;
+      for (let attempt = 0; attempt < 100; attempt++) {
+        if (
+          await fetch(`${at}/admin/api/info`).then(
+            ({ ok }) => ok,
+            () => false,
+          )
+        )
+          break;
+        await new Promise((resolve) => setTimeout(resolve, 100));
+      }
+      const robots = await fetch(`${at}/robots.txt`);
+      expect(await robots.text()).toContain("Sitemap: https://example.test/sitemap.xml");
+      expect(robots.headers.get("cache-control")).toBe("public, max-age=3600");
+      expect((await fetch(`${at}/sitemap.xml`)).headers.get("cache-control")).toBe("public, max-age=0");
+    } finally {
+      named.kill();
+    }
+  }, 30_000);
 });

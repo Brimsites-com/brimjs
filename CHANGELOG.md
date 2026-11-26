@@ -4,6 +4,14 @@ What changed in Brim.js, newest first. Versions are semantic: only a major versi
 and config, and says so here under **Changed**; a minor version adds, a patch version fixes. Database migrations are
 append-only.
 
+## 1.0.4
+
+### Fixed
+
+- **robots.txt and the sitemap say how long they may be kept** when the site's address is set (robots.txt an hour, the
+  sitemap asked again each time). Left unsaid, a CDN kept them as long as it liked: a site moved to a new domain went
+  on naming the old one in robots.txt.
+
 ## 1.0.3
 
 ### Changed

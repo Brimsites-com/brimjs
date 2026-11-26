@@ -28,7 +28,9 @@ export const GET: APIRoute = async ({ site, request }) => {
   return new Response(sitemapXml(entries, given ?? asked), {
     headers: {
       "content-type": "application/xml; charset=utf-8",
-      ...(!given && config.mode === "server" && { "cache-control": "no-store" }),
+      // With the site's address it is everyone's, asked again each time (a CDN in front keeps it as its host says):
+      // left unsaid, a CDN keeps it as long as it likes and new pages are missing from it.
+      ...(config.mode === "server" && { "cache-control": given ? "public, max-age=0" : "no-store" }),
     },
   });
 };

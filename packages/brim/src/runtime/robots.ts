@@ -22,8 +22,10 @@ export const GET: APIRoute = ({ site, request }) => {
   return new Response(`User-agent: *\nAllow: /\nDisallow: /admin\n${sitemap}`, {
     headers: {
       "content-type": "text/plain; charset=utf-8",
-      // The address asked at is the asker's to write: a cache must not hand this answer to anyone else.
-      ...(!given && config.mode === "server" && { "cache-control": "no-store" }),
+      // The address asked at is the asker's to write: a cache must not hand this answer to anyone else. With the
+      // site's address it is the same for everyone, and says how long: left unsaid, a CDN keeps it as long as it
+      // likes (Bunny: 30 days), and a new domain went on naming the old one.
+      ...(config.mode === "server" && { "cache-control": given ? "public, max-age=3600" : "no-store" }),
     },
   });
 };
