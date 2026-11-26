@@ -4,6 +4,13 @@ What changed in Brim.js, newest first. Versions are semantic: only a major versi
 and config, and says so here under **Changed**; a minor version adds, a patch version fixes. Database migrations are
 append-only.
 
+## 1.0.5
+
+### Fixed
+
+- **Astro's integrations directory can find brimjs**: the package carries the `withastro` and `astro-integration`
+  keywords that the directory on astro.build looks for on npm, and both packages name what they are for in npm search.
+
 ## 1.0.4
 
 ### Fixed

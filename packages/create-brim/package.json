@@ -1,7 +1,14 @@
 {
   "name": "@brimsites/create-brim",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "Starts a new Brim.js site: an Astro project with brimjs, a layout, pages, components and a content type.",
+  "keywords": [
+    "astro",
+    "brimjs",
+    "cms",
+    "starter",
+    "create"
+  ],
   "license": "FSL-1.1-MIT",
   "author": "Brimsites",
   "homepage": "https://brimjs.org",
