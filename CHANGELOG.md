@@ -22,7 +22,7 @@ append-only.
   and stays connected (it renews its hour-long access token itself) until you disconnect it in the editor's menu
   (**Connected apps**), change your password or are removed. The site serves the OAuth metadata under
   `/.well-known/oauth-*`, registers apps by itself and requires PKCE; `/admin/api/connections` lists and disconnects
-  apps, and `/admin/api/info` says `oauth`. Access tokens (`brim token add`) work as before. Database migration 16.
+  apps, and `/admin/api/info` says `oauth`. Access tokens (`brim token add`) work as before. Database migration 15.
 
 ## 1.0.5
 
