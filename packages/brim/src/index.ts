@@ -9,6 +9,7 @@ export { HistoryStore, type HistoryEntry } from "./content/history.ts";
 export type {
   FooterGroup,
   FooterValue,
+  ImageFocus,
   ImageValue,
   LinkValue,
   NavItem,

@@ -167,6 +167,7 @@ export async function getTranslations(key: string, item: Item): Promise<ContentI
 }
 
 export { type ImageSources, imageSources, mediaUrl } from "./media.ts";
+export { focusStyle } from "../content/image-focus.ts";
 
 /**
  * The site's own settings (`src/site-settings.ts`) as the page should show them: what the owner saved in Site

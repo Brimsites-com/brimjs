@@ -5,13 +5,15 @@
  */
 import type { ContentItem } from "../../runtime/content.ts";
 import { imageSources } from "../../runtime/media.ts";
+import { focusStyle } from "../../content/image-focus.ts";
+import type { ImageValue } from "../../content/types.ts";
 
 interface Props {
   items: ContentItem[];
   rendered: string[];
   custom: boolean;
   links: boolean;
-  image: (item: ContentItem) => { src: string; alt: string } | undefined;
+  image: (item: ContentItem) => ImageValue | undefined;
   text: (item: ContentItem) => string | undefined;
   labels: (item: ContentItem) => string[];
 }
@@ -30,6 +32,7 @@ const { items, rendered, custom, links, image, text, labels } = Astro.props;
               class="brim-listing__image"
               {...imageSources(image(item)?.src ?? "", "(max-width: 479px) 100vw, (max-width: 991px) 50vw, 33vw")}
               alt={image(item)?.alt ?? ""}
+              style={focusStyle(image(item)?.focus)}
               loading="lazy"
               decoding="async"
             />

@@ -13,7 +13,11 @@ export function itemLink(
   imageFields: string[],
 ): NavItem {
   const image = imageFields.map((name) => item.data[name] as ImageValue | undefined).find((value) => value?.src);
-  return { label: item.title, href: item.url, ...(image && { image: { src: image.src, alt: image.alt ?? "" } }) };
+  return {
+    label: item.title,
+    href: item.url,
+    ...(image && { image: { src: image.src, alt: image.alt ?? "", ...(image.focus && { focus: image.focus }) } }),
+  };
 }
 
 /** The navbar as the site shows it: every link `from` a content type gets that type's items as its sub-links. */

@@ -8,6 +8,9 @@ import {
   type SitePage,
   loadSiteInfo,
 } from "./api.ts";
+import { readFocus } from "../../content/image-focus.ts";
+import { imageField, itemPicture } from "../../content/item-image.ts";
+import type { ImageFocus } from "../../content/types.ts";
 import { CheckboxWidget, TextWidget } from "./fields.tsx";
 import { ItemFields } from "./ItemForm.tsx";
 import { Fieldset, Sidebar } from "./Sidebar.tsx";
@@ -73,6 +76,33 @@ export function PageSettings({
   const image = live.image || own?.image || identity?.image || "";
   const shareTitle = live.shareTitle || title;
   const shareDescription = live.shareDescription || description;
+  // On an item's page without a preview image of its own, the item's picture stands in: shown here, and its focus
+  // chosen here is the item's, the one its cards and the image field use. Choosing another picture sets the page's.
+  const picture = item && !seo.image ? itemPicture(item.type, item.item) : undefined;
+  const pictureField = item && imageField(item.type);
+  const preview =
+    picture && pictureField && item
+      ? {
+          value: picture.src,
+          focus: picture.focus,
+          onFocus: (focus: ImageFocus) => {
+            const { focus: _old, ...rest } = picture;
+            const kept = readFocus(focus);
+            item.onChange({
+              ...item.item,
+              data: { ...item.item.data, [pictureField]: kept ? { ...rest, focus: kept } : rest },
+            });
+          },
+        }
+      : {
+          value: seo.image ?? "",
+          focus: seo.imageFocus,
+          onFocus: (focus: ImageFocus) => {
+            const { imageFocus: _old, ...rest } = seo;
+            const kept = readFocus(focus);
+            onChange(kept ? { ...rest, imageFocus: kept } : rest);
+          },
+        };
 
   return (
     <Sidebar title="Page Settings" onClose={onClose}>
@@ -115,9 +145,19 @@ export function PageSettings({
         <SharePreview path={page.path} title={shareTitle} description={shareDescription} image={image} />
         <ImageUploadWidget
           label="Preview image"
-          description="Shown when the page is shared on social networks and in chats. Best at 1200 × 630."
-          value={seo.image ?? ""}
-          onChange={(value) => set({ image: value })}
+          description={
+            picture
+              ? `The ${item?.type.singular.toLowerCase()}'s picture, until you choose another for shared links. Best at 1200 × 630.`
+              : "Shown when the page is shared on social networks and in chats. Best at 1200 × 630."
+          }
+          value={preview.value}
+          focus={preview.focus}
+          onFocus={preview.onFocus}
+          // A new picture starts with its focus in the middle.
+          onChange={(value) => {
+            const { imageFocus: _old, ...rest } = seo;
+            onChange({ ...rest, image: value });
+          }}
         />
         <TextWidget
           label="Title on shared links"

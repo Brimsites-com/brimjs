@@ -1,6 +1,8 @@
 import { type KeyboardEvent, type ReactNode, useEffect, useId, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { readFocus } from "../../content/image-focus.ts";
 import { cleanTag, hasTag, sameTag } from "../../content/tags.ts";
+import type { ImageFocus } from "../../content/types.ts";
 import { CalendarIcon, ChevronDownIcon, ChevronLeftIcon, ChevronRightIcon } from "./icons.tsx";
 import { type FormValue, type Schema, emptyValue } from "./kinds.ts";
 import { LinkWidget } from "./LinkWidget.tsx";
@@ -309,7 +311,10 @@ export function DateWidget({
   );
 }
 
-/** An image with its description, as content items and the site's logo keep it: `{ src, alt }`. */
+/**
+ * An image with its description and focus, as content items and the site's logo keep it: `{ src, alt, focus? }`.
+ * A new picture starts with its focus in the middle.
+ */
 export function ImageWidget({
   label,
   value,
@@ -321,16 +326,27 @@ export function ImageWidget({
 }) {
   const src = asString(value.src);
   const alt = asString(value.alt);
+  const focus = readFocus(value.focus);
+  const image = (next: { src?: string; alt?: string; focus?: ImageFocus | undefined }): void => {
+    const kept = readFocus("focus" in next ? next.focus : focus);
+    onChange({ src: next.src ?? src, alt: next.alt ?? alt, ...(kept && { focus: kept }) });
+  };
 
   return (
     <fieldset className="brim-setting-group">
       <legend>{label}</legend>
-      <ImageUploadWidget label="Image" value={src} onChange={(next) => onChange({ src: next, alt })} />
+      <ImageUploadWidget
+        label="Image"
+        value={src}
+        focus={focus}
+        onChange={(next) => image({ src: next, focus: undefined })}
+        onFocus={(next) => image({ focus: next })}
+      />
       <TextWidget
         label="Alt Text (SEO)"
         value={alt}
         placeholder="Describe the image"
-        onChange={(next) => onChange({ src, alt: next })}
+        onChange={(next) => image({ alt: next })}
       />
     </fieldset>
   );

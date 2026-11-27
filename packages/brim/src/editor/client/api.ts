@@ -92,6 +92,7 @@ export interface SeoSettings {
   title?: string;
   description?: string;
   image?: string;
+  imageFocus?: { x: number; y: number };
   shareTitle?: string;
   shareDescription?: string;
   canonical?: string;

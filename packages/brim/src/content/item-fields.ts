@@ -1,6 +1,7 @@
 import { type ContentField, type ContentType, type FieldType, optionLabel } from "./content-types.ts";
 import { type Item, type ItemDraft, parseItem } from "./items.ts";
 import type { InlineNode } from "./types.ts";
+import { readFocus } from "./image-focus.ts";
 import { ValidationError } from "./validation-error.ts";
 
 /**
@@ -85,12 +86,17 @@ export function applyToItem(
   } else if (kind === "richtext" && fieldType === "richtext") {
     fieldValue = value;
   } else if (kind === "image" && fieldType === "image") {
-    fieldValue = value.url ? { src: value.url, alt: value.alt ?? "" } : undefined;
+    // The block keeps its focus as two numbers; the item's image keeps it with the picture.
+    const focus = readFocus({ x: value.focalPointX, y: value.focalPointY });
+    fieldValue = value.url ? { src: value.url, alt: value.alt ?? "", ...(focus && { focus }) } : undefined;
   } else if ((kind === "image-gallery" || kind === "carousel") && fieldType === "gallery") {
     // The images, in their order: a gallery field keeps each one's address and description.
     fieldValue = (Array.isArray(value.images) ? (value.images as Record<string, unknown>[]) : [])
       .filter((image) => typeof image.url === "string" && image.url !== "")
-      .map((image) => ({ src: image.url, alt: typeof image.alt === "string" ? image.alt : "" }));
+      .map((image) => {
+        const focus = readFocus(image.focus);
+        return { src: image.url, alt: typeof image.alt === "string" ? image.alt : "", ...(focus && { focus }) };
+      });
   } else if (kind === FIELD_KIND && METADATA_FIELDS.includes(fieldType)) {
     fieldValue = value.value;
   } else {

@@ -371,8 +371,27 @@ function PropertyField({
       );
     }
 
-    case "image":
-      return <ImageUploadWidget label={label} description={description} value={String(current ?? "")} onChange={set} />;
+    case "image": {
+      // A block that keeps the picture's focus names its two settings; the focus is then chosen on the picture.
+      const xField = key("xField");
+      const yField = key("yField");
+      if (!xField || !yField) {
+        return (
+          <ImageUploadWidget label={label} description={description} value={String(current ?? "")} onChange={set} />
+        );
+      }
+      return (
+        <ImageUploadWidget
+          label={label}
+          description={description}
+          value={String(current ?? "")}
+          focus={{ x: numberOf(settings[xField], 50), y: numberOf(settings[yField], 50) }}
+          // A new picture starts with its focus in the middle.
+          onChange={(url) => onPatch({ [name]: url, [xField]: 50, [yField]: 50 })}
+          onFocus={({ x, y }) => onPatch({ [xField]: x, [yField]: y })}
+        />
+      );
+    }
 
     case "image-focus":
       return (

@@ -5,6 +5,7 @@ import type { Icon, IconSearch, IconSetInfo } from "../../icons/library.ts";
 import { IMAGE_SHAPES, type ImageShape } from "../../blocks/data/image-shapes.ts";
 import { SOCIAL_NETWORKS, orderSocialNetworks } from "../../blocks/data/social-networks.ts";
 import { THEME_COLOR_DEFAULTS } from "../../blocks/theme.ts";
+import type { ImageFocus } from "../../content/types.ts";
 import { type MediaFile, api } from "./api.ts";
 import { useBrandColors } from "./brand.ts";
 import { ArrowLeftIcon, ChevronRightIcon, PlusIcon } from "./icons.tsx";
@@ -524,19 +525,34 @@ export const MediaFolderContext = createContext<MediaFolder | undefined>(undefin
 /**
  * The image picker: upload a file (or drop one on the box), choose one already uploaded,
  * or paste an address. Stores the image's address.
+ *
+ * With `onFocus`, the picture is also where the owner chooses its focus: the part that stays in sight when the site
+ * crops it. A click or a drag on the picture moves the point; a new picture starts at its middle (the caller resets
+ * the focus with the address) and asks for it at once.
  */
 export function ImageUploadWidget({
   label,
   description,
   value,
   onChange,
+  focus,
+  onFocus,
 }: {
   label: string;
   description?: string | undefined;
   value: string;
   onChange: (url: string, file?: MediaFile) => void;
+  /** The image's focus, the middle when absent. */
+  focus?: ImageFocus | undefined;
+  onFocus?: ((focus: ImageFocus) => void) | undefined;
 }) {
   const [busy, setBusy] = useState(false);
+  /** A picture just chosen: the widget asks where its focus is. */
+  const [chosen, setChosen] = useState(false);
+  const choose = (url: string, file?: MediaFile): void => {
+    setChosen(url !== "");
+    onChange(url, file);
+  };
   const [error, setError] = useState("");
   const [choosing, setChoosing] = useState(false);
   const [address, setAddress] = useState("");
@@ -560,7 +576,7 @@ export function ImageUploadWidget({
     setError("");
     try {
       const uploaded = await api.upload(file, destination);
-      onChange(uploaded.url, uploaded);
+      choose(uploaded.url, uploaded);
     } catch (failure) {
       setError(failure instanceof Error ? failure.message : "Could not upload the image.");
     } finally {
@@ -583,7 +599,11 @@ export function ImageUploadWidget({
       >
         {value ? (
           <>
-            <img className="preview-img" src={value} alt="" />
+            {onFocus ? (
+              <ImageFocusPicker image={value} focus={focus} prompt={chosen} onChange={onFocus} />
+            ) : (
+              <img className="preview-img" src={value} alt="" />
+            )}
             <div className="image-widget-actions">
               <button type="button" className="btn-upload" onClick={() => fileInput.current?.click()}>
                 Replace
@@ -591,7 +611,7 @@ export function ImageUploadWidget({
               <button type="button" className="btn-gallery" onClick={() => setChoosing(true)}>
                 Choose from site
               </button>
-              <button type="button" className="btn-remove" onClick={() => onChange("")}>
+              <button type="button" className="btn-remove" onClick={() => choose("")}>
                 Remove
               </button>
             </div>
@@ -611,7 +631,7 @@ export function ImageUploadWidget({
               className="external-url-panel"
               onSubmit={(event) => {
                 event.preventDefault();
-                if (address.trim()) onChange(address.trim());
+                if (address.trim()) choose(address.trim());
               }}
             >
               <input
@@ -666,7 +686,7 @@ export function ImageUploadWidget({
           folder={folder}
           onPick={(file) => {
             setChoosing(false);
-            onChange(file.url, file);
+            choose(file.url, file);
           }}
           onClose={() => setChoosing(false)}
         />
@@ -795,6 +815,123 @@ function MediaPicker({
   );
 }
 
+/**
+ * The whole picture with a point on it: a click or a drag puts the point where the picture must stay in sight when
+ * it is cropped; the arrow keys move it too (Shift for larger steps). Values are percentages from the left and top.
+ */
+function FocusFrame({
+  image,
+  x,
+  y,
+  onChange,
+}: {
+  image: string;
+  x: number;
+  y: number;
+  onChange: (x: number, y: number) => void;
+}) {
+  const frame = useRef<HTMLDivElement>(null);
+  // The frame takes the picture's shape once it has loaded, so a point on the frame is that point of the picture.
+  const [ratio, setRatio] = useState(16 / 9);
+
+  function moveTo(clientX: number, clientY: number): void {
+    const bounds = frame.current?.getBoundingClientRect();
+    if (!bounds || bounds.width === 0 || bounds.height === 0) return;
+    onChange(
+      Math.round(clamp(((clientX - bounds.left) / bounds.width) * 100, 0, 100)),
+      Math.round(clamp(((clientY - bounds.top) / bounds.height) * 100, 0, 100)),
+    );
+  }
+
+  return (
+    <div
+      ref={frame}
+      className="focus-frame"
+      style={{ "--focus-x": `${x}%`, "--focus-y": `${y}%`, "--focus-ratio": ratio } as React.CSSProperties}
+      onPointerDown={(event) => {
+        if (event.button !== 0) return;
+        event.currentTarget.setPointerCapture(event.pointerId);
+        moveTo(event.clientX, event.clientY);
+      }}
+      onPointerMove={(event) => event.buttons === 1 && moveTo(event.clientX, event.clientY)}
+    >
+      {image && (
+        <img
+          src={image}
+          alt=""
+          draggable={false}
+          onLoad={(event) => {
+            const { naturalWidth, naturalHeight } = event.currentTarget;
+            if (naturalWidth > 0 && naturalHeight > 0) setRatio(naturalWidth / naturalHeight);
+          }}
+        />
+      )}
+      <button
+        type="button"
+        className="focus-point"
+        aria-label={`Focus point, ${x}% from the left and ${y}% from the top. Use the arrow keys to move it.`}
+        onKeyDown={(event) => {
+          const step = event.shiftKey ? 10 : 1;
+          const move: Record<string, [number, number]> = {
+            ArrowLeft: [-step, 0],
+            ArrowRight: [step, 0],
+            ArrowUp: [0, -step],
+            ArrowDown: [0, step],
+          };
+          const delta = move[event.key];
+          if (!delta) return;
+          event.preventDefault();
+          onChange(clamp(x + delta[0], 0, 100), clamp(y + delta[1], 0, 100));
+        }}
+      />
+    </div>
+  );
+}
+
+/**
+ * The image widget's picture when it keeps a focus: the picture to click, how a wide and a square crop show it,
+ * and a way back to the middle. Right after a picture is chosen it says what the click does.
+ */
+function ImageFocusPicker({
+  image,
+  focus,
+  prompt,
+  onChange,
+}: {
+  image: string;
+  focus: ImageFocus | undefined;
+  prompt: boolean;
+  onChange: (focus: ImageFocus) => void;
+}) {
+  const x = focus?.x ?? 50;
+  const y = focus?.y ?? 50;
+  const position = `${x}% ${y}%`;
+  return (
+    <div className="image-focus">
+      <FocusFrame image={image} x={x} y={y} onChange={(nextX, nextY) => onChange({ x: nextX, y: nextY })} />
+      <p className="field-description" data-prompt={prompt || undefined}>
+        {prompt
+          ? "Click the part of the picture that must stay in sight when the site crops it."
+          : "Click the picture to choose the part that stays in sight when it is cropped."}
+      </p>
+      <div className="focus-footer">
+        <span className="focus-crops" aria-hidden="true">
+          <img src={image} alt="" style={{ objectPosition: position }} />
+          <img src={image} alt="" style={{ objectPosition: position }} />
+        </span>
+        <button
+          type="button"
+          className="focus-reset"
+          disabled={x === 50 && y === 50}
+          onClick={() => onChange({ x: 50, y: 50 })}
+        >
+          Center
+        </button>
+      </div>
+    </div>
+  );
+}
+
 /** Drag the dot to say which part of the image must stay visible when it is cropped. */
 export function FocusWidget({
   label,
@@ -813,52 +950,13 @@ export function FocusWidget({
   inherited: { x: number | undefined; y: number | undefined };
   onChange: (x: number, y: number) => void;
 }) {
-  const frame = useRef<HTMLDivElement>(null);
   const currentX = x ?? inherited.x ?? 50;
   const currentY = y ?? inherited.y ?? 50;
-
-  function moveTo(clientX: number, clientY: number): void {
-    const bounds = frame.current?.getBoundingClientRect();
-    if (!bounds) return;
-    onChange(
-      Math.round(clamp(((clientX - bounds.left) / bounds.width) * 100, 0, 100)),
-      Math.round(clamp(((clientY - bounds.top) / bounds.height) * 100, 0, 100)),
-    );
-  }
 
   return (
     <div className="field-group">
       <span className="field-label">{label}</span>
-      <div
-        ref={frame}
-        className="focus-frame"
-        style={{ "--focus-x": `${currentX}%`, "--focus-y": `${currentY}%` } as React.CSSProperties}
-        onPointerDown={(event) => {
-          event.currentTarget.setPointerCapture(event.pointerId);
-          moveTo(event.clientX, event.clientY);
-        }}
-        onPointerMove={(event) => event.buttons === 1 && moveTo(event.clientX, event.clientY)}
-      >
-        {image && <img src={image} alt="" draggable={false} />}
-        <button
-          type="button"
-          className="focus-point"
-          aria-label="Focal point. Use the arrow keys to move it."
-          onKeyDown={(event) => {
-            const step = event.shiftKey ? 10 : 1;
-            const move: Record<string, [number, number]> = {
-              ArrowLeft: [-step, 0],
-              ArrowRight: [step, 0],
-              ArrowUp: [0, -step],
-              ArrowDown: [0, step],
-            };
-            const delta = move[event.key];
-            if (!delta) return;
-            event.preventDefault();
-            onChange(clamp(currentX + delta[0], 0, 100), clamp(currentY + delta[1], 0, 100));
-          }}
-        />
-      </div>
+      <FocusFrame image={image} x={currentX} y={currentY} onChange={onChange} />
       <div className="focus-footer">
         <span className="focus-value">
           {currentX}% {currentY}%{x === undefined ? " inherited" : ""}

@@ -424,6 +424,16 @@ the same:
 <img {...imageSources(item.data.image.src, "(max-width: 768px) 100vw, 33vw")} alt={item.data.image.alt} />
 ```
 
+The owner chooses each picture's focus on the picture itself in the editor, right after choosing it: the part that
+stays in sight where the site crops it (`object-fit: cover`). An image field keeps it with the picture
+(`{ src, alt, focus: { x, y } }`, percentages, absent while it is the middle), and a page's preview image as
+`imageFocus` in its SEO. `Image`, a gallery's `image.img`, a carousel's `slide.img` and `Listing` cards apply it; in
+your own markup `focusStyle(item.data.image.focus)` from `@brimsites/brimjs/content` gives the `style`:
+
+```astro
+<img {...imageSources(item.data.image.src)} alt={item.data.image.alt} style={focusStyle(item.data.image.focus)} />
+```
+
 Brim measures every upload, so `imageSources`, a gallery's `image.img` and Brim's own images also give the `<img>`
 its `width` and `height`: the browser keeps the picture's place, in its own shape, before it arrives, and the page
 does not jump as photos load. Leave `width` and `height` out of the markup (`brim check` warns about a number written

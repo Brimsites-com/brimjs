@@ -1,3 +1,5 @@
+import { focusStyle, readFocus } from "../content/image-focus.ts";
+import type { ImageFocus } from "../content/types.ts";
 import type { ImageSources } from "../runtime/media.ts";
 /**
  * The images of a `Gallery` or a `Carousel`: what the owner adds, orders and describes in the side panel. The
@@ -8,12 +10,20 @@ export interface ShownImage {
   alt: string;
   caption?: string;
   link?: string;
+  /** The part that stays in sight where the site crops the picture; absent while it is the middle. */
+  focus?: ImageFocus;
   /**
    * Everything an `<img>` needs, a `srcset` included when the site's media can be resized and its `width` and
-   * `height` when the media library measured it: `<img {...image.img} />`.
+   * `height` when the media library measured it, and the `style` that anchors it at its focus when it has one:
+   * `<img {...image.img} />`.
    * In a `Gallery` whose pictures open over the whole screen, also what makes this one open (`data-lightbox`).
    */
-  img: ImageSources & { alt: string; "data-lightbox"?: number; "data-caption"?: string | undefined };
+  img: ImageSources & {
+    alt: string;
+    style?: string;
+    "data-lightbox"?: number;
+    "data-caption"?: string | undefined;
+  };
 }
 
 /** What a `Gallery`'s function gets: `{({ images }) => …}`. */
@@ -33,6 +43,7 @@ export interface StartingImage {
   alt?: string;
   caption?: string;
   link?: string;
+  focus?: ImageFocus;
 }
 
 const SAFE_LINK = /^(https?:\/\/|\/(?!\/)|#|mailto:|tel:)/i;
@@ -54,7 +65,18 @@ export function readImages(value: unknown, sources: (src: string) => ImageSource
       (text): text is string => typeof text === "string" && text !== "",
     );
     const link = typeof image.link === "string" && SAFE_LINK.test(image.link) ? image.link : undefined;
-    return [{ src, alt, ...(caption && { caption }), ...(link && { link }), img: { ...sources(src), alt } }];
+    const focus = readFocus(image.focus);
+    const style = focusStyle(focus);
+    return [
+      {
+        src,
+        alt,
+        ...(caption && { caption }),
+        ...(link && { link }),
+        ...(focus && { focus }),
+        img: { ...sources(src), alt, ...(style && { style }) },
+      },
+    ];
   });
 }
 

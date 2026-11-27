@@ -1826,11 +1826,13 @@ textarea.field-input {
   object-fit: cover;
 }
 
+/* The frame has the whole picture's shape, so a point on it is the same point of the picture. */
 .focus-frame {
   position: relative;
-  aspect-ratio: 16 / 9;
-  overflow: hidden;
-  border: 1px solid var(--border);
+  width: 100%;
+  max-width: calc(200px * var(--focus-ratio));
+  aspect-ratio: var(--focus-ratio);
+  margin-inline: auto;
   border-radius: 6px;
   background: var(--brim-editor-surface);
   cursor: crosshair;
@@ -1838,11 +1840,12 @@ textarea.field-input {
 }
 
 .focus-frame img {
+  display: block;
   width: 100%;
   height: 100%;
-  object-fit: cover;
-  object-position: var(--focus-x) var(--focus-y);
+  border-radius: 6px;
   pointer-events: none;
+  user-select: none;
 }
 
 .focus-point {
@@ -1870,6 +1873,40 @@ textarea.field-input {
 .focus-value {
   color: var(--muted-foreground);
   font-size: 0.75rem;
+}
+
+.image-focus {
+  margin-bottom: 10px;
+}
+
+.image-focus .field-description {
+  margin: 6px 0 0;
+}
+
+.image-focus .field-description[data-prompt] {
+  color: var(--foreground);
+  font-weight: 600;
+}
+
+/* How a wide and a square crop show the picture at its focus. */
+.focus-crops {
+  display: flex;
+  gap: 6px;
+}
+
+.focus-crops img {
+  height: 32px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  object-fit: cover;
+}
+
+.focus-crops img:first-child {
+  aspect-ratio: 16 / 9;
+}
+
+.focus-crops img:last-child {
+  aspect-ratio: 1;
 }
 
 .shape-grid {

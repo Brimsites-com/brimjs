@@ -6,6 +6,7 @@ import type { Item } from "../../content/items.ts";
 import type { ImageValue } from "../../content/types.ts";
 import type { NodeScope } from "../../runtime/context.ts";
 import { image } from "../schemas/image.ts";
+import { focusStyle, readFocus } from "../../content/image-focus.ts";
 import { imageSources } from "../../runtime/media.ts";
 
 /**
@@ -50,6 +51,7 @@ interface Props {
 const SETTINGS = new Set([...Object.keys(image.schema.properties), "openInNewTab"]);
 /** Settings an image had before its look became the site's: still accepted from older code, and left out. */
 const FORMER = new Set([
+  "imageFocus",
   "size",
   "customWidth",
   "rotation",
@@ -81,12 +83,13 @@ const binding: ItemBinding | undefined = item && field ? { item, field } : undef
 const bound = binding ? (boundValue(binding) as ImageValue | undefined) : undefined;
 const settings = Astro.locals.brim.settings(image, nodeId, scope, { ...source, url: src });
 // The item's image wins over anything stored with the element: the item is where it is saved.
-if (bound) Object.assign(settings, { url: bound.src, alt: bound.alt });
+if (bound) {
+  const focus = readFocus(bound.focus);
+  Object.assign(settings, { url: bound.src, alt: bound.alt, focalPointX: focus?.x ?? 50, focalPointY: focus?.y ?? 50 });
+}
 
 // The focal point only shows where the site crops the image (`object-fit: cover`); elsewhere it changes nothing.
-const x = Number(settings.focalPointX ?? 50);
-const y = Number(settings.focalPointY ?? 50);
-const focus = x === 50 && y === 50 ? undefined : `object-position:${x}% ${y}%`;
+const focus = focusStyle({ x: Number(settings.focalPointX ?? 50), y: Number(settings.focalPointY ?? 50) });
 const style = [typeof attributes.style === "string" ? attributes.style : undefined, focus].filter(Boolean).join(";");
 const sizes = typeof attributes.sizes === "string" ? attributes.sizes : undefined;
 // A `srcset` from the code lists copies of its starting picture (smaller files in public/): it goes with that picture

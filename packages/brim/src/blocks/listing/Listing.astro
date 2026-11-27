@@ -9,6 +9,7 @@ import { type ContentItem, getContentType, getItems, getTerms } from "../../runt
 import { tagsOf } from "../../content/tags.ts";
 import { optionLabel, optionsOf, standardField } from "../../content/content-types.ts";
 import { itemPicture } from "../../content/item-image.ts";
+import type { ImageValue } from "../../content/types.ts";
 import ListingCards from "./ListingCards.astro";
 import { type BrowseState, type FilterValue, browseItems, prefillOf, queryItems } from "./query.ts";
 
@@ -153,27 +154,27 @@ const labels = (item: ContentItem): string[] => (tagsField ? tagsOf(item.data[ta
 const links = props.links ?? props.enableItemLinks ?? Boolean(type.component);
 const showsImage = props.image !== false && props.showImage !== false;
 const custom = Astro.slots.has("default");
-const ownImage = (item: ContentItem): { src: string; alt: string } | undefined => {
+const ownImage = (item: ContentItem): ImageValue | undefined => {
   if (!showsImage) return undefined;
-  return props.image ? (item.data[props.image] as { src: string; alt: string } | undefined) : itemPicture(type, item);
+  return props.image ? (item.data[props.image] as ImageValue | undefined) : itemPicture(type, item);
 };
 // A card with no picture of its own takes its item page's preview image, the one its shared links show.
-const previews = new Map<string, string>();
+const previews = new Map<string, Pick<ImageValue, "src" | "focus">>();
 if (!custom && showsImage) {
   const { content } = await connect(config.databaseUrl, config.authToken);
   const missing = items.filter((item) => !ownImage(item)?.src);
   // One read for every card, not one per card: a long list on a remote database made a round trip for each.
   const seoByPath = missing.length > 0 ? await content.pageSeoSettings() : new Map();
   for (const item of missing) {
-    const preview = seoByPath.get(normalizePagePath(item.url))?.image;
-    if (preview) previews.set(item.id, preview);
+    const seo = seoByPath.get(normalizePagePath(item.url));
+    if (seo?.image) previews.set(item.id, { src: seo.image, ...(seo.imageFocus && { focus: seo.imageFocus }) });
   }
 }
-const image = (item: ContentItem): { src: string; alt: string } | undefined => {
+const image = (item: ContentItem): ImageValue | undefined => {
   const own = ownImage(item);
   if (own?.src) return own;
   const preview = previews.get(item.id);
-  return preview ? { src: preview, alt: item.title } : undefined;
+  return preview ? { ...preview, alt: item.title } : undefined;
 };
 const text = (item: ContentItem): string | undefined => {
   return showsText && textField ? (item.data[textField] as string | undefined) : undefined;

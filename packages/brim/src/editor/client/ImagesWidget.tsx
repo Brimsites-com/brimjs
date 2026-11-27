@@ -1,12 +1,14 @@
 import { type ReactNode, useEffect, useState } from "react";
+import { readFocus } from "../../content/image-focus.ts";
 import { TextWidget } from "./fields.tsx";
 import { LinkWidget } from "./LinkWidget.tsx";
 import { CardList, ImageUploadWidget } from "./widgets.tsx";
 
-/** One image of a list: its address and description, and what a gallery or carousel block also keeps. */
+/** One image of a list: its address, description and focus, and what a gallery or carousel block also keeps. */
 export interface ListedImage {
   url?: unknown;
   alt?: unknown;
+  focus?: unknown;
   caption?: unknown;
   link?: unknown;
   title?: unknown;
@@ -50,7 +52,16 @@ export function ImagesWidget({
             <ImageUploadWidget
               label="Image"
               value={String(entry.url ?? "")}
-              onChange={(url) => change({ ...entry, url })}
+              focus={readFocus(entry.focus)}
+              // A new picture starts with its focus in the middle.
+              onChange={(url) => {
+                const { focus: _old, ...rest } = entry;
+                change({ ...rest, url });
+              }}
+              onFocus={(focus) => {
+                const { focus: _old, ...rest } = entry;
+                change(readFocus(focus) ? { ...rest, focus } : rest);
+              }}
             />
             {field("alt", "Alt Text")}
             {extras && field("caption", "Caption")}
@@ -70,7 +81,7 @@ export function ImagesWidget({
 }
 
 /**
- * An item's `gallery` field (`[{ src, alt }]`) in the images widget, which speaks of `url`: what the owner sees and
+ * An item's `gallery` field (`[{ src, alt, focus? }]`) in the images widget, which speaks of `url`: what the owner sees and
  * does is the same as in a gallery block. An image left without a picture is not kept.
  */
 export function GalleryFieldWidget({
@@ -80,19 +91,23 @@ export function GalleryFieldWidget({
 }: {
   label: string;
   value: unknown;
-  onChange: (value: { src: string; alt: string }[]) => void;
+  onChange: (value: { src: string; alt: string; focus?: { x: number; y: number } }[]) => void;
 }) {
   const fromValue = (): ListedImage[] =>
     (Array.isArray(value) ? (value as Record<string, unknown>[]) : []).map((image) => ({
       url: image.src,
       alt: image.alt,
+      ...(readFocus(image.focus) && { focus: image.focus }),
     }));
   // A card just added has no picture yet: it stays here until it gets one, and only pictures are saved.
   const [images, setImages] = useState<ListedImage[]>(fromValue);
   const saved = (list: ListedImage[]) =>
     list
       .filter((image) => typeof image.url === "string" && image.url !== "")
-      .map((image) => ({ src: String(image.url), alt: String(image.alt ?? "") }));
+      .map((image) => {
+        const focus = readFocus(image.focus);
+        return { src: String(image.url), alt: String(image.alt ?? ""), ...(focus && { focus }) };
+      });
   // Changed elsewhere (on the page, by an undo), the field shows the item's images again.
   useEffect(() => {
     if (JSON.stringify(saved(images)) !== JSON.stringify(saved(fromValue()))) setImages(fromValue());

@@ -1,5 +1,5 @@
-// Settings of the "image" block: the picture, its description, caption and link, and the part that stays in
-// sight when the site crops it. Its size, shape, rotation, tint and fades are the site's CSS.
+// Settings of the "image" block: the picture with the part that stays in sight when the site crops it (chosen on
+// the picture), its description, caption and link. Its size, shape, rotation, tint and fades are the site's CSS.
 import type { BlockDefinition } from "../types.ts";
 
 export const image: BlockDefinition = {
@@ -9,23 +9,14 @@ export const image: BlockDefinition = {
   schema: {
     fieldsets: [
       { id: "default", title: "Default", fields: ["url", "alt", "showCaption", "caption", "link"] },
-      { id: "image_layout", title: "Crop", fields: ["imageFocus"] },
     ],
     properties: {
       url: {
         title: "Image",
         type: "string",
         widget: "image",
-        description: "Upload or select an image",
-      },
-      imageFocus: {
-        title: "Crop Position",
-        type: "string",
-        widget: "image-focus",
-        default: "",
-        description: "The part of the image that stays in sight when the site crops it.",
-        editContext: "grid",
-        imageField: "url",
+        description: "Upload or select an image, then click the part that stays in sight when the site crops it",
+        // The focus is chosen on the picture itself and kept in these two settings.
         xField: "focalPointX",
         yField: "focalPointY",
       },

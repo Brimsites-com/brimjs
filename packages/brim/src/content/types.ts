@@ -36,6 +36,17 @@ export interface RichTextValue {
 export interface ImageValue {
   src: string;
   alt: string;
+  /** The part that stays in sight where the site crops the picture; absent while it is the middle. */
+  focus?: ImageFocus;
+}
+
+/**
+ * Where a picture is anchored when the site crops it (`object-fit: cover`): percentages from its left and its top,
+ * its `object-position`. `focusStyle(image.focus)` from brimjs/content gives the CSS.
+ */
+export interface ImageFocus {
+  x: number;
+  y: number;
 }
 
 export interface LinkValue {
@@ -113,6 +124,11 @@ export interface SeoSettings {
   description?: string;
   /** Image shown when the page is shared. */
   image?: string;
+  /**
+   * The part of `image` that stays in sight where the site crops it: a card of the page in a listing. Shared links
+   * show the whole picture.
+   */
+  imageFocus?: ImageFocus;
   /** Title and description of the page's shared links (Open Graph, X); empty uses `title` and `description`. */
   shareTitle?: string;
   shareDescription?: string;

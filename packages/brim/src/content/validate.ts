@@ -1,6 +1,7 @@
 import { text as textBlock } from "../blocks/schemas/text.ts";
 import { parseSettings } from "../blocks/settings.ts";
 import { ValidationError } from "./validation-error.ts";
+import { isFocus, readFocus } from "./image-focus.ts";
 import { TEXT_TAGS } from "./rich-text.ts";
 import type {
   FooterGroup,
@@ -74,11 +75,16 @@ export function parseSeo(input: unknown): SeoSettings {
   const shareTitle = text("shareTitle", MAX_LABEL);
   const shareDescription = text("shareDescription", MAX_SEO_DESCRIPTION);
   const canonical = text("canonical", MAX_URL);
+  if (value.imageFocus !== undefined && value.imageFocus !== null && !isFocus(value.imageFocus)) {
+    throw new ValidationError('"imageFocus" must be {"x", "y"}, percentages from 0 to 100.');
+  }
+  const imageFocus = image ? readFocus(value.imageFocus) : undefined;
   if (canonical.startsWith("#")) throw new ValidationError('"canonical" must be a path of the site or a full address.');
   return {
     ...(title && { title }),
     ...(description && { description }),
     ...(image && { image: url(image, "image", IMAGE_SCHEMES) }),
+    ...(imageFocus && { imageFocus }),
     ...(shareTitle && { shareTitle }),
     ...(shareDescription && { shareDescription }),
     ...(canonical && { canonical: url(canonical, "canonical", WEB_SCHEMES) }),
@@ -150,7 +156,11 @@ function color(input: unknown, name: string): string {
 }
 
 export function parseImage(value: Record<string, unknown>): ImageValue {
-  return { src: url(value.src, "src", IMAGE_SCHEMES), alt: string(value.alt, "alt", MAX_LABEL * 2) };
+  const image = { src: url(value.src, "src", IMAGE_SCHEMES), alt: string(value.alt, "alt", MAX_LABEL * 2) };
+  if (value.focus === undefined || value.focus === null) return image;
+  if (!isFocus(value.focus)) throw new ValidationError('"focus" must be {"x", "y"}, percentages from 0 to 100.');
+  const focus = readFocus(value.focus);
+  return focus ? { ...image, focus } : image;
 }
 
 function parseLink(value: Record<string, unknown>): LinkValue {
