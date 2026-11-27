@@ -207,8 +207,7 @@ export const TOOLS: Tool[] = [
     run: async (args, context) => {
       const where = location(args);
       const stored = (await context.storedValue(where.path, where.scope, where.nodeId)) as
-        | Record<string, unknown>
-        | undefined;
+        Record<string, unknown> | undefined;
       const { rich: _formatting, text: _words, ...kept } = stored ?? {};
       // Line breaks and formatting travel as `rich`, which the API checks; `text` is its plain reading beside it.
       let rich: InlineNode[] | undefined;
@@ -341,7 +340,11 @@ export const TOOLS: Tool[] = [
         if (args.title === undefined && args.visibility === undefined) {
           return withEdit(context, { path }, { path, seo: args.seo, draft: true });
         }
-        return withEdit(context, { path }, await context.api("PUT", "/pages", { path, title: args.title, visibility: args.visibility }));
+        return withEdit(
+          context,
+          { path },
+          await context.api("PUT", "/pages", { path, title: args.title, visibility: args.visibility }),
+        );
       }
       return withEdit(
         context,
@@ -535,8 +538,7 @@ export const TOOLS: Tool[] = [
       properties: { path: { type: "string", description: "The page's path, e.g. / or /contact." } },
       required: ["path"],
     },
-    run: async (args, { api }) =>
-      api("GET", `/nodes?path=${encodeURIComponent(requireString(args.path, "path"))}`),
+    run: async (args, { api }) => api("GET", `/nodes?path=${encodeURIComponent(requireString(args.path, "path"))}`),
   },
   {
     name: "brim_list_media",
@@ -585,7 +587,10 @@ export const TOOLS: Tool[] = [
         args.item === undefined ? "" : `${requireString(args.type, "type")}/${requireString(args.item, "item")}`;
       if (args.file !== undefined) {
         // ChatGPT now and then sends the file's place in its own sandbox instead of the file: asked again, it sends it.
-        if (typeof args.file === "string" || typeof (args.file as { download_url?: unknown })?.download_url !== "string") {
+        if (
+          typeof args.file === "string" ||
+          typeof (args.file as { download_url?: unknown })?.download_url !== "string"
+        ) {
           throw new Error(
             `"file" did not arrive as the attached file (${typeof args.file === "string" ? args.file : "no download link"}). Call brim_upload_image again with the picture attached in the chat as "file".`,
           );
@@ -608,7 +613,7 @@ export const TOOLS: Tool[] = [
   {
     name: "brim_start_video_upload",
     description:
-      "Starts uploading a video file to the site's video host, which stores it, makes it ready for every screen and streams it. Give the file's `name`, `size` in bytes and `type` (e.g. video/mp4). It answers the video's `id`, its `url` (where it will play) and `upload`: the tus 1.0.0 endpoint and headers (https://tus.io) to send the file's bytes to, straight from your computer to the host; they never pass through this tool, so a large file is fine. Upload with a tus client, or by hand: POST the endpoint with every header of `upload.headers`, `Tus-Resumable: 1.0.0`, `Upload-Length: <size>` and `Upload-Metadata` (each `upload.metadata` pair as `key base64(value)`, comma separated); then PATCH the Location it answers, in pieces, with those headers, `Content-Type: application/offset+octet-stream` and `Upload-Offset`. Then ask brim_video_status until it is ready and use its `url` and `posterUrl` as a video element's value (brim_set_element, kind \"video\": {\"url\", \"posterUrl\"}) or in a video block. A site without a video host refuses: paste a YouTube or Vimeo link there instead.",
+      'Starts uploading a video file to the site\'s video host, which stores it, makes it ready for every screen and streams it. Give the file\'s `name`, `size` in bytes and `type` (e.g. video/mp4). It answers the video\'s `id`, its `url` (where it will play) and `upload`: the tus 1.0.0 endpoint and headers (https://tus.io) to send the file\'s bytes to, straight from your computer to the host; they never pass through this tool, so a large file is fine. Upload with a tus client, or by hand: POST the endpoint with every header of `upload.headers`, `Tus-Resumable: 1.0.0`, `Upload-Length: <size>` and `Upload-Metadata` (each `upload.metadata` pair as `key base64(value)`, comma separated); then PATCH the Location it answers, in pieces, with those headers, `Content-Type: application/offset+octet-stream` and `Upload-Offset`. Then ask brim_video_status until it is ready and use its `url` and `posterUrl` as a video element\'s value (brim_set_element, kind "video": {"url", "posterUrl"}) or in a video block. A site without a video host refuses: paste a YouTube or Vimeo link there instead.',
     inputSchema: {
       type: "object",
       properties: {
@@ -697,7 +702,10 @@ interface ItemRecord {
 async function findItem(api: ToolContext["api"], id: string, drafts = false): Promise<ItemRecord> {
   const { types = [] } = (await api("GET", "/types")) as { types?: { key: string }[] };
   for (const type of types) {
-    const { items = [] } = (await api("GET", `/items?type=${encodeURIComponent(type.key)}${drafts ? "&draft" : ""}`)) as {
+    const { items = [] } = (await api(
+      "GET",
+      `/items?type=${encodeURIComponent(type.key)}${drafts ? "&draft" : ""}`,
+    )) as {
       items?: ItemRecord[];
     };
     const item = items.find((candidate) => candidate.id === id);
@@ -755,15 +763,20 @@ function location(args: Record<string, unknown>): {
 function requirePath(args: Record<string, unknown>): string {
   const value = requireString(args.path, "path");
   if (!value.startsWith("/")) throw new Error('"path" must start with "/".');
-  if (/^\/[/\\]/.test(value) || value.includes("\\")) throw new Error('"path" must be a page of this site, like "/about".');
+  if (/^\/[/\\]/.test(value) || value.includes("\\"))
+    throw new Error('"path" must be a page of this site, like "/about".');
   return value;
 }
 
 /** A name for an attached file that came without one: its kind's usual extension. */
 function nameFor(mimeType: string | undefined): string {
-  const extension = { "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp", "image/gif": "gif", "image/avif": "avif" }[
-    mimeType ?? ""
-  ];
+  const extension = {
+    "image/jpeg": "jpg",
+    "image/png": "png",
+    "image/webp": "webp",
+    "image/gif": "gif",
+    "image/avif": "avif",
+  }[mimeType ?? ""];
   return `picture.${extension ?? "jpg"}`;
 }
 

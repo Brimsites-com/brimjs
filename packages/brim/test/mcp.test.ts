@@ -82,7 +82,8 @@ beforeEach(async () => {
       const url = String(input instanceof Request ? input.url : input);
       if (url.endsWith("/lamp.png")) return new Response(PNG, { headers: { "content-type": "image/png" } });
       // A chat app's link to a file the person attached: served as plain bytes.
-      if (url.includes("/chat-files/")) return new Response(PNG, { headers: { "content-type": "application/octet-stream" } });
+      if (url.includes("/chat-files/"))
+        return new Response(PNG, { headers: { "content-type": "application/octet-stream" } });
       return new Response("<html></html>", { headers: { "content-type": "text/html" } });
     }) as typeof fetch,
   });
@@ -518,7 +519,9 @@ describe("brim_upload_image", () => {
   });
 
   it("takes a picture attached in the chat, which ChatGPT hands over as a link", async () => {
-    const listed = (await rpc("tools/list")) as { result: { tools: { name: string; _meta?: object; inputSchema: any }[] } };
+    const listed = (await rpc("tools/list")) as {
+      result: { tools: { name: string; _meta?: object; inputSchema: any }[] };
+    };
     const upload = listed.result.tools.find((candidate) => candidate.name === "brim_upload_image")!;
     expect(upload._meta).toEqual({ "openai/fileParams": ["file"] });
     expect(upload.inputSchema.$defs.ChatFile.required).toEqual(["download_url", "file_id"]);
@@ -537,7 +540,9 @@ describe("brim_upload_image", () => {
     const path = await tool("brim_upload_image", { file: "/mnt/data/kitchen.png" });
     expect(path.error).toContain("Call brim_upload_image again");
     // Bytes served as a file, with no word that they are a picture, are still refused.
-    const unsaid = await tool("brim_upload_image", { file: { download_url: "https://93.184.215.14/chat-files/x", file_id: "f" } });
+    const unsaid = await tool("brim_upload_image", {
+      file: { download_url: "https://93.184.215.14/chat-files/x", file_id: "f" },
+    });
     expect(unsaid.error).toContain("not an image");
   });
 

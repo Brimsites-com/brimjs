@@ -45,7 +45,8 @@ export async function fetchImage(
     const served = response.headers.get("content-type") ?? "";
     const generic = served === "" || served.startsWith("application/octet-stream") || served.startsWith("binary/");
     const type = generic && declaredType?.startsWith("image/") ? declaredType : served;
-    if (!type.startsWith("image/")) throw new Error(`${url.origin}${url.pathname} is not an image (${served || "no content type"}).`);
+    if (!type.startsWith("image/"))
+      throw new Error(`${url.origin}${url.pathname} is not an image (${served || "no content type"}).`);
     if (Number(response.headers.get("content-length") ?? 0) > MAX_UPLOAD_BYTES) throw tooLarge();
     return { bytes: await readLimited(response), name: decodeURIComponent(url.pathname.split("/").pop() || "image") };
   }
@@ -76,7 +77,8 @@ export async function pinnedFetch(input: string | URL | Request, init: RequestIn
             if (usable.length === 0 || usable.length !== list.length) {
               return callback(new Error(`${hostname} is not a public address.`), "", 0);
             }
-            if ((options as { all?: boolean }).all) return (callback as (e: null, a: LookupAddress[]) => void)(null, usable);
+            if ((options as { all?: boolean }).all)
+              return (callback as (e: null, a: LookupAddress[]) => void)(null, usable);
             const first = usable[0]!;
             callback(null, first.address, first.family);
           });
