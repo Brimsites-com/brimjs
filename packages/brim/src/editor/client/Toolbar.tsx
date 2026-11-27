@@ -1,4 +1,4 @@
-import type { SitePage, User, Visibility } from "./api.ts";
+import type { ContentType, SitePage, User, Visibility } from "./api.ts";
 import {
   ChevronDownIcon,
   DesktopIcon,
@@ -7,6 +7,7 @@ import {
   MobileIcon,
   MoreIcon,
   PageIcon,
+  PlusIcon,
   RedoIcon,
   SettingsIcon,
   TabletIcon,
@@ -80,6 +81,8 @@ export function Toolbar({
   pageSettingsOpen,
   onSiteMap,
   onContent,
+  newTypes = [],
+  onNew,
   onViewport,
   onVisibility,
   onPageSettings,
@@ -103,6 +106,9 @@ export function Toolbar({
   onSiteMap: () => void;
   /** Opens the content browser: the site's content types and their items. */
   onContent: () => void;
+  /** The content types a new item can be started of from here; none hides the New menu. */
+  newTypes?: ContentType[];
+  onNew?: ((type: string) => void) | undefined;
   onViewport: (viewport: Viewport) => void;
   onVisibility: (visibility: Visibility) => void;
   onPageSettings: () => void;
@@ -225,6 +231,36 @@ export function Toolbar({
               <FolderIcon />
               <span className="brim-toolbar-label">Content</span>
             </button>
+            {onNew && newTypes.length > 0 && (
+              <Menu
+                label="New content"
+                className="brim-toolbar-btn brim-toolbar-btn--outline"
+                trigger={
+                  <>
+                    <PlusIcon />
+                    <span className="brim-toolbar-label">New</span>
+                  </>
+                }
+              >
+                {(close) =>
+                  newTypes.map((type) => (
+                    <button
+                      key={type.key}
+                      type="button"
+                      role="menuitem"
+                      className="brim-editor-menu__item"
+                      onClick={() => {
+                        close();
+                        onNew(type.key);
+                      }}
+                    >
+                      <span>{type.singular}</span>
+                      <code>{type.hasPage ? "Opens on its page" : "A form to fill in"}</code>
+                    </button>
+                  ))
+                }
+              </Menu>
+            )}
             <span className="toolbar-zone-divider" />
             <Menu
               label="Who can see this page"

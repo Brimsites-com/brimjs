@@ -3200,6 +3200,315 @@ button.cb-badge {
   gap: 8px;
 }
 
+/* The item form in two columns: what the item says on the left, its status and how it is filed on the right. */
+.cb-item-form--split {
+  max-width: 1080px;
+}
+
+.cb-item-form__heading {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.cb-item-form__heading h2 {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cb-item-form__kind {
+  color: var(--muted-foreground);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.cb-item-form__body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  align-items: start;
+  gap: 32px;
+}
+
+.cb-item-form__aside {
+  position: sticky;
+  top: 16px;
+  display: grid;
+  gap: 16px;
+}
+
+.cb-item-form__card {
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--card);
+}
+
+.cb-item-form__card-title {
+  margin: 0 0 12px;
+  font-size: 0.875rem;
+}
+
+.cb-item-form__status {
+  display: grid;
+  justify-items: start;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.cb-item-form__status .field-description {
+  margin: 0;
+}
+
+.cb-item-form__buttons {
+  display: grid;
+  gap: 8px;
+}
+
+.cb-item-form__buttons > button {
+  justify-content: center;
+  width: 100%;
+}
+
+.cb-item-form__card .cb-item-form__error {
+  margin: 0 0 12px;
+}
+
+.cb-item-form__hint {
+  margin: 10px 0 0;
+  color: var(--muted-foreground);
+  font-size: 0.75rem;
+  text-align: center;
+}
+
+.cb-item-form__hint kbd {
+  padding: 1px 5px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  font: inherit;
+}
+
+.cb-item-form__delete {
+  justify-self: start;
+}
+
+/* A required field left empty: its message sits right under it. */
+.cb-item-form__field {
+  margin-bottom: var(--brim-widget-margin-bottom);
+}
+
+.cb-item-form__field > .field-group,
+.cb-item-form__field > .brim-setting-group {
+  margin-bottom: 0;
+}
+
+.cb-item-form__field[data-missing] .field-input {
+  border-color: var(--destructive);
+}
+
+/* The item's address as the link it makes, changed only when asked. */
+.cb-item-address__row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.cb-item-address__link {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  padding: 6px 8px;
+  border-radius: 6px;
+  background: var(--accent);
+  font-size: 0.8125rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+:is(.brim-sidebar, .cb-item-form) .cb-item-address__edit {
+  flex: none;
+  padding: 4px 8px;
+  border: 0;
+  background: none;
+  color: var(--brim-form-action-bg);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.cb-item-address .field-description {
+  margin: 4px 0 0;
+}
+
+/* Beside an item's page: how it is filed, under what it says. */
+.brim-item-fields__heading {
+  margin: 8px 0 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+  color: var(--muted-foreground);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+/* A new item with a page, as the site's promo shows it: labels on the left, soft filled boxes, two clear choices. */
+.cb-quick-create {
+  width: min(560px, calc(100vw - 32px));
+  max-height: calc(100vh - 32px);
+  overflow: auto;
+  padding: 28px;
+  border-radius: 20px;
+}
+
+.cb-quick-create__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.cb-quick-create__header h3 {
+  margin: 0;
+  font-size: 1.375rem;
+}
+
+:is(.cb-quick-create) .cb-quick-create__close {
+  width: 32px;
+  height: 32px;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  color: var(--muted-foreground);
+  font-size: 1.375rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.cb-quick-create__close:hover {
+  background: var(--accent);
+}
+
+/* Each field one row: its label, then its box; help and errors under the box. */
+.cb-quick-create .field-group {
+  display: grid;
+  grid-template-columns: 7.5rem minmax(0, 1fr);
+  column-gap: 16px;
+  row-gap: 4px;
+  align-items: start;
+  margin-bottom: 12px;
+}
+
+.cb-quick-create .field-group > * {
+  grid-column: 2;
+  order: 1;
+}
+
+.cb-quick-create .field-group > .field-label {
+  grid-column: 1;
+  order: 0;
+  margin: 0;
+  padding-top: 12px;
+  color: var(--muted-foreground);
+  font-size: 0.9375rem;
+  font-weight: 400;
+}
+
+.cb-quick-create .field-group > .field-description {
+  order: 3;
+  margin: 0;
+}
+
+.cb-quick-create .field-group > .field-error {
+  order: 2;
+}
+
+.cb-quick-create :is(.field-input, .field-select) {
+  min-height: 44px;
+  border-color: transparent;
+  border-radius: 10px;
+  background: var(--accent);
+  font-size: 1rem;
+}
+
+.cb-quick-create :is(.field-input, .field-select):focus-visible {
+  border-color: var(--ring);
+  background: var(--card);
+}
+
+.cb-quick-create .cb-item-form__field {
+  margin-bottom: 0;
+}
+
+.cb-quick-create .cb-item-form__field[data-missing] :is(.field-input, .field-select) {
+  border-color: var(--destructive);
+}
+
+.cb-quick-create .field-error.cb-item-form__missing {
+  margin: -8px 0 12px calc(7.5rem + 16px);
+}
+
+.cb-quick-create .field-description code {
+  font-size: 0.75rem;
+}
+
+.cb-quick-create__note {
+  margin: 16px 0 !important;
+  font-size: 0.8125rem;
+}
+
+.cb-quick-create .cb-modal-actions > .cb-toolbar-btn {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--foreground);
+}
+
+.cb-quick-create .cb-modal-actions > .cb-new-btn {
+  border-radius: 10px;
+}
+
+.cb-quick-create .cb-modal-actions > button {
+  min-height: 44px;
+  padding-inline: 20px;
+  font-size: 0.9375rem;
+}
+
+.field-select-label[data-empty] {
+  color: var(--muted-foreground);
+}
+
+.cb-quick-create .field-error {
+  margin: 4px 0 0;
+  color: var(--destructive);
+}
+
+@media (max-width: 480px) {
+  .cb-quick-create .field-group {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .cb-quick-create .field-group > * {
+    grid-column: 1;
+  }
+
+  .cb-quick-create .field-error.cb-item-form__missing {
+    margin-left: 0;
+  }
+}
+
+@media (max-width: 900px) {
+  .cb-item-form__body {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .cb-item-form__aside {
+    position: static;
+  }
+}
+
 .cb-response {
   display: grid;
   gap: 16px;

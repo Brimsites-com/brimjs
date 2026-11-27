@@ -26,6 +26,7 @@ import {
   TrashIcon,
 } from "./icons.tsx";
 import { ItemForm, type ItemLanguages } from "./ItemForm.tsx";
+import { QuickCreate } from "./QuickCreate.tsx";
 import { hasTag, rankTags, sameTag, tagsOf } from "../../content/tags.ts";
 import { itemImage } from "../../content/item-image.ts";
 import { itemPagePath } from "../../server/locales.ts";
@@ -59,6 +60,8 @@ interface Entry {
 
 /** The folder that holds what visitors sent through the site's forms. */
 const RESPONSES = "form-responses";
+/** The folder of the site's pages, beside the content types: the root lists only folders. */
+const PAGES = "pages";
 
 type View = "table" | "grid";
 
@@ -86,6 +89,7 @@ export function ContentBrowser({
   initialData,
   initialForm,
   initialResponse,
+  canPublish = true,
   run,
   onBack,
   onEditPage,
@@ -103,6 +107,8 @@ export function ContentBrowser({
   initialForm?: string | undefined;
   /** A response to open as soon as the responses are read. */
   initialResponse?: string | undefined;
+  /** Whether the user's role may publish: the item form then offers Publish. */
+  canPublish?: boolean;
   run: (work: Promise<unknown>) => Promise<boolean>;
   onBack: () => void;
   onEditPage: (path: string) => void;
@@ -126,6 +132,8 @@ export function ContentBrowser({
   const formDirty = useRef(false);
   /** Why the item form could not be saved, e.g. a required field left empty. */
   const [formError, setFormError] = useState<string>();
+  /** A new item of a type with a page, asked for by its title before it opens on its page. */
+  const [quick, setQuick] = useState<{ type: ContentType; data?: Record<string, unknown> } | null>(null);
   const [deleting, setDeleting] = useState<Entry[] | null>(null);
   const [responses, setResponses] = useState<FormResponse[]>([]);
   /** In Form responses, only the responses of this form (by its name); `null` shows them all. */
@@ -161,7 +169,7 @@ export function ContentBrowser({
   useEffect(() => {
     void load().then((list) => {
       const type = initialCreate ? list.find((candidate) => candidate.key === initialFolder) : undefined;
-      if (type) setForm({ type, ...(initialData && { data: initialData }) });
+      if (type) startNew(type, initialData);
     });
   }, []);
 
@@ -211,6 +219,14 @@ export function ContentBrowser({
         }),
       ),
       {
+        id: `folder:${PAGES}`,
+        kind: "folder",
+        title: "Pages",
+        typeLabel: "Folder",
+        typePlural: "Folders",
+        count: pages.length,
+      },
+      {
         id: `folder:${RESPONSES}`,
         kind: "folder",
         title: "Form responses",
@@ -240,7 +256,9 @@ export function ContentBrowser({
         ? itemEntries(folderType)
         : folder === RESPONSES
           ? responseEntries
-          : [...folders, ...pageEntries];
+          : folder === PAGES
+            ? pageEntries
+            : folders;
     const needle = query.trim().toLowerCase();
     // A search finds an entry by its title or by one of its tags.
     const found = (entry: Entry): boolean =>
@@ -334,6 +352,15 @@ export function ContentBrowser({
     leave();
   }
 
+  /**
+   * Starts a new item: one with a page is asked for by its title and opens on that page, where it is written;
+   * one without is filled in in its form.
+   */
+  function startNew(type: ContentType, data?: Record<string, unknown>): void {
+    if (type.hasPage) setQuick({ type, ...(data && { data }) });
+    else setForm({ type, ...(data && { data }) });
+  }
+
   function openFolder(key: string | null): void {
     // Going somewhere leaves what is open: an item's form or a form message would otherwise stay over the folder.
     setForm(null);
@@ -353,7 +380,7 @@ export function ContentBrowser({
   }
 
   function open(entry: Entry): void {
-    if (entry.kind === "folder") openFolder(entry.type?.key ?? RESPONSES);
+    if (entry.kind === "folder") openFolder(entry.type?.key ?? entry.id.slice("folder:".length));
     else edit(entry);
   }
 
@@ -482,10 +509,12 @@ export function ContentBrowser({
               <button type="button" className="cb-breadcrumb" aria-label="All content" onClick={() => openFolder(null)}>
                 <HomeIcon />
               </button>
-              {(folderType || folder === RESPONSES) && (
+              {(folderType || folder === RESPONSES || folder === PAGES) && (
                 <>
                   <span className="cb-breadcrumb-separator">/</span>
-                  <span className="cb-breadcrumb current">{folderType?.label ?? "Form responses"}</span>
+                  <span className="cb-breadcrumb current">
+                    {folderType?.label ?? (folder === PAGES ? "Pages" : "Form responses")}
+                  </span>
                 </>
               )}
             </nav>
@@ -519,7 +548,7 @@ export function ContentBrowser({
             )}
             {/* Not while a new item is being written: the form's own buttons create it or leave it. */}
             {!(form && !form.item) && (
-              <NewButton types={types} folderType={folderType} onNew={(type) => setForm({ type })} />
+              <NewButton types={types} folderType={folderType} onNew={(type) => startNew(type)} />
             )}
           </div>
         </div>
@@ -632,6 +661,7 @@ export function ContentBrowser({
               formDirty.current = dirty;
             }}
             languages={formLanguages}
+            canPublish={canPublish}
           />
         </div>
       ) : (
@@ -771,7 +801,7 @@ export function ContentBrowser({
             <EmptyState
               searching={query.trim().length >= 2}
               folderType={folderType}
-              onCreate={(type) => setForm({ type })}
+              onCreate={(type) => startNew(type)}
             />
           ) : view === "table" ? (
             <div className="cb-table-container">
@@ -925,7 +955,7 @@ export function ContentBrowser({
                             entry={entry}
                             onEdit={() => edit(entry)}
                             onDelete={() => setDeleting([entry])}
-                            onNew={(type) => setForm({ type })}
+                            onNew={(type) => startNew(type)}
                           />
                         </td>
                       </tr>
@@ -962,7 +992,7 @@ export function ContentBrowser({
                         entry={entry}
                         onEdit={() => edit(entry)}
                         onDelete={() => setDeleting([entry])}
-                        onNew={(type) => setForm({ type })}
+                        onNew={(type) => startNew(type)}
                       />
                     </div>
                   </article>
@@ -973,6 +1003,14 @@ export function ContentBrowser({
         </>
       )}
 
+      {quick && (
+        <QuickCreate
+          type={quick.type}
+          initialData={quick.data}
+          onCancel={() => setQuick(null)}
+          onCreated={(item) => onEditPage(itemPagePath(quick.type, item, locales ?? undefined))}
+        />
+      )}
       {deleting && (
         <div className="cb-modal-overlay" onClick={() => setDeleting(null)}>
           <div className="cb-modal" role="alertdialog" aria-label="Delete" onClick={(event) => event.stopPropagation()}>

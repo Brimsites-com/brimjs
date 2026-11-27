@@ -63,7 +63,7 @@ export function TextWidget({
   placeholder?: string | undefined;
   description?: string | undefined;
   multiline?: boolean;
-  type?: "text" | "email" | "password";
+  type?: "text" | "email" | "password" | "number";
   /** Shows how many characters are written against this recommended length; going over is allowed. */
   limit?: number | undefined;
   /** Each keystroke, before the value is saved on blur: for a live preview. */
@@ -501,7 +501,9 @@ export function SelectWidget({
         onClick={() => setOpen(!open)}
         onKeyDown={(event) => event.key === "Escape" && !isComposing(event) && setOpen(false)}
       >
-        <span className="field-select-label">{selected?.label ?? value}</span>
+        <span className="field-select-label" data-empty={selected || value ? undefined : ""}>
+          {selected?.label ?? (value || "Choose…")}
+        </span>
         <span className="field-select-chevron">
           <ChevronDownIcon />
         </span>

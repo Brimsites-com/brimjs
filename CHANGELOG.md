@@ -4,6 +4,24 @@ What changed in Brim.js, newest first. Versions are semantic: only a major versi
 and config, and says so here under **Changed**; a minor version adds, a patch version fixes. Database migrations are
 append-only.
 
+## 1.2.0
+
+### Added
+
+- **New in the editor's toolbar** starts an item of any content type. One with a page asks in a small dialog for its
+  title and the fields it cannot be saved without (those in its address first, e.g. the category of
+  `/shop/[category]/[slug]`), showing the address they make, then opens on its page as a private draft. One without a
+  page opens its form. The site map, listings and Content start new items the same way.
+
+### Changed
+
+- **The item form in two columns**: what the item says on the left; on the right its status with Publish / Save as
+  draft (Unpublish once it is out) and how it is filed: address, image, author, dates and tags, titled Article for an
+  `article` type. A required field left empty says so under itself, ⌘S saves, and the address shows as the link it
+  makes and follows the title until it is changed. Beside an item's page the same fields come under what it says.
+- **Content lists folders only**: the content types, Pages and Form responses; the site's pages moved into Pages.
+- An empty select says Choose… instead of showing nothing, and a number field takes numbers.
+
 ## 1.1.2
 
 ### Changed

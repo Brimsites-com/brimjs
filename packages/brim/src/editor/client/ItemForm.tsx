@@ -3,6 +3,7 @@ import { optionValues, optionsOf } from "../../content/content-types.ts";
 import { renderBlocks } from "../../content/rich-text.ts";
 import { rankTags, tagsOf } from "../../content/tags.ts";
 import type { RichTextValue } from "../../content/types.ts";
+import { itemPathSegments, slugify } from "../../content/item-path.ts";
 import { type ContentField, type ContentType, type Item, type ItemDraft, api } from "./api.ts";
 import {
   CheckboxWidget,
@@ -31,10 +32,32 @@ export interface ItemLanguages {
   onTranslate: (code: string) => void;
 }
 
-const VISIBILITY_OPTIONS = [
-  { value: "published", label: "Published" },
-  { value: "private", label: "Private" },
-];
+/**
+ * The fields that say how an item is filed and shown rather than what it says: beside the content in the item form,
+ * under it beside the page. The names are Brim's standard ones (see `content-types.ts`).
+ */
+const DETAIL_FIELDS = new Set(["image", "published", "modified", "author", "tags"]);
+
+/** Which of an item's fields `ItemFields` draws: what it says, how it is filed, or all of them one after the other. */
+export type ItemFieldsPart = "main" | "details" | "all";
+
+/** The required fields left empty in a draft, with why: the server would refuse the item for the first of them. */
+export function missingFields(type: ContentType, draft: ItemDraft): Record<string, string> {
+  const missing: Record<string, string> = {};
+  if (draft.title.trim() === "") missing.title = "Give it a title.";
+  for (const field of type.fields) {
+    if (!field.required || field.type === "blocks") continue;
+    const value = draft.data[field.name];
+    const empty =
+      value === undefined ||
+      value === null ||
+      (typeof value === "string" && value.trim() === "") ||
+      (Array.isArray(value) && value.length === 0) ||
+      (field.type === "image" && !(value as { src?: unknown }).src);
+    if (empty) missing[field.name] = `${field.label} is required.`;
+  }
+  return missing;
+}
 
 // Each row is two text boxes; rows left wholly empty are dropped when the item is saved.
 const KEY_VALUE: Schema = {
@@ -46,12 +69,16 @@ const KEY_VALUE: Schema = {
 
 const LEAVE_UNSAVED = "Leave without saving? Your changes to this item will be lost.";
 
-/** The form for one item of a content type: its title, address, visibility and the fields the type declares. */
+/**
+ * The form for one item of a content type. What the item says is on the left; on the right, whether it is out and
+ * how it is filed (address, picture, date, author, tags). Saving keeps it private or publishes it, said on the button.
+ */
 export function ItemForm({
   type,
   item,
   initialData,
   error,
+  canPublish = true,
   onSave,
   onDelete,
   onCancel,
@@ -64,6 +91,8 @@ export function ItemForm({
   initialData?: Record<string, unknown> | undefined;
   /** Why the last save was refused. */
   error: string | undefined;
+  /** Whether the user's role may publish; without it, only private items are saved. */
+  canPublish?: boolean | undefined;
   onSave: (draft: ItemDraft) => void;
   onDelete: (() => void) | undefined;
   onCancel: () => void;
@@ -76,6 +105,8 @@ export function ItemForm({
   const [draft, setDraft] = useState<ItemDraft>(
     () => item ?? { title: "", slug: "", visibility: "private", data: { ...initialData } },
   );
+  const draftRef = useRef(draft);
+  draftRef.current = draft;
   const [start] = useState(draft);
   const dirty = JSON.stringify(draft) !== JSON.stringify(start);
   const dirtyRef = useRef(dirty);
@@ -83,6 +114,15 @@ export function ItemForm({
   useEffect(() => onDirty?.(dirty), [dirty]);
   // Gone (saved, or left after asking): it holds nothing unsaved any more.
   useEffect(() => () => onDirty?.(false), []);
+  /** Required fields found empty when saving was tried: each says so under itself until it is filled. */
+  const [missing, setMissing] = useState<Record<string, string>>({});
+  const formElement = useRef<HTMLFormElement>(null);
+  /** The title as it is typed, before its box saves it: the heading and the address follow each keystroke. */
+  const [typedTitle, setTypedTitle] = useState<string | null>(null);
+  useEffect(() => setTypedTitle(null), [draft.title]);
+  useEffect(() => {
+    if (missing.title && typedTitle?.trim()) setMissing(({ title: _, ...rest }) => rest);
+  }, [typedTitle]);
 
   // Closing the tab or reloading with changes in the form would lose them.
   useEffect(() => {
@@ -92,37 +132,76 @@ export function ItemForm({
     return () => window.removeEventListener("beforeunload", onBeforeUnload);
   }, [dirty]);
 
+  // Once a missing field is filled, its message goes.
+  useEffect(() => {
+    if (Object.keys(missing).length === 0) return;
+    const still = missingFields(type, draft);
+    const kept = Object.fromEntries(Object.entries(missing).filter(([name]) => name in still));
+    if (Object.keys(kept).length !== Object.keys(missing).length) setMissing(kept);
+  }, [draft]);
+
   /** Runs `leave` once the owner agrees to lose what is not saved; at once when nothing is. */
-  const leaving =
-    (leave: () => void) =>
-    (): void => {
-      if (!dirtyRef.current || window.confirm(LEAVE_UNSAVED)) leave();
-    };
+  const leaving = (leave: () => void) => (): void => {
+    if (!dirtyRef.current || window.confirm(LEAVE_UNSAVED)) leave();
+  };
+
+  /**
+   * Saves the item as private or published. A text box being typed in saves its words when it loses focus, so focus
+   * leaves it first and the save reads the draft after that.
+   */
+  function save(visibility: ItemDraft["visibility"]): void {
+    (document.activeElement as HTMLElement | null)?.blur?.();
+    setTimeout(() => {
+      const next = { ...draftRef.current, visibility };
+      const empty = missingFields(type, next);
+      setMissing(empty);
+      if (Object.keys(empty).length > 0) {
+        // The first field to fill in comes into view.
+        requestAnimationFrame(() =>
+          formElement.current
+            ?.querySelector(".cb-item-form__missing")
+            ?.closest(".field-group, .brim-setting-group, .cb-item-form__field")
+            ?.scrollIntoView({ block: "center", behavior: "smooth" }),
+        );
+        return;
+      }
+      onSave(next);
+    });
+  }
+
+  const published = draft.visibility === "published";
+  const isNew = !item;
+  const singular = type.singular.toLowerCase();
+  const publishedOn = typeof draft.data.published === "string" ? draft.data.published : "";
 
   return (
     <MediaFolderContext.Provider
-      value={item ? { key: `${type.key}/${item.id}`, label: item.title } : { label: type.singular.toLowerCase() }}
+      value={item ? { key: `${type.key}/${item.id}`, label: item.title } : { label: singular }}
     >
       <form
-        className="cb-item-form"
+        ref={formElement}
+        className="cb-item-form cb-item-form--split"
+        noValidate
         onSubmit={(event) => {
           event.preventDefault();
-          onSave(draft);
+          save(draft.visibility);
+        }}
+        onKeyDown={(event) => {
+          // Cmd+S / Ctrl+S saves as it is, never the browser's "save page".
+          if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "s") {
+            event.preventDefault();
+            save(draft.visibility);
+          }
         }}
       >
         <header className="cb-item-form__header">
-          <h2>{item ? item.title : `New ${type.singular.toLowerCase()}`}</h2>
+          <div className="cb-item-form__heading">
+            <span className="cb-item-form__kind">{isNew ? `New ${singular}` : type.singular}</span>
+            <h2>{(typedTitle ?? draft.title).trim() || (isNew ? `Untitled ${singular}` : item.title)}</h2>
+          </div>
           <div className="cb-item-form__actions">
             <button type="button" className="cb-toolbar-btn" onClick={leaving(onCancel)}>
-              Cancel
-            </button>
-            {onDelete && (
-              <button type="button" className="cb-toolbar-btn danger" onClick={onDelete}>
-                Delete
-              </button>
-            )}
-            <button type="submit" className="cb-new-btn">
-              {item ? "Save" : `Create ${type.singular}`}
+              {dirty ? "Cancel" : "Close"}
             </button>
           </div>
         </header>
@@ -159,66 +238,285 @@ export function ItemForm({
             })}
           </div>
         )}
-        {error && (
-          <p className="field-error cb-item-form__error" role="alert">
-            {error}
-          </p>
-        )}
-        <ItemFields type={type} draft={draft} onChange={setDraft} />
-        <SelectWidget
-          label="Visibility"
-          options={VISIBILITY_OPTIONS}
-          value={draft.visibility}
-          onChange={(visibility) => setDraft({ ...draft, visibility: visibility as ItemDraft["visibility"] })}
-        />
+        <div className="cb-item-form__body">
+          <div className="cb-item-form__main">
+            <ItemFields
+              type={type}
+              draft={draft}
+              onChange={setDraft}
+              onDraft={(field, value) => field === "title" && setTypedTitle(String(value))}
+              part="main"
+              missing={missing}
+            />
+          </div>
+          <aside className="cb-item-form__aside" aria-label="Status and details">
+            <section className="cb-item-form__card">
+              <div className="cb-item-form__status">
+                <span className={`cb-badge cb-badge-status ${draft.visibility}`}>
+                  {published ? "Published" : isNew ? "Draft" : "Private"}
+                </span>
+                <span className="field-description">
+                  {published
+                    ? type.article && publishedOn
+                      ? `Out since ${formatDate(publishedOn)}.`
+                      : "Visitors see it."
+                    : "Only people signed in to the editor see it."}
+                </span>
+              </div>
+              {error && (
+                <p className="field-error cb-item-form__error" role="alert">
+                  {error}
+                </p>
+              )}
+              {Object.keys(missing).length > 0 && (
+                <p className="field-error cb-item-form__error" role="alert">
+                  {Object.keys(missing).length === 1
+                    ? "One field still needs filling in."
+                    : `${Object.keys(missing).length} fields still need filling in.`}
+                </p>
+              )}
+              <div className="cb-item-form__buttons">
+                {published ? (
+                  <>
+                    <button type="button" className="cb-new-btn" onClick={() => save("published")}>
+                      {dirty ? "Save changes" : "Saved"}
+                    </button>
+                    {canPublish && (
+                      <button type="button" className="cb-toolbar-btn" onClick={() => save("private")}>
+                        Unpublish
+                      </button>
+                    )}
+                  </>
+                ) : (
+                  <>
+                    {canPublish && (
+                      <button type="button" className="cb-new-btn" onClick={() => save("published")}>
+                        Publish
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      className={canPublish ? "cb-toolbar-btn" : "cb-new-btn"}
+                      onClick={() => save("private")}
+                    >
+                      {isNew ? "Save as draft" : "Save"}
+                    </button>
+                  </>
+                )}
+              </div>
+              <p className="cb-item-form__hint">
+                <kbd>{navigator.platform.startsWith("Mac") ? "⌘" : "Ctrl"}</kbd> <kbd>S</kbd> saves without changing who
+                sees it
+              </p>
+            </section>
+            <section className="cb-item-form__card">
+              <h3 className="cb-item-form__card-title">{type.article ? "Article" : "Details"}</h3>
+              <ItemFields
+                type={type}
+                draft={draft}
+                onChange={setDraft}
+                part="details"
+                missing={missing}
+                liveTitle={typedTitle ?? undefined}
+              />
+            </section>
+            {onDelete && (
+              <button type="button" className="cb-toolbar-btn danger cb-item-form__delete" onClick={onDelete}>
+                Delete {singular}
+              </button>
+            )}
+          </aside>
+        </div>
       </form>
     </MediaFolderContext.Provider>
   );
 }
 
-/** An item's title, address and the fields its type declares: in the item form, and beside the item's page. */
+/** `2026-11-26` as the browser's language writes a day. */
+function formatDate(day: string): string {
+  const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(day);
+  if (!match) return day;
+  return new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3])).toLocaleDateString(undefined, {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+}
+
+/**
+ * An item's title, address and the fields its type declares: in the item form (`part` splits them between its two
+ * columns) and beside the item's page (all of them, what it says first and how it is filed under it).
+ */
 export function ItemFields({
   type,
   draft,
   onChange,
   onDraft,
+  part = "all",
+  missing = {},
+  liveTitle,
 }: {
   type: ContentType;
   draft: ItemDraft;
   onChange: (draft: ItemDraft) => void;
   /** Each keystroke in a text field, before it is saved on blur: for a live preview of the page. */
   onDraft?: ((field: string, value: unknown) => void) | undefined;
+  part?: ItemFieldsPart;
+  /** Required fields left empty, by name (`title` for the title), with what to tell the owner under each. */
+  missing?: Record<string, string>;
+  /** The title as typed in another part of the form, for the address made from it. */
+  liveTitle?: string | undefined;
 }): ReactNode {
+  // The title as it is typed, so the address made from it follows each keystroke.
+  const [typedTitle, setTypedTitle] = useState<string | null>(null);
+  useEffect(() => setTypedTitle(null), [draft.title]);
+  // Blocks are added and arranged on the item's page, where they are seen: no place for them in a form.
+  const shown = type.fields.filter((field) => field.type !== "blocks");
+  const main = shown.filter((field) => !DETAIL_FIELDS.has(field.name));
+  const details = shown.filter((field) => DETAIL_FIELDS.has(field.name));
+  const field = (field: ContentField) => (
+    <ItemField
+      key={field.name}
+      type={type}
+      field={field}
+      value={draft.data[field.name]}
+      missing={missing[field.name]}
+      onDraft={onDraft && ((value) => onDraft(field.name, value))}
+      onChange={(value) => onChange({ ...draft, data: { ...draft.data, [field.name]: value } })}
+    />
+  );
+
+  const title = (
+    <div className="cb-item-form__field" key="title">
+      <TextWidget
+        label="Title *"
+        value={draft.title}
+        onDraft={(next) => {
+          setTypedTitle(next);
+          onDraft?.("title", next);
+        }}
+        onChange={(next) => onChange({ ...draft, title: next })}
+      />
+      {missing.title && <Missing text={missing.title} />}
+    </div>
+  );
+  const address = (
+    <AddressField
+      key="address"
+      type={type}
+      title={typedTitle ?? liveTitle ?? draft.title}
+      slug={draft.slug}
+      data={draft.data}
+      onChange={(slug) => onChange({ ...draft, slug })}
+    />
+  );
+
+  if (part === "main") return [title, ...main.map(field)];
+  if (part === "details") return [address, ...details.map(field)];
   return (
     <>
-      <TextWidget
-        label="Title"
-        value={draft.title}
-        onDraft={onDraft && ((title) => onDraft("title", title))}
-        onChange={(title) => onChange({ ...draft, title })}
-      />
-      <TextWidget
-        label="Address"
-        description={`The item's own part of its link: ${(type.path ?? `/${type.slug}/[slug]`).replace("[slug]", "…")}  Empty makes it from the title.`}
-        value={draft.slug}
-        onChange={(slug) => onChange({ ...draft, slug })}
-      />
-      {type.fields.map((field) => (
-        <ItemField
-          key={field.name}
-          type={type}
-          field={field}
-          value={draft.data[field.name]}
-          onDraft={onDraft && ((value) => onDraft(field.name, value))}
-          onChange={(value) => onChange({ ...draft, data: { ...draft.data, [field.name]: value } })}
-        />
-      ))}
+      {title}
+      {main.map(field)}
+      <h4 className="brim-item-fields__heading">{type.article ? "Article" : "Details"}</h4>
+      {address}
+      {details.map(field)}
     </>
+  );
+}
+
+/** Says under a field that it is required and empty. */
+function Missing({ text }: { text: string }) {
+  return (
+    <p className="field-error cb-item-form__missing" role="alert">
+      {text}
+    </p>
+  );
+}
+
+/**
+ * The item's own part of its link, shown as the link it makes. It follows the title until the owner changes it;
+ * emptied, it follows the title again.
+ */
+function AddressField({
+  type,
+  title,
+  slug,
+  data,
+  onChange,
+}: {
+  type: ContentType;
+  title: string;
+  slug: string;
+  data: Record<string, unknown>;
+  onChange: (slug: string) => void;
+}) {
+  const [editing, setEditing] = useState(false);
+  const own = slug || slugify(title);
+  const link = itemPathSegments(type)
+    .map((segment) => {
+      if ("fixed" in segment) return segment.fixed;
+      if (segment.field === "slug") return own || "…";
+      const value = data[segment.field];
+      return typeof value === "string" && value ? slugify(value) : `[${segment.field}]`;
+    })
+    .join("/");
+
+  if (editing) {
+    return (
+      <div className="cb-item-form__field">
+        <TextWidget
+          label="Address"
+          description="Lowercase letters, digits and dashes. Empty makes it from the title."
+          value={slug}
+          placeholder={slugify(title)}
+          onChange={(next) => {
+            onChange(slugify(next));
+            setEditing(false);
+          }}
+        />
+      </div>
+    );
+  }
+  return (
+    <div className="field-group cb-item-address">
+      <span className="field-label">Address</span>
+      <div className="cb-item-address__row">
+        <code className="cb-item-address__link" title={`/${link}`}>
+          /{link}
+        </code>
+        <button type="button" className="cb-item-address__edit" onClick={() => setEditing(true)}>
+          Change
+        </button>
+      </div>
+      {!slug && <p className="field-description">Made from the title.</p>}
+    </div>
   );
 }
 
 /** One field of an item with its widget: in the item form, the page settings, and beside an element showing it. */
 export function ItemField({
+  missing,
+  ...props
+}: {
+  type: ContentType;
+  field: ContentField;
+  value: unknown;
+  /** Set when the field is required and was left empty: said under it. */
+  missing?: string | undefined;
+  /** Each keystroke in a text field, before it is saved on blur. */
+  onDraft?: ((value: string) => void) | undefined;
+  onChange: (value: unknown) => void;
+}): ReactNode {
+  if (!missing) return <FieldWidget {...props} />;
+  return (
+    <div className="cb-item-form__field" data-missing="">
+      <FieldWidget {...props} />
+      <Missing text={missing} />
+    </div>
+  );
+}
+
+function FieldWidget({
   type,
   field,
   value,
@@ -228,7 +526,6 @@ export function ItemField({
   type: ContentType;
   field: ContentField;
   value: unknown;
-  /** Each keystroke in a text field, before it is saved on blur. */
   onDraft?: ((value: string) => void) | undefined;
   onChange: (value: unknown) => void;
 }): ReactNode {
@@ -260,6 +557,7 @@ export function ItemField({
         <TextWidget
           label={label}
           description={field.help}
+          type="number"
           value={typeof value === "number" ? String(value) : ""}
           onChange={(next) => onChange(next.trim() === "" ? undefined : Number(next))}
         />

@@ -28,6 +28,7 @@ import { FrameHandles, SidebarHandle, storedSidebarWidth } from "./Resize.tsx";
 import { ItemField } from "./ItemForm.tsx";
 import { type FormValue, nodeKinds } from "./kinds.ts";
 import { ContentBrowser } from "./ContentBrowser.tsx";
+import { QuickCreate } from "./QuickCreate.tsx";
 import { type MediaFolder, MediaFolderContext } from "./widgets.tsx";
 import { SiteMap } from "./SiteMap.tsx";
 import { type OwnSeo, PageSettings } from "./PageSettings.tsx";
@@ -138,7 +139,16 @@ const IMAGE_CONTENT = ["url", "alt", "images"];
  * What the owner still changes on a gallery or carousel the site draws itself: the images and how they move. Its
  * columns, arrows and dots are the site's markup, so they are not offered.
  */
-const DRAWN_SETTINGS = ["images", "lightbox", "start", "autoplay", "autoplaySpeed", "pauseOnHover", "loop", "continuousSpeed"];
+const DRAWN_SETTINGS = [
+  "images",
+  "lightbox",
+  "start",
+  "autoplay",
+  "autoplaySpeed",
+  "pauseOnHover",
+  "loop",
+  "continuousSpeed",
+];
 
 /** The image block's settings without its image, which belongs to the item. */
 function withoutImageContent(form: FormValue): FormValue {
@@ -369,6 +379,8 @@ export function Editor({ user, onSignedOut }: { user: User; onSignedOut: () => v
   });
   const [siteMapOpen, setSiteMapOpen] = useState(false);
   const [types, setTypes] = useState<ContentType[]>([]);
+  /** A new item of a type with a page, asked for by its title over the page before it opens on its own. */
+  const [quickNew, setQuickNew] = useState<{ type: ContentType; data?: Record<string, unknown> } | null>(null);
   const [itemPage, setItemPage] = useState<ItemPage | null>(null);
   /** On an item's page: true while its type's template is edited, false while the item itself is. */
   const [templateMode, setTemplateMode] = useState(() => new URLSearchParams(location.search).has("template"));
@@ -1029,6 +1041,18 @@ export function Editor({ user, onSignedOut }: { user: User; onSignedOut: () => v
     setBrowsing({ folder, create, ...(data && { data }), ...(form !== undefined && { form }) });
   }
 
+  /**
+   * Starts a new item of a type, from wherever it was asked for (the toolbar, the site map, a listing): one with a
+   * page is asked for by its title and opens there; one without opens on its form in the content browser.
+   */
+  function newItem(key: string, data?: Record<string, unknown>): void {
+    const type = types.find((candidate) => candidate.key === key);
+    if (!type?.hasPage) return browse(key, true, data);
+    select(null);
+    setSiteMapOpen(false);
+    setQuickNew({ type, ...(data && { data }) });
+  }
+
   function leaveBrowser(): void {
     setBrowsing(null);
     setBrowsed((count) => count + 1);
@@ -1469,7 +1493,7 @@ export function Editor({ user, onSignedOut }: { user: User; onSignedOut: () => v
       key={`${path} ${selected.dataset.brimNode}`}
       element={selected}
       onOpen={(type) => browse(type)}
-      onNew={(type, prefill) => browse(type, true, prefill)}
+      onNew={(type, prefill) => newItem(type, prefill)}
       onClose={() => select(null)}
     />
   ) : selected && isPickedField(selected) && itemPage && hasSettings(selected) ? (
@@ -1557,6 +1581,17 @@ export function Editor({ user, onSignedOut }: { user: User; onSignedOut: () => v
 
   return (
     <EditorProvider value={{ pages, viewport }}>
+      {quickNew && (
+        <QuickCreate
+          type={quickNew.type}
+          initialData={quickNew.data}
+          onCancel={() => setQuickNew(null)}
+          onCreated={(item) => {
+            setQuickNew(null);
+            navigate(itemPagePath(quickNew.type, item, locales ?? undefined));
+          }}
+        />
+      )}
       {browsing && (
         <ContentBrowser
           pages={pages}
@@ -1565,6 +1600,7 @@ export function Editor({ user, onSignedOut }: { user: User; onSignedOut: () => v
           initialData={browsing.data}
           initialForm={browsing.form}
           initialResponse={browsing.response}
+          canPublish={user.permissions.includes("publish")}
           run={run}
           onBack={leaveBrowser}
           onEditPage={navigate}
@@ -1584,6 +1620,8 @@ export function Editor({ user, onSignedOut }: { user: User; onSignedOut: () => v
           pageSettingsOpen={!siteSettingsOpen && !historyOpen && !(selected && hasSettings(selected))}
           onSiteMap={() => setSiteMapOpen(!siteMapOpen)}
           onContent={() => browse()}
+          newTypes={user.permissions.includes("content") ? types.filter((type) => !type.vocabulary) : []}
+          onNew={(key) => newItem(key)}
           onViewport={(next) => {
             // A device gives the page its own width again, also the one already chosen.
             setViewport(next);
@@ -1642,7 +1680,7 @@ export function Editor({ user, onSignedOut }: { user: User; onSignedOut: () => v
             templates={templates}
             currentPath={path}
             onNavigate={navigate}
-            onBrowse={browse}
+            onBrowse={(folder, create, data) => (create && folder ? newItem(folder, data) : browse(folder ?? null))}
             onCreate={createPage}
             onDelete={deletePage}
             onClose={() => setSiteMapOpen(false)}

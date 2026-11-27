@@ -29,6 +29,10 @@ Publishing or hiding a page or an item, and changes made in the content browser,
 
 Typed text is never lost: opening another page, a redraw and Save all save the open text first, leaving the tab warns while something is still unsaved, and an expired session opens a Sign in again dialog over the editor and sends the refused change once you are back.
 
+## Adding content
+
+New, beside Content in the toolbar, starts an item of any content type. One with a page asks for its title (and the fields it cannot be saved without) and opens on its page as a private draft, to be written there and published; one without a page opens its form. Content lists the content types, Pages and Form responses as folders. See [Content types](./content-types.md).
+
 ## Editing on the page
 
 - Click a text and type. The text toolbar sets bold, italic, links and colors; what a Text may hold is described in [Components and nodeId](./components.md).

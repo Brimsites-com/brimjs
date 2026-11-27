@@ -30,6 +30,13 @@ export const contentTypes = [project];
 
 Brim loads this file itself, so a new type or field shows up in the editor and on the pages as soon as you save it. The owner adds and edits items under Content in the editor. Each item is `private` (a new one, until it is published) or `published`.
 
+New in the editor's toolbar starts an item of any type (the site map, a listing and Content start one the same way):
+
+- A type with a page (`component`) asks in a small dialog for what the item cannot be saved without: the fields in its address first (a category in `/shop/[category]/[slug]`), then the title, then the other `required` fields, with the address they make shown as they are typed. The item is made private and opens on its page, where the rest is written and it is published.
+- A type without a page opens its form: what the item says on the left; on the right its status with Publish and Save as draft (Unpublish once it is out), and how it is filed: its address (made from the title until it is changed), image, author, dates and tags, titled Article for an `article` type. A required field left empty says so under itself. ⌘S saves without changing who sees it.
+
+Keep `required` for what an item truly cannot exist without: each one is asked for before the item is made.
+
 Every item also has a title and an address. A new item whose title another item has gets a number in its address (`lake-house-2`). Items come newest first, unless the type is `ordered` (below).
 
 ## The fields Brim adds
@@ -118,7 +125,7 @@ const { item: project } = Astro.props as ItemPageProps;
 
 The owner edits an item's page in one of two modes:
 
-- The item (`/admin/edit/projects/lake-house`): the elements that show its fields are typed in place, and Page Settings holds its title, address and every field. The rest of the page is locked.
+- The item (`/admin/edit/projects/lake-house`): the elements that show its fields are typed in place, and Page Settings holds its title and every field, with its address, image, author, dates and tags under them (Article, for an `article` type). The rest of the page is locked.
 - The template (Edit template in the toolbar): everything on the page that is not one of the item's fields, and how the fields look. A change is saved once for the type and shows on the page of every item. Only owners can change templates.
 
 A type without `component` has no page per item. A page written in `src/pages` wins over the template at its address.
