@@ -39,6 +39,8 @@ Passwords are read from stdin when it is not a terminal:
 printf %s "$OWNER_PASSWORD" | npx brim user add owner@example.test
 ```
 
+AI apps that sign in (ChatGPT, Claude) need no token: they connect with OAuth and are listed and disconnected in the editor's menu, under Connected apps. A new password, a removal, or a reset of access that revokes tokens (`POST /admin/api/users/reset` with `revokeTokens`) ends them like tokens. See [Site MCP](./mcp.md).
+
 Never write passwords or tokens into the project's files. `brim check` reports a password in a file as an error. To let someone sign in without passing a password around, give them `npx brim user link <email>`.
 
 ## On a host

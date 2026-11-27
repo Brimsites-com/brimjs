@@ -37,6 +37,7 @@ import { SCHEMA_VERSION } from "../db/schema.ts";
 import type { QueryRules } from "./query-params.ts";
 import { VERSION } from "../version.ts";
 import { handleMcp } from "../mcp/server.ts";
+import { createOAuthRoutes, isOAuthPath, resourceMetadataUrl } from "./oauth-routes.ts";
 import {
   type BrandColor,
   type HostSignIn,
@@ -217,6 +218,16 @@ export function createAdminHandler(options: AdminOptions): AdminHandler {
   const formFiles = options.formFiles && new FormFiles(options.formFiles, () => brim.forms.secret());
 
   const videos = VideoHost.from(options.videoUploads, options.fetch);
+  const oauthRoutes = createOAuthRoutes({
+    brim,
+    rateLimiter,
+    siteName: options.identity?.name,
+    favicon: options.identity?.favicon,
+    hostSignIn: options.hostSignIn,
+    signInHeaders,
+    signOutHeaders,
+    loginKeys: (clientAddress, email) => loginKeys({ clientAddress }, email),
+  });
   const mailSettings = new MailSettingsStore(brim.db);
 
   /** The signed-in user, when their role allows all of `permissions` (see `auth/permissions.ts`). */
@@ -776,6 +787,9 @@ export function createAdminHandler(options: AdminOptions): AdminHandler {
           "users",
           "history",
           "drafts",
+          // AI apps connect to /admin/mcp with OAuth (the user signs in and allows them); `/admin/api/connections`
+          // lists and disconnects them.
+          "oauth",
           // A request that changed what visitors see is answered with `X-Brim-Changed: live`.
           "live-change-header",
           // `query` below: the query parameters each page and route reads.
@@ -915,6 +929,20 @@ export function createAdminHandler(options: AdminOptions): AdminHandler {
       return json({ user }, { headers: signInHeaders(request, session.token, session.maxAgeSeconds) });
     },
 
+    /**
+     * The AI apps connected with OAuth: one's own, or everyone's for an owner who asks with `?all` (a host's dashboard
+     * does, with an owner's token). With the MCP's address, which is what a person pastes into the app.
+     */
+    "GET /connections": async (request) => {
+      const user = await currentUser(request);
+      const all = new URL(request.url).searchParams.has("all");
+      if (all) need(user, "users");
+      return json({
+        mcp: `${requestOrigin(request)}${MCP_PATH}`,
+        connections: await brim.accounts.oauth.connections(all ? undefined : user.id),
+      });
+    },
+
     // Who is signed in and what their role allows, so the editor offers only what will work.
     "GET /session": async (request) => {
       const user = await currentUser(request);
@@ -951,10 +979,7 @@ export function createAdminHandler(options: AdminOptions): AdminHandler {
 
     "DELETE /session": async (request) => {
       for (const token of sessionCookies(request)) await brim.accounts.endSession(token);
-      const headers = new Headers({ "set-cookie": sessionCookie(request, "", 0) });
-      // Sessions started before the cookie covered the whole site were kept under /admin.
-      headers.append("set-cookie", sessionCookie(request, "", 0, ADMIN_PATH));
-      return json({}, { headers });
+      return json({}, { headers: signOutHeaders(request) });
     },
 
     // Pages written in code, then the ones added from templates, in one list by address.
@@ -1761,6 +1786,17 @@ export function createAdminHandler(options: AdminOptions): AdminHandler {
     handle: (request: Request, name: string) => Promise<Response>;
   }[] = [
     {
+      // Disconnects an AI app: one's own, or anyone's for an owner. Its tokens stop working at once.
+      method: "DELETE",
+      pattern: /^\/connections\/([^/]+)$/,
+      handle: async (request, id) => {
+        const user = await currentUser(request);
+        const disconnected = await brim.accounts.oauth.disconnect(safeDecode(id), can(user, "users") ? undefined : user.id);
+        if (!disconnected) throw new HttpError(404, "There is no such connected app.");
+        return json({ disconnected: true });
+      },
+    },
+    {
       // One set's icons whose name contains `q`: a pack can hold thousands, so the editor asks as it is typed.
       method: "GET",
       pattern: /^\/icons\/([^/]+)$/,
@@ -1838,7 +1874,11 @@ export function createAdminHandler(options: AdminOptions): AdminHandler {
       await currentUser(request);
     } catch (error) {
       if (!(error instanceof HttpError)) throw error;
-      return json({ error: error.message }, { status: error.status, headers: { "www-authenticate": "Bearer" } });
+      // An MCP client finds how to connect from here (RFC 9728): the site's OAuth, where its user signs in. A token
+      // that ran out is said to be one, so the app refreshes it.
+      const metadata = `resource_metadata="${resourceMetadataUrl(request)}"`;
+      const challenge = bearerToken(request) ? `Bearer error="invalid_token", ${metadata}` : `Bearer ${metadata}`;
+      return json({ error: error.message }, { status: error.status, headers: { "www-authenticate": challenge } });
     }
 
     return handleMcp(request, toolContext(request, info, { authorization }));
@@ -1925,6 +1965,7 @@ export function createAdminHandler(options: AdminOptions): AdminHandler {
   }
 
   async function respond(request: Request, info: RequestInfo, pathname: string): Promise<Response> {
+    if (isOAuthPath(pathname)) return oauthRoutes(request, info.clientAddress, pathname);
     if (pathname.startsWith(`${API_PATH}/`)) return api(request, info, pathname.slice(API_PATH.length));
     if (pathname === MCP_PATH) return mcp(request, info);
     if (pathname.startsWith(`${ASSETS_PATH}/`)) return asset(pathname.slice(ASSETS_PATH.length + 1));
@@ -1947,7 +1988,7 @@ export function createAdminHandler(options: AdminOptions): AdminHandler {
 
   return async (request, info) => {
     const { pathname } = new URL(request.url);
-    if (pathname !== ADMIN_PATH && !pathname.startsWith(`${ADMIN_PATH}/`)) return undefined;
+    if (pathname !== ADMIN_PATH && !pathname.startsWith(`${ADMIN_PATH}/`) && !isOAuthPath(pathname)) return undefined;
     const changes = { live: false };
     const response = await liveChanges.run(changes, () => respond(request, info, pathname));
     // Only a change that was accepted: a refused one (an error after a partial write included) says nothing.
@@ -2006,6 +2047,13 @@ const EDITOR_PAGE = `<!doctype html>
  */
 function signInHeaders(request: Request, token: string, maxAgeSeconds: number): Headers {
   const headers = new Headers({ "set-cookie": sessionCookie(request, token, maxAgeSeconds) });
+  headers.append("set-cookie", sessionCookie(request, "", 0, ADMIN_PATH));
+  return headers;
+}
+
+/** Ends the browser's session: its cookie, and the old one kept under /admin before the cookie covered the site. */
+function signOutHeaders(request: Request): Headers {
+  const headers = new Headers({ "set-cookie": sessionCookie(request, "", 0) });
   headers.append("set-cookie", sessionCookie(request, "", 0, ADMIN_PATH));
   return headers;
 }

@@ -5,9 +5,31 @@ order: 2
 lead: Every Brim.js site serves its own MCP at /admin/mcp, so AI agents can read and change content with the same checks as the editor.
 ---
 
-## Connect a client
+## Connect an AI app by signing in
 
-The MCP needs an access token, which acts as one of the site's users and may do what that user's role allows.
+ChatGPT, Claude and other apps that sign in to MCP servers (OAuth) need nothing but the address:
+
+1. Add a custom connector (an MCP server) in the app with `https://your-site.com/admin/mcp`. In ChatGPT choose OAuth as its authentication.
+2. The app opens the site's sign-in page. Sign in with your account on the site and choose **Allow**.
+3. Ask for changes in the chat. The app acts as you, with what your role allows.
+
+The app stays connected: its access token works for an hour and the app renews it on its own, with nothing to do. A connection ends only when someone disconnects it, in the editor's menu (**Connected apps**, where an owner sees everyone's) or at `DELETE /admin/api/connections/<id>`, or when its user changes their password, has their access reset with tokens revoked, or is removed.
+
+What the site serves for it, for any MCP client:
+
+| Address | What it is |
+| --- | --- |
+| `/.well-known/oauth-protected-resource` (and `…/admin/mcp`) | The MCP's protected-resource metadata (RFC 9728); a 401 from the MCP points here |
+| `/.well-known/oauth-authorization-server` | The site as its own authorization server (RFC 8414) |
+| `/admin/oauth/register` | Dynamic client registration (RFC 7591), open to any app, slowed down per address |
+| `/admin/oauth/authorize` | Sign-in and consent; authorization code with PKCE S256 only |
+| `/admin/oauth/token`, `/admin/oauth/revoke` | Tokens and refresh (the refresh token changes on every use), revocation (RFC 7009) |
+
+A host that puts a CDN in front of the site sends `/.well-known/oauth-*` straight to the site's server, uncached, like `/admin`. `/admin/api/info` lists the capability `oauth`; `GET /admin/api/connections` answers the MCP's address and the user's connected apps (`?all` for an owner).
+
+## Connect a client with a token
+
+Tools that do not sign in (Claude Code, Codex, Cursor, scripts) use an access token, which acts as one of the site's users and may do what that user's role allows. Tokens work as they always did, beside OAuth.
 
 ```bash
 npx brim token add you@example.com --name claude
@@ -43,7 +65,7 @@ Any client that speaks MCP over HTTP works the same way, Codex and Cursor includ
 
 - Changes through the MCP are saved at once, with no draft. Read a page (`brim_read_page`) before changing it, and use `brim_list_history` and `brim_restore_history` to take a change back.
 - The role decides what a token can do. A refused call names the role that can.
-- Revoke a token at any time with `brim token revoke <email> <name>`.
+- Revoke a token at any time with `brim token revoke <email> <name>`, and disconnect an app in the editor's menu (Connected apps).
 
 ## Why every site has one
 

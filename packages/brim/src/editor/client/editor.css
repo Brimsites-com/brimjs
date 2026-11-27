@@ -3405,6 +3405,57 @@ button.cb-badge {
   color: var(--foreground);
 }
 
+/* The AI apps connected to the site's MCP, from the editor's menu. */
+.brim-connected-apps {
+  width: min(460px, calc(100vw - 32px));
+}
+
+.brim-connected-apps__address {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 12px 0 16px;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.brim-connected-apps__address code {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  font-size: 12px;
+}
+
+.brim-connected-apps__list {
+  margin: 0 0 16px;
+  padding: 0;
+  list-style: none;
+}
+
+.brim-connected-apps__list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 0;
+  border-top: 1px solid var(--border);
+}
+
+.brim-connected-apps__list li > div {
+  display: grid;
+  gap: 2px;
+}
+
+.brim-connected-apps__list .brim-login__hint {
+  margin: 0;
+}
+
+.brim-connected-apps .brim-login__link {
+  flex: none;
+  margin: 0;
+}
+
 /* Over the editor when the session ran out: the editor stays open underneath, with everything typed in it. */
 .brim-signin-again {
   position: fixed;

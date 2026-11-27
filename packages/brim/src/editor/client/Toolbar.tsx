@@ -85,6 +85,7 @@ export function Toolbar({
   onPageSettings,
   onSiteSettings,
   onChangePassword,
+  onConnectedApps,
   onHistory,
   onSignOut,
   languages,
@@ -109,6 +110,8 @@ export function Toolbar({
   onSiteSettings?: (() => void) | undefined;
   /** Opens the form to change one's own password; absent when the user signed in another way (an access token). */
   onChangePassword?: (() => void) | undefined;
+  /** Opens the AI apps connected to the site's MCP, and the address to connect one. */
+  onConnectedApps: () => void;
   /** Opens the site's history: what changed lately, and taking a change back. */
   onHistory: () => void;
   onSignOut: () => void;
@@ -384,6 +387,17 @@ export function Toolbar({
                   Site settings
                 </button>
               )}
+              <button
+                type="button"
+                role="menuitem"
+                className="brim-editor-menu__item"
+                onClick={() => {
+                  close();
+                  onConnectedApps();
+                }}
+              >
+                Connected apps
+              </button>
               <ThemeChoice />
               <div className="brim-editor-menu__separator" />
               {onChangePassword && (

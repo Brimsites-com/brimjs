@@ -117,7 +117,10 @@ describe("access", () => {
   it("needs a valid access token", async () => {
     const missing = await post({ jsonrpc: "2.0", id: 1, method: "ping" }, null);
     expect(missing.status).toBe(401);
-    expect(missing.headers.get("www-authenticate")).toBe("Bearer");
+    // It says where to sign in (OAuth): the site's protected-resource metadata.
+    expect(missing.headers.get("www-authenticate")).toBe(
+      `Bearer resource_metadata="${ORIGIN}/.well-known/oauth-protected-resource/admin/mcp"`,
+    );
     expect((await post({ jsonrpc: "2.0", id: 1, method: "ping" }, "Bearer brim_forged")).status).toBe(401);
   });
 

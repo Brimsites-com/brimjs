@@ -1,6 +1,6 @@
 {
   "name": "@brimsites/brimjs",
-  "version": "1.0.5",
+  "version": "1.1.0",
   "description": "Makes Astro sites editable: primitives with stable node ids, content in SQLite, static output.",
   "keywords": [
     "withastro",

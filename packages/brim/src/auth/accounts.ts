@@ -1,5 +1,6 @@
 import { createHash, randomBytes, randomUUID } from "node:crypto";
 import type { Database } from "../db/database.ts";
+import { OAuthStore } from "./oauth.ts";
 import { MIN_PASSWORD_LENGTH, generatePassword, hashPassword, verifyPassword } from "./password.ts";
 
 /**
@@ -34,9 +35,12 @@ const DECOY_HASH = await hashPassword(randomBytes(16).toString("hex"));
 
 export class Accounts {
   readonly #db: Database;
+  /** AI apps connected with OAuth: they act as a user too, and end with the user's password like access tokens. */
+  readonly oauth: OAuthStore;
 
   constructor(db: Database) {
     this.#db = db;
+    this.oauth = new OAuthStore(db);
   }
 
   async createUser(email: string, password: string, role: Role): Promise<User> { // betterleaks:allow
@@ -190,7 +194,9 @@ export class Accounts {
     return token;
   }
 
+  /** The user behind a bearer token: an access token from `brim token add`, or one an app got with OAuth. */
   async tokenUser(token: string): Promise<User | undefined> {
+    if (OAuthStore.isAccessToken(token)) return this.oauth.accessUser(token);
     if (!token.startsWith(TOKEN_PREFIX)) return undefined;
     const hash = hashToken(token);
     const rows = await this.#db.query(
@@ -258,13 +264,14 @@ export class Accounts {
     await this.#db.batch([
       { sql: "DELETE FROM brim_sessions WHERE user_id = ?", args: [user.id] },
       { sql: "DELETE FROM brim_tokens WHERE user_id = ?", args: [user.id] },
+      ...OAuthStore.endAll(user.id),
       { sql: "DELETE FROM brim_users WHERE id = ?", args: [user.id] },
     ]);
   }
 
   /**
-   * A new password signs the user out everywhere: open sessions and access tokens both end. A password is changed
-   * when someone else may know it, and they may have made themselves a token with it.
+   * A new password signs the user out everywhere: open sessions, access tokens and connected apps all end. A password
+   * is changed when someone else may know it, and they may have made themselves a token or connected an app with it.
    */
   async setPassword(email: string, password: string): Promise<void> { // betterleaks:allow
     if (password.length < MIN_PASSWORD_LENGTH) {
@@ -275,12 +282,14 @@ export class Accounts {
       { sql: "UPDATE brim_users SET password_hash = ? WHERE id = ?", args: [await hashPassword(password), user.id] }, // betterleaks:allow
       { sql: "DELETE FROM brim_sessions WHERE user_id = ?", args: [user.id] },
       { sql: "DELETE FROM brim_tokens WHERE user_id = ?", args: [user.id] },
+      ...OAuthStore.endAll(user.id),
     ]);
   }
 
   /**
    * "Reset access", for someone who lost their password or may have shared it: a new password (handed back once),
-   * every session and link of theirs ends, and their access tokens too when asked (a tool they connected stops).
+   * every session and link of theirs ends, and their access tokens and connected apps too when asked (a tool they
+   * connected stops).
    */
   async resetAccess(email: string, options: { revokeTokens?: boolean } = {}): Promise<{ password: string; revokedTokens: number }> { // betterleaks:allow
     const user = await this.#userByEmail(email);
@@ -291,7 +300,9 @@ export class Accounts {
     await this.#db.batch([
       { sql: "UPDATE brim_users SET password_hash = ? WHERE id = ?", args: [await hashPassword(password), user.id] }, // betterleaks:allow
       { sql: "DELETE FROM brim_sessions WHERE user_id = ?", args: [user.id] },
-      ...(options.revokeTokens ? [{ sql: "DELETE FROM brim_tokens WHERE user_id = ?", args: [user.id] }] : []),
+      ...(options.revokeTokens
+        ? [{ sql: "DELETE FROM brim_tokens WHERE user_id = ?", args: [user.id] }, ...OAuthStore.endAll(user.id)]
+        : []),
     ]);
     return { password, revokedTokens: tokens };
   }

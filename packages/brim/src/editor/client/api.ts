@@ -298,7 +298,20 @@ export interface MailSettingsUpdate {
   smtp: (Omit<SmtpServerView, "hasPassword"> & { password: string }) | null; // betterleaks:allow
 }
 
+/** An AI app connected to the site's MCP with OAuth, as `/admin/api/connections` lists it. */
+export interface ConnectedApp {
+  id: string;
+  app: string;
+  appHost: string;
+  email: string;
+  createdAt: string;
+  lastUsedAt: string | null;
+}
+
 export const api = {
+  /** The MCP's address and the connected AI apps: one's own, or everyone's for an owner. */
+  connections: (all = false) => request<{ mcp: string; connections: ConnectedApp[] }>("GET", `/connections${all ? "?all" : ""}`),
+  disconnect: (id: string) => request<object>("DELETE", `/connections/${encodeURIComponent(id)}`),
   session: () => request<Session>("GET", "/session").then(withPermissions),
   // betterleaks:allow (a parameter named after what it carries, not a secret)
   signIn: (email: string, password: string) => request<Session>("POST", "/session", { email, password }).then(withPermissions), // betterleaks:allow

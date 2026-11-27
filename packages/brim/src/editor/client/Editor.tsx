@@ -1,5 +1,6 @@
 import { type CSSProperties, useCallback, useEffect, useRef, useState } from "react";
 import { ChangePassword } from "./Login.tsx";
+import { ConnectedApps } from "./ConnectedApps.tsx";
 import { type BlockLayout, layoutOf } from "../../content/block-layout.ts";
 import { blocksOf } from "../../content/block-values.ts";
 import { BLOCK_TYPES, type BlockEntry } from "../../content/content-types.ts";
@@ -347,6 +348,7 @@ export function Editor({ user, onSignedOut }: { user: User; onSignedOut: () => v
   const [liveField, setLiveField] = useState<{ field: string; value: unknown } | null>(null);
   const [siteSettingsOpen, setSiteSettingsOpen] = useState(false);
   const [changingPassword, setChangingPassword] = useState(false);
+  const [connectedAppsOpen, setConnectedAppsOpen] = useState(false);
   const [settingFocus, setSettingFocus] = useState<string | undefined>(undefined);
   const [historyOpen, setHistoryOpen] = useState(false);
   /**
@@ -1610,6 +1612,7 @@ export function Editor({ user, onSignedOut }: { user: User; onSignedOut: () => v
               : undefined
           }
           onChangePassword={() => setChangingPassword(true)}
+          onConnectedApps={() => setConnectedAppsOpen(true)}
           onSignOut={() =>
             void finishTextEdit()
               .then(() => api.signOut())
@@ -1714,6 +1717,9 @@ export function Editor({ user, onSignedOut }: { user: User; onSignedOut: () => v
         </div>
       </div>
       {changingPassword && <ChangePassword onClose={() => setChangingPassword(false)} />}
+      {connectedAppsOpen && (
+        <ConnectedApps owner={user.permissions.includes("users")} onClose={() => setConnectedAppsOpen(false)} />
+      )}
     </EditorProvider>
   );
 }

@@ -15,8 +15,11 @@ import { withEditing } from "./request-state.ts";
 import { QueryCollector, collectingQueryReads } from "./query-reads.ts";
 import { queryReads } from "./query-store.ts";
 
-/** Brim's own routes (`/admin`, forms, uploads) check who is asking themselves and show no page content. */
-const OWN_ROUTES = /^\/(admin|_brim|uploads)(\/|$)/;
+/**
+ * Brim's own routes (`/admin`, forms, uploads, and the OAuth metadata MCP clients look for under `/.well-known`) check
+ * who is asking themselves and show no page content.
+ */
+const OWN_ROUTES = /^\/(admin|_brim|uploads|\.well-known\/oauth-[a-z-]+)(\/|$)/;
 /** The route Brim adds for pages added from templates and the pages of items. */
 const TEMPLATE_ROUTE = "/[...page]";
 

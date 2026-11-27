@@ -246,6 +246,10 @@ export default function brim(options: BrimOptions = {}): AstroIntegration {
           ownAdapter = adapter !== undefined;
           updateConfig({ output: "server", ...(adapter && { adapter, integrations: [adapter] }) });
           injectRoute({ pattern: `${ADMIN_PATH}/[...path]`, entrypoint: "@brimsites/brimjs/admin-route", prerender: false });
+          // Where an MCP client looks for how to sign in to the site's MCP (OAuth, RFC 9728 and 8414): the same handler.
+          for (const document of ["oauth-protected-resource", "oauth-authorization-server"]) {
+            injectRoute({ pattern: `/.well-known/${document}/[...path]`, entrypoint: "@brimsites/brimjs/admin-route", prerender: false });
+          }
           injectRoute({ pattern: `${FORMS_PATH}/[...path]`, entrypoint: "@brimsites/brimjs/forms-route", prerender: false });
           injectRoute({ pattern: `${UPLOADS_PATH}[...file]`, entrypoint: "@brimsites/brimjs/uploads-route", prerender: false });
         }

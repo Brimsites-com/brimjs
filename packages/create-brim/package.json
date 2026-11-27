@@ -1,6 +1,6 @@
 {
   "name": "@brimsites/create-brim",
-  "version": "1.0.5",
+  "version": "1.1.0",
   "description": "Starts a new Brim.js site: an Astro project with brimjs, a layout, pages, components and a content type.",
   "keywords": [
     "astro",

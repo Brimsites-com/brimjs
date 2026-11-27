@@ -166,6 +166,39 @@ const MIGRATIONS: string[][] = [
     // kept outside the database, in a private place.
     `ALTER TABLE brim_form_responses ADD COLUMN files TEXT NOT NULL DEFAULT '[]'`,
   ],
+  [
+    // AI apps (ChatGPT, Claude) connected to the site's MCP with OAuth: the apps that registered themselves, the
+    // one-time codes of a sign-in in progress, and each connection a user allowed, with its current tokens' hashes.
+    `CREATE TABLE brim_oauth_clients (
+      client_id TEXT PRIMARY KEY,
+      secret_hash TEXT,
+      name TEXT NOT NULL,
+      redirect_uris TEXT NOT NULL,
+      created_at TEXT NOT NULL
+    ) WITHOUT ROWID`,
+    `CREATE TABLE brim_oauth_codes (
+      code_hash TEXT PRIMARY KEY,
+      client_id TEXT NOT NULL,
+      user_id TEXT NOT NULL,
+      redirect_uri TEXT NOT NULL,
+      challenge TEXT NOT NULL,
+      expires_at INTEGER NOT NULL
+    ) WITHOUT ROWID`,
+    `CREATE TABLE brim_oauth_grants (
+      id TEXT PRIMARY KEY,
+      client_id TEXT NOT NULL,
+      user_id TEXT NOT NULL,
+      access_hash TEXT NOT NULL UNIQUE,
+      access_expires_at INTEGER NOT NULL,
+      refresh_hash TEXT NOT NULL UNIQUE,
+      previous_refresh_hash TEXT,
+      rotated_at INTEGER,
+      created_at TEXT NOT NULL,
+      last_used_at TEXT
+    ) WITHOUT ROWID`,
+    `CREATE INDEX brim_oauth_grants_previous ON brim_oauth_grants (previous_refresh_hash)`,
+    `CREATE INDEX brim_oauth_grants_user ON brim_oauth_grants (user_id)`,
+  ],
 ];
 
 /** How many migrations this brimjs knows; a database is at this version once `migrate` ran. */

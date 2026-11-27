@@ -4,6 +4,17 @@ What changed in Brim.js, newest first. Versions are semantic: only a major versi
 and config, and says so here under **Changed**; a minor version adds, a patch version fixes. Database migrations are
 append-only.
 
+## 1.1.0
+
+### Added
+
+- **AI apps connect to the site's MCP by signing in (OAuth)**: paste `https://your-site.com/admin/mcp` into ChatGPT,
+  Claude or any MCP client that signs in, sign in on the site and choose Allow. The app acts as you, with your role,
+  and stays connected (it renews its hour-long access token itself) until you disconnect it in the editor's menu
+  (**Connected apps**), change your password or are removed. The site serves the OAuth metadata under
+  `/.well-known/oauth-*`, registers apps by itself and requires PKCE; `/admin/api/connections` lists and disconnects
+  apps, and `/admin/api/info` says `oauth`. Access tokens (`brim token add`) work as before. Database migration 16.
+
 ## 1.0.5
 
 ### Fixed
