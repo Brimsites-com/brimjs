@@ -4,6 +4,19 @@ What changed in Brim.js, newest first. Versions are semantic: only a major versi
 and config, and says so here under **Changed**; a minor version adds, a patch version fixes. Database migrations are
 append-only.
 
+## 1.2.1
+
+### Added
+
+- **The focus is chosen on the picture**: every image widget (an Image, an image field, gallery and carousel images,
+  a page's preview image) shows the picture with a point to click or drag, the part that stays in sight where the site
+  crops it. A new picture starts at its middle and asks for it at once; a wide and a square crop preview it. The Image
+  block's Crop tab is gone. An image value keeps it as `{ src, alt, focus: { x, y } }`, a page's preview image as
+  `imageFocus`; an Image bound to an item's picture saves it in the item, and on an item's page the preview image
+  shows the item's picture and its focus until another is chosen. `Image`, a gallery's `image.img`, a carousel's
+  `slide.img`, `Listing` cards and menu links apply it, and `focusStyle(image.focus)` from `@brimsites/brimjs/content`
+  gives the `style` for the site's own markup.
+
 ## 1.2.0
 
 ### Added
