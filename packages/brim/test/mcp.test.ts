@@ -412,6 +412,8 @@ describe("pages from templates", () => {
     const created = await tool("brim_create_page", { template: "service", title: "Lawn care" });
     expect(created.output).toEqual({
       page: { path: "/services/lawn-care", visibility: "private", seo: {}, template: "service", title: "Lawn care" },
+      // Where the person opens it in the editor.
+      editUrl: `${ORIGIN}/admin/edit/services/lawn-care`,
     });
 
     const site = (await tool("brim_site")).output;

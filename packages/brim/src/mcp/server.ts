@@ -1,6 +1,6 @@
 import { HttpError, readBytes } from "../server/http.ts";
 import { VERSION } from "../version.ts";
-import { INSTRUCTIONS, TOOLS, type ToolContext } from "./tools.ts";
+import { TOOLS, type ToolContext, instructionsFor } from "./tools.ts";
 
 /**
  * The site's MCP endpoint (`/admin/mcp`): JSON-RPC over HTTP POST, the "streamable HTTP" transport
@@ -65,7 +65,7 @@ async function answer(message: Message, context: ToolContext): Promise<object | 
         protocolVersion,
         capabilities: { tools: {} },
         serverInfo: SERVER_INFO,
-        instructions: INSTRUCTIONS,
+        instructions: instructionsFor(context),
       });
     }
     case "ping":

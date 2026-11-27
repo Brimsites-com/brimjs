@@ -1,6 +1,7 @@
 import { createHash, randomBytes } from "node:crypto";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { Accounts } from "../src/auth/accounts.ts";
+import { defineContentType } from "../src/content/content-types.ts";
 import { ItemStore } from "../src/content/items.ts";
 import { ContentStore } from "../src/content/store.ts";
 import { HistoryStore } from "../src/content/history.ts";
@@ -17,6 +18,15 @@ const EDITOR = "editor@example.test";
 const PASSWORD = "correct horse battery"; // betterleaks:allow
 const REDIRECT = "https://chatgpt.com/connector_platform_oauth_redirect";
 const visitor = { clientAddress: "203.0.113.7" };
+
+const story = defineContentType({
+  key: "story",
+  label: "Stories",
+  singular: "Story",
+  slug: "stories",
+  component: () => "",
+  fields: [{ name: "body", label: "Body", type: "textarea" }],
+});
 
 let brim: Brim;
 let admin: AdminHandler;
@@ -40,6 +50,8 @@ beforeEach(async () => {
     assetsDirectory: new URL("../editor-dist/", import.meta.url),
     identity: { name: "Acme Gardens" },
     renderPage: async () => "<html></html>",
+    pages: () => ["/"],
+    contentTypes: () => [story],
   });
 });
 
@@ -425,5 +437,83 @@ describe("connected apps", () => {
     expect((await refresh(owner.client, owner.tokens.refresh_token)).status).toBe(400);
     await brim.accounts.removeUser(EDITOR);
     expect((await refresh(editor.client, editor.tokens.refresh_token)).status).toBe(400);
+  });
+});
+
+describe("an app connected by signing in publishes nothing on its own", () => {
+  let call: (name: string, args?: Record<string, unknown>) => Promise<any>;
+  let accessToken: string; // betterleaks:allow
+
+  beforeEach(async () => {
+    accessToken = (await connect()).tokens.access_token; // betterleaks:allow
+    call = async (name, args = {}) => {
+      const response = await send("/admin/mcp", {
+        method: "POST",
+        headers: { "content-type": "application/json", authorization: `Bearer ${accessToken}` }, // betterleaks:allow
+        body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "tools/call", params: { name, arguments: args } }),
+      });
+      const { result } = (await response.json()) as { result: { content: { text: string }[]; isError?: boolean } };
+      if (result.isError) throw new Error(result.content[0]!.text);
+      return JSON.parse(result.content[0]!.text);
+    };
+  });
+
+  async function instructions(authorization: string): Promise<string> {
+    const response = await send("/admin/mcp", {
+      method: "POST",
+      headers: { "content-type": "application/json", authorization },
+      body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "initialize", params: { protocolVersion: "2025-06-18" } }),
+    });
+    return ((await response.json()) as { result: { instructions: string } }).result.instructions;
+  }
+
+  it("is told to publish only when asked, and to hand over the editor's link", async () => {
+    expect(await instructions(`Bearer ${accessToken}`)).toContain("Make nothing public unless the user");
+    // A token made for a developer's tool keeps working as it did.
+    const token = await brim.accounts.createToken(OWNER, "agent");
+    expect(await instructions(`Bearer ${token}`)).not.toContain("Make nothing public");
+  });
+
+  it("makes new items private and answers where to edit them", async () => {
+    const { item, editUrl } = await call("brim_create_item", { type: "story", title: "Spring planting", data: { body: "Hi" } });
+    expect(item.visibility).toBe("private");
+    expect(editUrl).toBe(`${ORIGIN}/admin/edit/stories/spring-planting`);
+  });
+
+  it("keeps its changes to a published item as a draft until someone publishes them", async () => {
+    const live = await brim.items.create("story", { slug: "lawn", title: "Lawn care", visibility: "published", data: { body: "Old" } });
+    const answer = await call("brim_update_item", { id: live.id, data: { body: "New" } });
+    expect(answer).toMatchObject({ draft: true, editUrl: `${ORIGIN}/admin/edit/stories/lawn` });
+    expect((await brim.items.get(live.id))?.data.body).toBe("Old");
+    expect(await brim.drafts.count()).toBe(1);
+    // A second change builds on the first draft, and still leaves visitors' copy alone.
+    await call("brim_update_item", { id: live.id, title: "Lawn care in spring" });
+    expect((await brim.items.get(live.id))?.title).toBe("Lawn care");
+
+    await call("brim_publish_drafts");
+    const published = await brim.items.get(live.id);
+    expect(published).toMatchObject({ title: "Lawn care in spring", data: { body: "New" } });
+  });
+
+  it("keeps its text changes on a page as drafts, while a developer's token saves at once", async () => {
+    const answer = await call("brim_set_text", { path: "/", nodeId: "hero-title", text: "Draft words" });
+    expect(answer).toMatchObject({ draft: true, editUrl: `${ORIGIN}/admin/edit` });
+    expect(await brim.content.loadNodes(["page:/"])).toEqual([]);
+    expect(await brim.drafts.count()).toBe(1);
+
+    const token = await brim.accounts.createToken(OWNER, "agent");
+    const response = await send("/admin/mcp", {
+      method: "POST",
+      headers: { "content-type": "application/json", authorization: `Bearer ${token}` },
+      body: JSON.stringify({
+        jsonrpc: "2.0",
+        id: 1,
+        method: "tools/call",
+        params: { name: "brim_set_text", arguments: { path: "/", nodeId: "hero-title", text: "Live words" } },
+      }),
+    });
+    expect(response.status).toBe(200);
+    const saved = await brim.content.loadNodes(["page:/"]);
+    expect(saved[0]?.value).toMatchObject({ text: "Live words" });
   });
 });

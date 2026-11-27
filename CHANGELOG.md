@@ -4,6 +4,16 @@ What changed in Brim.js, newest first. Versions are semantic: only a major versi
 and config, and says so here under **Changed**; a minor version adds, a patch version fixes. Database migrations are
 append-only.
 
+## 1.1.2
+
+### Changed
+
+- **An AI app connected by signing in publishes nothing on its own**: the pages and items it adds stay private, and its
+  changes to what visitors already see wait as drafts in the editor, until the person saves them there or asks the app
+  to publish (new tool `brim_publish_drafts`). It is told to publish only when asked in so many words, and every
+  change answers an `editUrl`: the editor's page to open, edit and publish. Clients with an access token
+  (`brim token add`) save at once, as before.
+
 ## 1.1.1
 
 ### Fixed

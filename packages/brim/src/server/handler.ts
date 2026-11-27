@@ -39,6 +39,7 @@ import type { QueryRules } from "./query-params.ts";
 import { VERSION } from "../version.ts";
 import { handleMcp } from "../mcp/server.ts";
 import { createOAuthRoutes, isOAuthPath, resourceMetadataUrl } from "./oauth-routes.ts";
+import { OAuthStore } from "../auth/oauth.ts";
 import {
   type BrandColor,
   type HostSignIn,
@@ -1896,6 +1897,8 @@ export function createAdminHandler(options: AdminOptions): AdminHandler {
    */
   function toolContext(request: Request, info: RequestInfo, credentials: Record<string, string>): ToolContext {
     const origin = requestOrigin(request);
+    // An app the person connected by signing in publishes nothing unless they ask (see `ToolContext.drafting`).
+    const drafting = OAuthStore.isAccessToken(bearerToken(request) ?? "");
     // A session's cookie is sent with the site's own origin: the API checks it on every change.
     const headers = credentials.authorization ? credentials : { ...credentials, origin };
     return {
@@ -1931,8 +1934,21 @@ export function createAdminHandler(options: AdminOptions): AdminHandler {
         return response.text();
       },
       storedValue: async (path, scope, nodeId) => {
-        const nodes = await brim.content.loadNodes([await scopeOf({ scope }, normalizePagePath(path))]);
+        const where = await scopeOf({ scope }, normalizePagePath(path));
+        // An app's changes wait as drafts: the next one builds on the draft, not on what visitors see.
+        if (drafting) {
+          const draft = (await brim.drafts.get("node", `${where}\n${nodeId}`)) as NodeDraft | undefined;
+          if (draft) return "reset" in draft ? undefined : draft.value;
+        }
+        const nodes = await brim.content.loadNodes([where]);
         return nodes.find((node) => node.nodeId === nodeId)?.value;
+      },
+      drafting,
+      origin: publicOrigin(request, options.siteUrl),
+      itemPage: async (id) => {
+        const item = await brim.items.get(id);
+        const type = item && (await contentTypes()).find((candidate) => candidate.key === item.type);
+        return item && type?.component ? normalizePagePath(itemPagePath(type, item, locales)) : undefined;
       },
       // Through the API's own route, so the token's role, the size limit and the folder check all apply.
       upload: async (bytes, name, folder) => {

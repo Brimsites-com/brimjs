@@ -57,6 +57,7 @@ Any client that speaks MCP over HTTP works the same way, Codex and Cursor includ
 | `brim_reorder_items` | The order of an ordered type's items |
 | `brim_list_media`, `brim_upload_image` | The media library: search it, add to it from a public address or base64 |
 | `brim_list_form_responses` | Form messages, newest first |
+| `brim_publish_drafts` | Publishes the changes waiting as drafts, as the editor's Save does |
 | `brim_list_history`, `brim_restore_history` | The latest changes, and taking one back |
 
 `brim_set_text` keeps a `\n` as a line break and takes `rich` to keep or add formatting. A batch holds at most 20 requests, run one after another.
@@ -70,7 +71,8 @@ The MCP tells every client how a site's content is shaped, so an app writing an 
 
 ## What to know
 
-- Changes through the MCP are saved at once, with no draft. Read a page (`brim_read_page`) before changing it, and use `brim_list_history` and `brim_restore_history` to take a change back.
+- **An app connected by signing in (OAuth) publishes nothing on its own.** New pages and items stay private, and its changes to what visitors already see (texts, elements, a published item, SEO) wait as drafts, like the editor's unsaved changes. It is told to publish only when the person asks in so many words, and to hand over the editor's link when it is done (every change answers an `editUrl`), so the person can look, edit and publish themselves.
+- A client with an access token (`brim token add`) saves at once, with no draft, as before. Read a page (`brim_read_page`) before changing it, and use `brim_list_history` and `brim_restore_history` to take a change back.
 - The role decides what a token can do. A refused call names the role that can.
 - Revoke a token at any time with `brim token revoke <email> <name>`, and disconnect an app in the editor's menu (Connected apps).
 

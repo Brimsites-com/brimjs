@@ -15,6 +15,16 @@ export interface ToolContext {
   upload(bytes: Uint8Array, name: string, folder: string): Promise<unknown>;
   /** Fetches an image from a public web address, refusing the server's own network. */
   fetchImage(url: string): Promise<{ bytes: Uint8Array; name: string }>;
+  /**
+   * An app the person connected by signing in (OAuth: ChatGPT, Claude…). Nothing it does reaches visitors unless the
+   * person asks for it: changes to what visitors see wait as drafts, as the editor's own changes do, until someone
+   * saves them in the editor or asks the app to publish (brim_publish_drafts).
+   */
+  drafting?: boolean;
+  /** The site's address as the client reached it, for the editor links handed to the person. */
+  origin?: string;
+  /** The address of an item's own page; `undefined` for a type without pages. */
+  itemPage?(id: string): Promise<string | undefined>;
 }
 
 export type Scope = "page" | "site" | "template";
@@ -29,6 +39,24 @@ export interface Tool {
 type JsonSchema = { type: "object"; properties: Record<string, unknown>; required?: string[] };
 
 /** Explains the model to the AI client once, when it connects. */
+/**
+ * Added to the instructions for an app connected by signing in (OAuth), whose user may not read code or check a site
+ * before visitors do: it publishes nothing unless they ask.
+ */
+export const APP_INSTRUCTIONS = `You are connected as an app the site's user allowed. Make nothing public unless the user
+explicitly asks you to publish (in so many words, e.g. "publish it", "make it live"): leave new pages and items private
+(never pass visibility "published"), and know that your changes to what visitors already see are kept as drafts, not
+shown to visitors. Do not call brim_publish_drafts, set visibility to published, or otherwise publish on your own, and
+do not take a request to write or change content as a request to publish it. Each change answers an "editUrl": when you
+finish, give it to the user, e.g. "Here it is in the editor, if you want to edit it yourself or publish it: <editUrl>".
+If they then ask you to publish, publish what you made (brim_update_item or brim_update_page with visibility
+"published", and brim_publish_drafts for drafts) and say what is now public.`;
+
+/** The instructions an MCP client gets: the site's, and an app's own rules when it connected by signing in. */
+export function instructionsFor(context: Pick<ToolContext, "drafting">): string {
+  return context.drafting ? `${INSTRUCTIONS}\n\n${APP_INSTRUCTIONS}` : INSTRUCTIONS;
+}
+
 export const INSTRUCTIONS = `This is a Brim.js site: an Astro site whose texts, images, links and settings the owner edits.
 Code is in git; content is in SQLite. Every editable element has a stable nodeId; a value saved for that nodeId
 replaces the default written in code. Never invent nodeIds: read a page with brim_read_page first.
@@ -153,9 +181,11 @@ export const TOOLS: Tool[] = [
       },
       required: ["path", "nodeId"],
     },
-    run: async (args, { api, storedValue }) => {
+    run: async (args, context) => {
       const where = location(args);
-      const stored = (await storedValue(where.path, where.scope, where.nodeId)) as Record<string, unknown> | undefined;
+      const stored = (await context.storedValue(where.path, where.scope, where.nodeId)) as
+        | Record<string, unknown>
+        | undefined;
       const { rich: _formatting, text: _words, ...kept } = stored ?? {};
       // Line breaks and formatting travel as `rich`, which the API checks; `text` is its plain reading beside it.
       let rich: InlineNode[] | undefined;
@@ -165,9 +195,9 @@ export const TOOLS: Tool[] = [
       } else {
         const text = requireString(args.text, "text");
         rich = text.includes("\n") ? textWithBreaks(text) : undefined;
-        if (!rich) return api("PUT", "/nodes", { ...where, kind: "text", value: { ...kept, text } });
+        if (!rich) return saveNode(context, where, { kind: "text", value: { ...kept, text } });
       }
-      return api("PUT", "/nodes", { ...where, kind: "text", value: { ...kept, text: readingOf(rich), rich } });
+      return saveNode(context, where, { kind: "text", value: { ...kept, text: readingOf(rich), rich } });
     },
   },
   {
@@ -179,24 +209,25 @@ export const TOOLS: Tool[] = [
       properties: { path, nodeId, scope, ...binding, kind: { type: "string" }, value: { type: "object" } },
       required: ["path", "nodeId", "kind", "value"],
     },
-    run: async (args, { api, storedValue }) => {
+    run: async (args, context) => {
       const where = location(args);
       const kind = requireString(args.kind, "kind");
       const value = requireObject(args.value, "value");
       const isBlock = Object.hasOwn(blockDefinitions, kind) && kind !== "text";
       const stored = isBlock
-        ? ((await storedValue(where.path, where.scope, where.nodeId)) as object | undefined)
+        ? ((await context.storedValue(where.path, where.scope, where.nodeId)) as object | undefined)
         : undefined;
-      return api("PUT", "/nodes", { ...where, kind, value: { ...stored, ...value } });
+      return saveNode(context, where, { kind, value: { ...stored, ...value } });
     },
   },
   {
     name: "brim_reset_element",
     description: "Removes the owner's saved value of an element, so it shows the default written in code again.",
     inputSchema: { type: "object", properties: { path, nodeId, scope }, required: ["path", "nodeId"] },
-    run: async (args, { api }) => {
-      await api("DELETE", "/nodes", location(args));
-      return { reset: true };
+    run: async (args, context) => {
+      const where = location(args);
+      await context.api("DELETE", "/nodes", { ...where, ...(context.drafting && { draft: true }) });
+      return withEdit(context, { path: where.path }, { reset: true, ...(context.drafting && { draft: true }) });
     },
   },
   {
@@ -233,13 +264,15 @@ export const TOOLS: Tool[] = [
       },
       required: ["template", "title"],
     },
-    run: async (args, { api }) =>
-      api("POST", "/pages", {
+    run: async (args, context) => {
+      const answer = (await context.api("POST", "/pages", {
         template: requireString(args.template, "template"),
         title: requireString(args.title, "title"),
         path: args.path,
         visibility: args.visibility ?? "private",
-      }),
+      })) as { page?: { path?: string } };
+      return withEdit(context, answer.page?.path ? { path: answer.page.path } : undefined, answer);
+    },
   },
   {
     name: "brim_delete_page",
@@ -277,13 +310,22 @@ export const TOOLS: Tool[] = [
       },
       required: ["path"],
     },
-    run: async (args, { api }) =>
-      api("PUT", "/pages", {
-        path: requirePath(args),
-        title: args.title,
-        visibility: args.visibility,
-        seo: args.seo,
-      }),
+    run: async (args, context) => {
+      const path = requirePath(args);
+      // An app's SEO change waits in the draft with the page's content; its title and visibility are its own asking.
+      if (context.drafting && args.seo !== undefined) {
+        await context.api("PUT", "/pages", { path, seo: args.seo, draft: true });
+        if (args.title === undefined && args.visibility === undefined) {
+          return withEdit(context, { path }, { path, seo: args.seo, draft: true });
+        }
+        return withEdit(context, { path }, await context.api("PUT", "/pages", { path, title: args.title, visibility: args.visibility }));
+      }
+      return withEdit(
+        context,
+        { path },
+        await context.api("PUT", "/pages", { path, title: args.title, visibility: args.visibility, seo: args.seo }),
+      );
+    },
   },
   {
     name: "brim_move_page",
@@ -359,14 +401,16 @@ export const TOOLS: Tool[] = [
       },
       required: ["type", "title"],
     },
-    run: async (args, { api }) =>
-      api("POST", "/items", {
+    run: async (args, context) => {
+      const answer = (await context.api("POST", "/items", {
         type: args.type,
         title: args.title,
         slug: args.slug,
         visibility: args.visibility,
         data: args.data ?? {},
-      }),
+      })) as { item?: { id?: string } };
+      return withEdit(context, answer.item?.id ? { item: answer.item.id } : undefined, answer);
+    },
   },
   {
     name: "brim_update_item",
@@ -382,16 +426,31 @@ export const TOOLS: Tool[] = [
       },
       required: ["id"],
     },
-    run: async (args, { api }) => {
+    run: async (args, context) => {
+      const { api } = context;
       const id = requireString(args.id, "id");
-      const item = await findItem(api, id);
-      return api("PUT", "/items", {
+      // An app works on the item as the editor previews it, drafts included, so a change keeps the ones before it.
+      const item = await findItem(api, id, context.drafting);
+      const content = {
         id,
         title: args.title ?? item.title,
         slug: args.slug ?? item.slug,
-        visibility: args.visibility ?? item.visibility,
         data: { ...item.data, ...(args.data as object | undefined) },
-      });
+      };
+      // What visitors see of a published item: an app's change to it waits as a draft. Who can see the item (its
+      // visibility) changes only when asked, at once.
+      if (context.drafting && item.visibility === "published") {
+        const page = (await context.itemPage?.(id)) ?? "/";
+        const drafted = await api("PUT", "/items", { ...content, path: page, draft: true });
+        const visibility = args.visibility ?? item.visibility;
+        if (visibility !== item.visibility) await api("PUT", "/items/visibility", { id, visibility });
+        return withEdit(context, { item: id }, { ...(drafted as object), draft: true });
+      }
+      return withEdit(
+        context,
+        { item: id },
+        await api("PUT", "/items", { ...content, visibility: args.visibility ?? item.visibility }),
+      );
     },
   },
   {
@@ -553,6 +612,13 @@ export const TOOLS: Tool[] = [
     run: async (_args, { api }) => api("GET", "/responses"),
   },
   {
+    name: "brim_publish_drafts",
+    description:
+      "Publishes every change waiting as a draft on the site, as the editor's Save does: drafts made through the MCP and in the editor alike. Visitors see them at once. Only when the user explicitly asks to publish.",
+    inputSchema: { type: "object", properties: {} },
+    run: async (_args, { api }) => api("POST", "/drafts/save"),
+  },
+  {
     name: "brim_list_history",
     description:
       "Lists the latest changes to the site's content, newest first: elements changed or reset, items changed or deleted, pages deleted, each with who made it and when. Kept for 90 days. Pass `path` for the changes made on one page.",
@@ -589,16 +655,40 @@ interface ItemRecord {
 }
 
 /** Items are listed per type, so the type is found from the declared ones. */
-async function findItem(api: ToolContext["api"], id: string): Promise<ItemRecord> {
+async function findItem(api: ToolContext["api"], id: string, drafts = false): Promise<ItemRecord> {
   const { types = [] } = (await api("GET", "/types")) as { types?: { key: string }[] };
   for (const type of types) {
-    const { items = [] } = (await api("GET", `/items?type=${encodeURIComponent(type.key)}`)) as {
+    const { items = [] } = (await api("GET", `/items?type=${encodeURIComponent(type.key)}${drafts ? "&draft" : ""}`)) as {
       items?: ItemRecord[];
     };
     const item = items.find((candidate) => candidate.id === id);
     if (item) return item;
   }
   throw new Error(`There is no item with the id ${id}.`);
+}
+
+/** Saves an element: as a draft for an app connected by signing in, else at once. Answers with the editor's address. */
+async function saveNode(
+  context: ToolContext,
+  where: ReturnType<typeof location>,
+  value: { kind: string; value: unknown },
+): Promise<unknown> {
+  const answer = await context.api("PUT", "/nodes", { ...where, ...value, ...(context.drafting && { draft: true }) });
+  const target = where.item ? { item: where.item } : { path: where.path };
+  return withEdit(context, target, { ...(answer as object), ...(context.drafting && { draft: true }) });
+}
+
+/** A tool's answer with the editor's address of what it changed, for the person to open, edit and publish. */
+async function withEdit(
+  context: ToolContext,
+  target: { path: string } | { item: string } | undefined,
+  answer: unknown,
+): Promise<unknown> {
+  if (!target || !context.origin) return answer;
+  const path = "path" in target ? target.path : await context.itemPage?.(target.item);
+  // The editor opens on that page; an item without a page of its own is found in the editor's content.
+  const editUrl = `${context.origin}/admin/edit${path && path !== "/" ? path : ""}`;
+  return { ...(answer as object), editUrl };
 }
 
 function location(args: Record<string, unknown>): {
