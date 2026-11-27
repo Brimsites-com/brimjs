@@ -1,8 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { readImages } from "../src/blocks/images.ts";
-import { defineContentType } from "../src/content/content-types.ts";
+import { type ContentType, defineContentType } from "../src/content/content-types.ts";
 import { focusStyle, readFocus } from "../src/content/image-focus.ts";
 import { applyToItem } from "../src/content/item-fields.ts";
+import { parseItem } from "../src/content/items.ts";
 import type { Item } from "../src/content/items.ts";
 import { parseImage } from "../src/content/validate.ts";
 import { ValidationError } from "../src/content/validation-error.ts";
@@ -70,6 +71,23 @@ describe("an image's focus", () => {
     expect(moved?.focus).toEqual({ x: 10, y: 90 });
     expect(moved?.img.style).toBe("object-position:10% 90%");
     expect(centered?.img).toEqual({ src: "/uploads/b.webp", alt: "B" });
+  });
+
+  it("stays with an image block in an item's blocks field", () => {
+    const article: ContentType = {
+      key: "article",
+      label: "Articles",
+      singular: "Article",
+      slug: "blog",
+      fields: [{ name: "body", label: "Body", type: "blocks" }],
+    };
+    const parsed = parseItem(article, {
+      title: "Guide",
+      visibility: "published",
+      data: { body: [{ id: "a", type: "image", value: { url: "/uploads/a.webp", focalPointX: 15, focalPointY: 85 } }] },
+    });
+    const [block] = parsed.data.body as { value: Record<string, unknown> }[];
+    expect(block?.value).toMatchObject({ url: "/uploads/a.webp", focalPointX: 15, focalPointY: 85 });
   });
 
   it("moves from an Image or a Gallery on an item's page into the item", () => {
