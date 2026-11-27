@@ -61,6 +61,13 @@ Any client that speaks MCP over HTTP works the same way, Codex and Cursor includ
 
 `brim_set_text` keeps a `\n` as a line break and takes `rich` to keep or add formatting. A batch holds at most 20 requests, run one after another.
 
+## Writing articles and other items
+
+The MCP tells every client how a site's content is shaped, so an app writing an article puts things where they show:
+
+- A `richtext` field holds text only. Text with pictures between its paragraphs goes in a `blocks` field, as `richtext` and `image` blocks in reading order. A type that should take such texts declares a `blocks` field; its `help` can say so, since clients read it.
+- `brim_site` names each type's `previewImage`: the field with the picture on cards, in feeds and in shared links (the standard `image`, or the first image field of a type that set `image: false`). Clients are asked to fill it for every new item.
+
 ## What to know
 
 - Changes through the MCP are saved at once, with no draft. Read a page (`brim_read_page`) before changing it, and use `brim_list_history` and `brim_restore_history` to take a change back.

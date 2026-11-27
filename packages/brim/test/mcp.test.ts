@@ -385,6 +385,8 @@ describe("tools", () => {
   it("gives an overview and block schemas", async () => {
     const { output } = await tool("brim_site");
     expect(output.types.map((type: { key: string }) => type.key)).toEqual(["project"]);
+    // The field with an item's picture on cards and shared links, which the MCP is told to fill: the standard `image`.
+    expect(output.types[0].previewImage).toBe("image");
     expect(output.pages.map((page: { path: string }) => page.path)).toEqual(["/"]);
     expect((await tool("brim_block_schema", { kind: "button" })).output.type).toBe("button");
     expect((await tool("brim_block_schema", { kind: "nope" })).error).toContain("no block");
@@ -552,5 +554,42 @@ describe("the formatting of a text element, as brim_read_page reads it", () => {
   it("gives nothing for plain text, so rich shows only where there is formatting", () => {
     expect(inlineNodes("Just words &amp; more")).toBeUndefined();
     expect(inlineNodes('<span class="x">Still plain</span>')).toBeUndefined();
+  });
+});
+
+describe("guidance for writing items", () => {
+  it("names the preview picture of a type that keeps its own image field", async () => {
+    const story = defineContentType({
+      key: "story",
+      label: "Stories",
+      singular: "Story",
+      slug: "stories",
+      component: () => "",
+      image: false,
+      fields: [
+        { name: "cover", label: "Cover", type: "image" },
+        { name: "content", label: "Text", type: "richtext" },
+        { name: "body", label: "Blocks", type: "blocks" },
+      ],
+    });
+    const types = createAdminHandler({
+      brim,
+      assetsDirectory: new URL("../editor-dist/", import.meta.url),
+      contentTypes: () => [story],
+    });
+    const response = await types(
+      new Request(`${ORIGIN}/admin/api/types`, { headers: { authorization: `Bearer ${token}` } }),
+      visitor,
+    );
+    const { types: listed } = (await response!.json()) as { types: { key: string; previewImage: string | null }[] };
+    expect(listed[0]).toMatchObject({ key: "story", previewImage: "cover" });
+  });
+
+  it("tells the client that pictures between paragraphs go in a blocks field", async () => {
+    const { result } = (await rpc("initialize", { protocolVersion: "2025-06-18", capabilities: {} })) as {
+      result: { instructions: string };
+    };
+    expect(result.instructions).toContain('A "richtext" field holds text only');
+    expect(result.instructions).toContain("previewImage");
   });
 });

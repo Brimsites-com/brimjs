@@ -30,6 +30,7 @@ import {
   requestOrigin,
 } from "./http.ts";
 import { itemPathSegments } from "../content/item-path.ts";
+import { imageField } from "../content/item-image.ts";
 import { type LocaleConfig, itemPagePath, localeOfPath, pathInLocale, storedLocale } from "./locales.ts";
 import { RateLimiter } from "./rate-limit.ts";
 import { SESSION_COOKIE, bearerToken, requestUser, sessionCookies } from "./auth.ts";
@@ -1385,7 +1386,12 @@ export function createAdminHandler(options: AdminOptions): AdminHandler {
 
     "GET /types": async (request) => {
       await currentUser(request);
-      const types = (await contentTypes()).map(({ component, ...type }) => ({ ...type, hasPage: Boolean(component) }));
+      // `previewImage`: the field with an item's picture on cards, in feeds and in shared links (the MCP fills it).
+      const types = (await contentTypes()).map(({ component, ...type }) => ({
+        ...type,
+        hasPage: Boolean(component),
+        previewImage: imageField(type) ?? null,
+      }));
       return json({ types });
     },
 

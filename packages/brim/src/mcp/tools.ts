@@ -43,6 +43,11 @@ Repeatable content (projects, articles…) is items of content types declared in
 then create or change items. A "blocks" field is a list of blocks, [{"id","type","value"}]: an id of its own (e.g.
 "b1a2b3c4"), a type the field offers (its "blocks", or else richtext, image, image-gallery, carousel, video, button,
 accordion, divider, map) and its value: rich text {"blocks":[…]}, or the block's settings (brim_block_schema).
+A "richtext" field holds text only: headings, paragraphs, lists, quotes, never a picture. Text with pictures between
+its paragraphs (an article, a story, a guide) goes in a "blocks" field instead, as richtext and image blocks one after
+the other in reading order, e.g. [richtext, image, richtext, image, richtext]; when a type has both kinds of field,
+leave the richtext one empty for such a text. Fill each new item's picture too: brim_site names it per type
+("previewImage", shown on cards, in feeds and in shared links), and a picture in the text does not replace it.
 New pages are content too: pick a page template declared in code
 (brim_list_page_templates), create the page with brim_create_page, then fill its elements like any page's. Pages and items are "private" or "published"; only published ones reach the public build.
 Facts about the whole site that its owner changes (phone, email, WhatsApp, social profiles, address, opening
@@ -80,7 +85,7 @@ export const TOOLS: Tool[] = [
   {
     name: "brim_site",
     description:
-      "Overview of the site: its pages with their visibility and SEO (pages added from a template also have their template and title), its content types with their fields, its page templates, and its own settings (siteSettings: fields and values).",
+      "Overview of the site: its pages with their visibility and SEO (pages added from a template also have their template and title), its content types with their fields and previewImage (the field with an item's picture on cards and shared links), its page templates, and its own settings (siteSettings: fields and values).",
     inputSchema: { type: "object", properties: {} },
     run: async (_args, { api }) => ({
       ...((await api("GET", "/pages")) as object),
@@ -342,7 +347,7 @@ export const TOOLS: Tool[] = [
   {
     name: "brim_create_item",
     description:
-      'Creates an item of a content type. `data` holds the fields the type declares (brim_site lists them); images are {src, alt}, rich text is {blocks:[…]}, tags are a list of text (["garden", "2024"]), a keyvalue field is a list of rows ([{"label": "Size", "value": "60 × 120 cm"}]), a select field takes the value of one of its options (not its label), and a reference field takes the slug of an existing item of the type it points at ("ceramica"), or a list of slugs when it is multiple: create the terms of the vocabulary first. Items start private unless visibility is published.',
+      'Creates an item of a content type. `data` holds the fields the type declares (brim_site lists them); images are {src, alt}, rich text is {blocks:[…]}, tags are a list of text (["garden", "2024"]), a keyvalue field is a list of rows ([{"label": "Size", "value": "60 × 120 cm"}]), a select field takes the value of one of its options (not its label), and a reference field takes the slug of an existing item of the type it points at ("ceramica"), or a list of slugs when it is multiple: create the terms of the vocabulary first. Set the previewImage field of the type (brim_site) to the picture of the item. Pictures between paragraphs go in a blocks field, as image blocks between richtext blocks: a richtext field cannot hold them. Items start private unless visibility is published.',
     inputSchema: {
       type: "object",
       properties: {

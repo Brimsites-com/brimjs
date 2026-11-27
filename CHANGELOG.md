@@ -4,6 +4,15 @@ What changed in Brim.js, newest first. Versions are semantic: only a major versi
 and config, and says so here under **Changed**; a minor version adds, a patch version fixes. Database migrations are
 append-only.
 
+## 1.1.1
+
+### Fixed
+
+- **AI apps write articles with pictures where they belong**: the MCP tells them that a `richtext` field cannot hold
+  pictures, so text with pictures between its paragraphs goes in a `blocks` field as text and image blocks in reading
+  order, and to fill each new item's preview picture. `brim_site` (and `/admin/api/types`) names it per type as
+  `previewImage`. Before, ChatGPT wrote a whole article into one rich text and could only add a picture after it.
+
 ## 1.1.0
 
 ### Added
