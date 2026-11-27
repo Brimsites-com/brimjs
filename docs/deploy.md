@@ -46,7 +46,9 @@ Set `BRIM_CLIENT_IP_HEADER` only when the proxy always writes that header itself
 `GET /admin/api/info` answers `{ name, version, schemaVersion, capabilities, … }` without signing in, for health
 checks. A host that keeps pages in a CDN empties it when an `/admin` answer carries `X-Brim-Changed: live`
 (capability `live-change-header`), and keys each page on the query parameters `query` says it reads (capability
-`query-params`); see "Caching on a host" in the README.
+`query-params`); see "Caching on a host" in the README. Send `/.well-known/oauth-protected-resource` and
+`/.well-known/oauth-authorization-server` (and what follows them) straight to the server like `/admin`, uncached and not
+redirected: ChatGPT and Claude read them to sign in to the site's MCP ([Site MCP](./mcp.md)).
 
 ## Updates and backups
 

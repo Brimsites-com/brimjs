@@ -122,6 +122,12 @@ claude mcp add --transport http <site> https://<site address>/admin/mcp --header
 clients `brimsites mcp <site>` prints the address and a configuration that reads the token from `BRIM_SITE_TOKEN`.
 Never write the token into a file of the project (a committed `.mcp.json`), and never repeat it in a message.
 
+The owner can edit the site from ChatGPT or Claude themselves, without any token: tell them, once the site is
+online, to add `https://<site address>/admin/mcp` as a custom connector in the app (in ChatGPT with OAuth as its
+authentication; in Claude under Settings → Connectors), sign in on the site's page that opens and choose Allow. The
+app stays connected until they disconnect it in the editor's menu (Connected apps) or on Brimsites (the site's MCP
+settings). A token is for tools like you that cannot sign in.
+
 What the live MCP changes is online at once, with no Save step: read the page (`brim_read_page`) before changing it,
 and `brim_list_history` / `brim_restore_history` take a change back. `brimsites tokens list <site>` shows the
 tokens, and `brimsites tokens revoke <site> <email> claude` stops one. On a server of your own, make the token where

@@ -185,6 +185,9 @@ things:
   matches a path wins). The host keeps exactly those in its cache key, so `/about?utm_source=x` or `/about?ref=mail`
   is the cached `/about`, while `/shop?brand=marazzi` is a copy of its own. A path that is not in the map keeps every
   parameter, as before: declaring is only ever more precise, never a page that loses what it reads.
+- **Where AI apps sign in** (capability `oauth`): `/.well-known/oauth-protected-resource` (and `…/admin/mcp`) and
+  `/.well-known/oauth-authorization-server` must reach the site's server like `/admin`: not cached, not redirected to
+  another domain, and waking a sleeping server. They answer for the address they were asked at.
 
 ```json
 { "capabilities": ["…", "live-change-header", "query-params"],
@@ -1306,7 +1309,17 @@ addresses. A site with its own `src/pages/rss/` keeps it and Brim adds no feeds.
 ## Site MCP
 
 Every Brim.js site serves its own MCP endpoint at `/admin/mcp`, so an AI client can read and change the site's
-content with the same checks as the editor. It needs an access token, which acts as one of the site's users:
+content with the same checks as the editor.
+
+**AI apps that sign in** (ChatGPT, Claude, any MCP client with OAuth) need only the address: add
+`https://your-site.com/admin/mcp` as a custom connector (in ChatGPT with OAuth as its authentication), sign in on the
+site's own page and choose Allow. The app acts as that user, with their role, and stays connected (it renews its
+hour-long access token itself) until it is disconnected in the editor's menu (**Connected apps**), the user's
+password changes or the user is removed. The site is its own OAuth server: metadata under `/.well-known/oauth-*`,
+apps register themselves at `/admin/oauth/register`, PKCE is required. See [Site MCP](./docs/mcp.md).
+
+**Tools that use a token** (Claude Code, Codex, Cursor, scripts) send an access token, which acts as one of the
+site's users:
 
 ```bash
 pnpm brim token add you@example.com --name claude

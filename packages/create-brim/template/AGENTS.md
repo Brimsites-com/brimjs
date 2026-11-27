@@ -114,3 +114,7 @@ here without opening the editor. On a yes: `brimsites tokens create <site> --nam
 `claude mcp add --transport http <site> https://<site address>/admin/mcp --header "Authorization: Bearer <token>"`
 (the guide's "Editing the live site from an AI agent"). The token never goes into a file of the project or a
 message. Changes made through it are online at once.
+
+Tell the owner too that they can edit the live site by chatting in ChatGPT or Claude, with no token: add
+`https://<site address>/admin/mcp` there as a custom connector (OAuth), sign in on the site and choose Allow. The
+editor's menu (Connected apps) shows and disconnects those apps.

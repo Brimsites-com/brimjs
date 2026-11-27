@@ -66,6 +66,8 @@ A new password, either way, signs the user out everywhere else.
 
 Every saved change of content is kept for 90 days (the latest 5,000 changes at most): an element changed or reset, an item changed or deleted, a page deleted with everything written on it. History, in the editor's account menu, lists them for the page or the whole site, with who made each and when.
 
+Connected apps, in the same menu, shows the AI apps (ChatGPT, Claude) connected to the site's MCP by signing in, with the address to paste into one, and disconnects any of them at once. An owner sees everyone's. See [Site MCP](./mcp.md).
+
 Restore puts it back as it was before that change. A restored page comes back private, and a restore can be taken back too. Saves of the same thing by the same person within ten minutes count as one change. Restoring needs the role the change itself needs.
 
 ## The editor on any screen
