@@ -81,6 +81,8 @@ beforeEach(async () => {
     fetch: (async (input: string | URL | Request) => {
       const url = String(input instanceof Request ? input.url : input);
       if (url.endsWith("/lamp.png")) return new Response(PNG, { headers: { "content-type": "image/png" } });
+      // A chat app's link to a file the person attached: served as plain bytes.
+      if (url.includes("/chat-files/")) return new Response(PNG, { headers: { "content-type": "application/octet-stream" } });
       return new Response("<html></html>", { headers: { "content-type": "text/html" } });
     }) as typeof fetch,
   });
@@ -513,6 +515,30 @@ describe("brim_upload_image", () => {
 
     const { output } = await tool("brim_list_media");
     expect(output.files).toHaveLength(2);
+  });
+
+  it("takes a picture attached in the chat, which ChatGPT hands over as a link", async () => {
+    const listed = (await rpc("tools/list")) as { result: { tools: { name: string; _meta?: object; inputSchema: any }[] } };
+    const upload = listed.result.tools.find((candidate) => candidate.name === "brim_upload_image")!;
+    expect(upload._meta).toEqual({ "openai/fileParams": ["file"] });
+    expect(upload.inputSchema.$defs.ChatFile.required).toEqual(["download_url", "file_id"]);
+
+    const attached = await tool("brim_upload_image", {
+      file: {
+        download_url: "https://93.184.215.14/chat-files/abc?sig=1",
+        file_id: "file_abc",
+        mime_type: "image/png",
+        file_name: "kitchen.png",
+      },
+    });
+    expect(attached.output.file).toMatchObject({ name: "kitchen.png", mime: "image/png" });
+
+    // Sometimes ChatGPT sends the file's place in its sandbox: the answer asks it to try again.
+    const path = await tool("brim_upload_image", { file: "/mnt/data/kitchen.png" });
+    expect(path.error).toContain("Call brim_upload_image again");
+    // Bytes served as a file, with no word that they are a picture, are still refused.
+    const unsaid = await tool("brim_upload_image", { file: { download_url: "https://93.184.215.14/chat-files/x", file_id: "f" } });
+    expect(unsaid.error).toContain("not an image");
   });
 
   it("refuses what is not an image, the server's own network, and a folder that does not exist", async () => {

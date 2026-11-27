@@ -55,7 +55,7 @@ Any client that speaks MCP over HTTP works the same way, Codex and Cursor includ
 | `brim_list_items`, `brim_create_item`, `brim_update_item`, `brim_delete_item` | Items of content types; filter by `tag` and `locale` |
 | `brim_translate_item` | A private translation of an item, linked to it |
 | `brim_reorder_items` | The order of an ordered type's items |
-| `brim_list_media`, `brim_upload_image` | The media library: search it, add to it from a public address or base64 |
+| `brim_list_media`, `brim_upload_image` | The media library: search it, add to it from a picture attached in the chat, a public address or base64 |
 | `brim_list_form_responses` | Form messages, newest first |
 | `brim_publish_drafts` | Publishes the changes waiting as drafts, as the editor's Save does |
 | `brim_list_history`, `brim_restore_history` | The latest changes, and taking one back |
@@ -68,6 +68,8 @@ The MCP tells every client how a site's content is shaped, so an app writing an 
 
 - A `richtext` field holds text only. Text with pictures between its paragraphs goes in a `blocks` field, as `richtext` and `image` blocks in reading order. A type that should take such texts declares a `blocks` field; its `help` can say so, since clients read it.
 - `brim_site` names each type's `previewImage`: the field with the picture on cards, in feeds and in shared links (the standard `image`, or the first image field of a type that set `image: false`). Clients are asked to fill it for every new item.
+
+A picture the person attaches in ChatGPT reaches the site too: `brim_upload_image` names its `file` input in `_meta["openai/fileParams"]`, so ChatGPT hands the tool a short-lived link to the file, which the site fetches into its media library. Clients that cannot pass files (most others) use a public address, or the person uploads the picture in the editor and the app finds it with `brim_list_media`.
 
 ## What to know
 

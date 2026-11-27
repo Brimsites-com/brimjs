@@ -14,7 +14,7 @@ export interface ToolContext {
   /** Puts an image into the site's media library (`folder` "" or `<type>/<item id>`), as the editor uploads one. */
   upload(bytes: Uint8Array, name: string, folder: string): Promise<unknown>;
   /** Fetches an image from a public web address, refusing the server's own network. */
-  fetchImage(url: string): Promise<{ bytes: Uint8Array; name: string }>;
+  fetchImage(url: string, declaredType?: string): Promise<{ bytes: Uint8Array; name: string }>;
   /**
    * An app the person connected by signing in (OAuth: ChatGPT, Claude…). Nothing it does reaches visitors unless the
    * person asks for it: changes to what visitors see wait as drafts, as the editor's own changes do, until someone
@@ -33,10 +33,33 @@ export interface Tool {
   name: string;
   description: string;
   inputSchema: JsonSchema;
+  /** Extra facts for clients, listed with the tool: `openai/fileParams` names the inputs ChatGPT fills with a file. */
+  _meta?: Record<string, unknown>;
   run(args: Record<string, unknown>, context: ToolContext): Promise<unknown>;
 }
 
-type JsonSchema = { type: "object"; properties: Record<string, unknown>; required?: string[] };
+type JsonSchema = {
+  type: "object";
+  properties: Record<string, unknown>;
+  required?: string[];
+  $defs?: Record<string, unknown>;
+};
+
+/**
+ * A file the person attached in a chat app, as ChatGPT hands it to a tool that names the input in its
+ * `openai/fileParams`: a short-lived link to the file, not its bytes. The shape is the one ChatGPT requires.
+ */
+const CHAT_FILE = {
+  type: "object",
+  properties: {
+    download_url: { type: "string" },
+    file_id: { type: "string" },
+    mime_type: { type: "string" },
+    file_name: { type: "string" },
+  },
+  required: ["download_url", "file_id"],
+  additionalProperties: false,
+};
 
 /** Explains the model to the AI client once, when it connects. */
 /**
@@ -539,10 +562,12 @@ export const TOOLS: Tool[] = [
   {
     name: "brim_upload_image",
     description:
-      "Puts an image into the site's media library, where the owner finds it under \"Choose from site\" and can replace it, and answers its address (/uploads/…) to use in image fields, Image elements and blocks. Give `url` (a public http or https address; the site fetches it) or `data` (the file in base64) with `name`. With `type` and `item`, the image goes to that item's folder. Use it for pictures of items (products, projects, articles, people) and pictures the owner adds; the pictures the design starts with (hero, sections, logo) stay files of the code in public/. Use the address it answers in content (an item's image field, brim_set_element), never in the site's code: uploads are not in git.",
+      "Puts an image into the site's media library, where the owner finds it under \"Choose from site\" and can replace it, and answers its address (/uploads/…) to use in image fields, Image elements and blocks. Give `file` for a picture the user attached in the chat (call it once per picture), `url` (a public http or https address; the site fetches it), or `data` (the file in base64) with `name`. With `type` and `item`, the image goes to that item's folder. Use it for pictures of items (products, projects, articles, people) and pictures the owner adds; the pictures the design starts with (hero, sections, logo) stay files of the code in public/. Use the address it answers in content (an item's image field, brim_set_element), never in the site's code: uploads are not in git.",
     inputSchema: {
       type: "object",
+      $defs: { ChatFile: CHAT_FILE },
       properties: {
+        file: { $ref: "#/$defs/ChatFile", description: "A picture the user attached in the chat." },
         url: { type: "string", description: "A public http or https address of the image." },
         data: { type: "string", description: "The image file in base64, when there is no address to fetch." },
         name: {
@@ -553,9 +578,23 @@ export const TOOLS: Tool[] = [
         item: { type: "string", description: "With type: the id of the item whose folder takes the image." },
       },
     },
+    // ChatGPT fills `file` with the picture the person attached, as a link the site fetches.
+    _meta: { "openai/fileParams": ["file"] },
     run: async (args, { upload, fetchImage }) => {
       const folder =
         args.item === undefined ? "" : `${requireString(args.type, "type")}/${requireString(args.item, "item")}`;
+      if (args.file !== undefined) {
+        // ChatGPT now and then sends the file's place in its own sandbox instead of the file: asked again, it sends it.
+        if (typeof args.file === "string" || typeof (args.file as { download_url?: unknown })?.download_url !== "string") {
+          throw new Error(
+            `"file" did not arrive as the attached file (${typeof args.file === "string" ? args.file : "no download link"}). Call brim_upload_image again with the picture attached in the chat as "file".`,
+          );
+        }
+        const file = args.file as { download_url: string; mime_type?: string; file_name?: string };
+        const fetched = await fetchImage(file.download_url, file.mime_type);
+        const name = typeof args.name === "string" ? args.name : file.file_name || nameFor(file.mime_type);
+        return upload(fetched.bytes, name, folder);
+      }
       if (typeof args.url === "string") {
         const fetched = await fetchImage(args.url);
         return upload(fetched.bytes, typeof args.name === "string" ? args.name : fetched.name, folder);
@@ -718,6 +757,14 @@ function requirePath(args: Record<string, unknown>): string {
   if (!value.startsWith("/")) throw new Error('"path" must start with "/".');
   if (/^\/[/\\]/.test(value) || value.includes("\\")) throw new Error('"path" must be a page of this site, like "/about".');
   return value;
+}
+
+/** A name for an attached file that came without one: its kind's usual extension. */
+function nameFor(mimeType: string | undefined): string {
+  const extension = { "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp", "image/gif": "gif", "image/avif": "avif" }[
+    mimeType ?? ""
+  ];
+  return `picture.${extension ?? "jpg"}`;
 }
 
 function requireString(value: unknown, name: string): string {

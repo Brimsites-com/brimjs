@@ -72,7 +72,12 @@ async function answer(message: Message, context: ToolContext): Promise<object | 
       return result(id, {});
     case "tools/list":
       return result(id, {
-        tools: TOOLS.map(({ name, description, inputSchema }) => ({ name, description, inputSchema })),
+        tools: TOOLS.map(({ name, description, inputSchema, _meta }) => ({
+          name,
+          description,
+          inputSchema,
+          ...(_meta && { _meta }),
+        })),
       });
     case "tools/call": {
       const tool = TOOLS.find((candidate) => candidate.name === message.params?.name);

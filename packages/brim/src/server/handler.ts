@@ -1971,7 +1971,7 @@ export function createAdminHandler(options: AdminOptions): AdminHandler {
         if (!response.ok) throw new Error(String(answer.error ?? `The site answered ${response.status}.`));
         return answer;
       },
-      fetchImage: (url) => fetchImage(url, options.fetch),
+      fetchImage: (url, declaredType) => fetchImage(url, options.fetch, undefined, declaredType),
     };
   }
 

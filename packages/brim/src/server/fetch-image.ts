@@ -26,6 +26,11 @@ export async function fetchImage(
   address: string,
   fetcher: typeof fetch = pinnedFetch,
   resolve: Lookup = (host) => lookup(host, { all: true }),
+  /**
+   * The image type whoever gave the address says the file has, for a store that serves every file as
+   * `application/octet-stream` (a chat app's link to a file the person attached). The upload checks the bytes anyway.
+   */
+  declaredType?: string,
 ): Promise<FetchedImage> {
   let url = parseAddress(address);
   for (let hop = 0; hop <= MAX_REDIRECTS; hop++) {
@@ -37,8 +42,10 @@ export async function fetchImage(
       continue;
     }
     if (!response.ok) throw new Error(`${url.href} answered ${response.status}.`);
-    const type = response.headers.get("content-type") ?? "";
-    if (!type.startsWith("image/")) throw new Error(`${url.href} is not an image (${type || "no content type"}).`);
+    const served = response.headers.get("content-type") ?? "";
+    const generic = served === "" || served.startsWith("application/octet-stream") || served.startsWith("binary/");
+    const type = generic && declaredType?.startsWith("image/") ? declaredType : served;
+    if (!type.startsWith("image/")) throw new Error(`${url.origin}${url.pathname} is not an image (${served || "no content type"}).`);
     if (Number(response.headers.get("content-length") ?? 0) > MAX_UPLOAD_BYTES) throw tooLarge();
     return { bytes: await readLimited(response), name: decodeURIComponent(url.pathname.split("/").pop() || "image") };
   }

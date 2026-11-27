@@ -4,6 +4,15 @@ What changed in Brim.js, newest first. Versions are semantic: only a major versi
 and config, and says so here under **Changed**; a minor version adds, a patch version fixes. Database migrations are
 append-only.
 
+## 1.2.2
+
+### Added
+
+- **Pictures attached in ChatGPT go into the site**: `brim_upload_image` takes a `file` that ChatGPT fills with a picture
+  the person attached in the chat (it declares it in `_meta["openai/fileParams"]`), fetches it from the short-lived
+  link ChatGPT gives and puts it in the media library, ready for an article. Before, only a public address or base64
+  worked, and a chat app cannot pass a picture's bytes.
+
 ## 1.2.1
 
 ### Added
