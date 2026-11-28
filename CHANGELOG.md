@@ -4,6 +4,20 @@ What changed in Brim.js, newest first. Versions are semantic: only a major versi
 and config, and says so here under **Changed**; a minor version adds, a patch version fixes. Database migrations are
 append-only.
 
+## 1.2.3
+
+### Fixed
+
+- **The focus point follows the mouse only while it is held**: it moves at once under the pointer and is saved once,
+  when the button is let go, instead of saving and redrawing the page at every step; a release outside the picture
+  (over the page) ends the drag. A click gives the point the keyboard focus, so the arrow keys fine-tune it.
+
+### Added
+
+- **AI apps set the focus too**: the MCP tells them how: `focus: { x, y }` in an image field or a gallery,
+  `focalPointX` / `focalPointY` in an Image's or image block's settings (saved in the item for an Image bound to one),
+  and `imageFocus` beside a page's SEO image in `brim_update_page`. They give it when the subject is not in the middle.
+
 ## 1.2.2
 
 ### Added
