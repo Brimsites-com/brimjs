@@ -818,42 +818,95 @@ function MediaPicker({
 /**
  * The whole picture with a point on it: a click or a drag puts the point where the picture must stay in sight when
  * it is cropped; the arrow keys move it too (Shift for larger steps). Values are percentages from the left and top.
+ * While the point moves it is only drawn here (and given to `onPreview`); it is saved once, when the button or the key
+ * is let go, so the page is not redrawn at every step.
  */
 function FocusFrame({
   image,
   x,
   y,
   onChange,
+  onPreview,
 }: {
   image: string;
   x: number;
   y: number;
   onChange: (x: number, y: number) => void;
+  onPreview?: ((point: ImageFocus | undefined) => void) | undefined;
 }) {
   const frame = useRef<HTMLDivElement>(null);
   // The frame takes the picture's shape once it has loaded, so a point on the frame is that point of the picture.
   const [ratio, setRatio] = useState(16 / 9);
+  /** Where the point is drawn while it moves, before it is saved. */
+  const [moving, setMoving] = useState<ImageFocus>();
+  const dragging = useRef(false);
+  const dot = useRef<HTMLButtonElement>(null);
+  const shown = moving ?? { x, y };
 
-  function moveTo(clientX: number, clientY: number): void {
+  // Once the saved point arrives, it is drawn instead of the moving one.
+  useEffect(() => {
+    if (dragging.current) return;
+    setMoving(undefined);
+    onPreview?.(undefined);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [x, y]);
+
+  function show(point: ImageFocus): void {
+    setMoving(point);
+    onPreview?.(point);
+  }
+
+  function pointAt(clientX: number, clientY: number): ImageFocus | undefined {
     const bounds = frame.current?.getBoundingClientRect();
-    if (!bounds || bounds.width === 0 || bounds.height === 0) return;
-    onChange(
-      Math.round(clamp(((clientX - bounds.left) / bounds.width) * 100, 0, 100)),
-      Math.round(clamp(((clientY - bounds.top) / bounds.height) * 100, 0, 100)),
-    );
+    if (!bounds || bounds.width === 0 || bounds.height === 0) return undefined;
+    return {
+      x: Math.round(clamp(((clientX - bounds.left) / bounds.width) * 100, 0, 100)),
+      y: Math.round(clamp(((clientY - bounds.top) / bounds.height) * 100, 0, 100)),
+    };
+  }
+
+  /** Saves where the point was let go, once. */
+  function settle(): void {
+    if (!dragging.current) return;
+    dragging.current = false;
+    commit(moving);
+  }
+
+  function commit(point: ImageFocus | undefined): void {
+    if (!point) return;
+    if (point.x === x && point.y === y) {
+      setMoving(undefined);
+      onPreview?.(undefined);
+      return;
+    }
+    onChange(point.x, point.y);
   }
 
   return (
     <div
       ref={frame}
       className="focus-frame"
-      style={{ "--focus-x": `${x}%`, "--focus-y": `${y}%`, "--focus-ratio": ratio } as React.CSSProperties}
+      style={{ "--focus-x": `${shown.x}%`, "--focus-y": `${shown.y}%`, "--focus-ratio": ratio } as React.CSSProperties}
       onPointerDown={(event) => {
         if (event.button !== 0) return;
+        event.preventDefault();
         event.currentTarget.setPointerCapture(event.pointerId);
-        moveTo(event.clientX, event.clientY);
+        // The point takes the focus, so the arrow keys fine-tune where the click put it.
+        dot.current?.focus({ preventScroll: true });
+        dragging.current = true;
+        const point = pointAt(event.clientX, event.clientY);
+        if (point) show(point);
       }}
-      onPointerMove={(event) => event.buttons === 1 && moveTo(event.clientX, event.clientY)}
+      onPointerMove={(event) => {
+        if (!dragging.current) return;
+        // The button was let go where this frame did not hear it: the drag is over.
+        if ((event.buttons & 1) === 0) return settle();
+        const point = pointAt(event.clientX, event.clientY);
+        if (point) show(point);
+      }}
+      onPointerUp={settle}
+      onPointerCancel={settle}
+      onLostPointerCapture={settle}
     >
       {image && (
         <img
@@ -867,9 +920,10 @@ function FocusFrame({
         />
       )}
       <button
+        ref={dot}
         type="button"
         className="focus-point"
-        aria-label={`Focus point, ${x}% from the left and ${y}% from the top. Use the arrow keys to move it.`}
+        aria-label={`Focus point, ${shown.x}% from the left and ${shown.y}% from the top. Use the arrow keys to move it.`}
         onKeyDown={(event) => {
           const step = event.shiftKey ? 10 : 1;
           const move: Record<string, [number, number]> = {
@@ -881,8 +935,12 @@ function FocusFrame({
           const delta = move[event.key];
           if (!delta) return;
           event.preventDefault();
-          onChange(clamp(x + delta[0], 0, 100), clamp(y + delta[1], 0, 100));
+          show({ x: clamp(shown.x + delta[0], 0, 100), y: clamp(shown.y + delta[1], 0, 100) });
         }}
+        onKeyUp={(event) => {
+          if (event.key.startsWith("Arrow")) commit(moving);
+        }}
+        onBlur={() => commit(moving)}
       />
     </div>
   );
@@ -905,10 +963,18 @@ function ImageFocusPicker({
 }) {
   const x = focus?.x ?? 50;
   const y = focus?.y ?? 50;
-  const position = `${x}% ${y}%`;
+  // The crops follow the point while it moves, before it is saved.
+  const [preview, setPreview] = useState<ImageFocus>();
+  const position = `${preview?.x ?? x}% ${preview?.y ?? y}%`;
   return (
     <div className="image-focus">
-      <FocusFrame image={image} x={x} y={y} onChange={(nextX, nextY) => onChange({ x: nextX, y: nextY })} />
+      <FocusFrame
+        image={image}
+        x={x}
+        y={y}
+        onPreview={setPreview}
+        onChange={(nextX, nextY) => onChange({ x: nextX, y: nextY })}
+      />
       <p className="field-description" data-prompt={prompt || undefined}>
         {prompt
           ? "Click the part of the picture that must stay in sight when the site crops it."

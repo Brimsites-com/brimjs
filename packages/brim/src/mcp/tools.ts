@@ -108,6 +108,10 @@ Images are addresses: https URLs, files under /uploads, or the site's own files 
 one the owner adds, goes into the media library with brim_upload_image (from its web address, or as base64): use the
 /uploads address it answers in the item's image field, or as an element's value with brim_set_element
 ({"url": "/uploads/…", "alt": "…"}). Never write an /uploads address into the site's code (uploads are not in git).
+Where the site crops a picture, the part kept in sight is its focus, percentages from its left and top (the middle,
+50/50, when not given): {"src", "alt", "focus": {"x": 50, "y": 20}} in an image field or a gallery, "focalPointX" and
+"focalPointY" in an Image element's or image block's settings, "imageFocus" beside a page's SEO image. Give it when
+the subject is not in the middle (a face near the top: y 20–30), or when the person asks to show another part.
 The pictures the design starts with stay files of the code, in public/; Brim sends smaller copies of them.
 Videos go to the site's video host, never into public/ or git: brim_start_video_upload answers where to send the
 file (tus), brim_video_status says when it is ready and gives its url and posterUrl, for a video element or block.
@@ -159,7 +163,7 @@ export const TOOLS: Tool[] = [
   {
     name: "brim_set_site_settings",
     description:
-      "Changes some of the site's own settings: `values` holds only the ones to change, checked like an item's fields (images {src, alt}, references by slug…); null empties one. Every page that shows them changes at once.",
+      "Changes some of the site's own settings: `values` holds only the ones to change, checked like an item's fields (images {src, alt, focus?}, references by slug…); null empties one. Every page that shows them changes at once.",
     inputSchema: {
       type: "object",
       properties: {
@@ -225,7 +229,7 @@ export const TOOLS: Tool[] = [
   {
     name: "brim_set_element",
     description:
-      'Saves the value of any element, checked like the editor checks it. For blocks pass `value` as settings: they are merged into the saved settings, so only the changed ones are needed (brim_block_schema lists them). For richtext pass {"blocks":[{"tag":"p","children":["Text"]}]}; for link {"href":"/about","label":"About"}; for field (with item and field) {"value":"2026-11-20"}; for navbar and footer their full value as brim_read_page shows it. A navbar is {"logoText","logo":{"src","alt"},"items":[{"label","href"}]}; an item may also have "image":{"src","alt"} and "children" (sub-links of the same shape, two levels deep at most), e.g. a "Products" item whose children are categories with pictures. Footer items are only {"label","href"}.',
+      'Saves the value of any element, checked like the editor checks it. For blocks pass `value` as settings: they are merged into the saved settings, so only the changed ones are needed (brim_block_schema lists them); the focus of an image is {"focalPointX": 30, "focalPointY": 20}, also for an Image showing the picture of an item (it is saved in the item). For richtext pass {"blocks":[{"tag":"p","children":["Text"]}]}; for link {"href":"/about","label":"About"}; for field (with item and field) {"value":"2026-11-20"}; for navbar and footer their full value as brim_read_page shows it. A navbar is {"logoText","logo":{"src","alt"},"items":[{"label","href"}]}; an item may also have "image":{"src","alt"} and "children" (sub-links of the same shape, two levels deep at most), e.g. a "Products" item whose children are categories with pictures. Footer items are only {"label","href"}.',
     inputSchema: {
       type: "object",
       properties: { path, nodeId, scope, ...binding, kind: { type: "string" }, value: { type: "object" } },
@@ -322,6 +326,11 @@ export const TOOLS: Tool[] = [
             title: { type: "string" },
             description: { type: "string" },
             image: { type: "string" },
+            imageFocus: {
+              type: "object",
+              description: "The part of `image` kept in sight where the site crops it (a card): percentages.",
+              properties: { x: { type: "number" }, y: { type: "number" } },
+            },
             shareTitle: { type: "string", description: "Title of shared links; empty uses the SEO title." },
             shareDescription: { type: "string", description: "Description of shared links." },
             canonical: { type: "string", description: "Preferred address: a path of the site or a full URL." },
@@ -415,7 +424,7 @@ export const TOOLS: Tool[] = [
   {
     name: "brim_create_item",
     description:
-      'Creates an item of a content type. `data` holds the fields the type declares (brim_site lists them); images are {src, alt}, rich text is {blocks:[…]}, tags are a list of text (["garden", "2024"]), a keyvalue field is a list of rows ([{"label": "Size", "value": "60 × 120 cm"}]), a select field takes the value of one of its options (not its label), and a reference field takes the slug of an existing item of the type it points at ("ceramica"), or a list of slugs when it is multiple: create the terms of the vocabulary first. Set the previewImage field of the type (brim_site) to the picture of the item. Pictures between paragraphs go in a blocks field, as image blocks between richtext blocks: a richtext field cannot hold them. Items start private unless visibility is published.',
+      'Creates an item of a content type. `data` holds the fields the type declares (brim_site lists them); images are {src, alt} with an optional focus {x, y} (the part kept in sight where the site crops it, percentages), rich text is {blocks:[…]}, tags are a list of text (["garden", "2024"]), a keyvalue field is a list of rows ([{"label": "Size", "value": "60 × 120 cm"}]), a select field takes the value of one of its options (not its label), and a reference field takes the slug of an existing item of the type it points at ("ceramica"), or a list of slugs when it is multiple: create the terms of the vocabulary first. Set the previewImage field of the type (brim_site) to the picture of the item. Pictures between paragraphs go in a blocks field, as image blocks between richtext blocks: a richtext field cannot hold them. Items start private unless visibility is published.',
     inputSchema: {
       type: "object",
       properties: {

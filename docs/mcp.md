@@ -71,6 +71,8 @@ The MCP tells every client how a site's content is shaped, so an app writing an 
 
 A picture the person attaches in ChatGPT reaches the site too: `brim_upload_image` names its `file` input in `_meta["openai/fileParams"]`, so ChatGPT hands the tool a short-lived link to the file, which the site fetches into its media library. Clients that cannot pass files (most others) use a public address, or the person uploads the picture in the editor and the app finds it with `brim_list_media`.
 
+An app can also say which part of a picture stays in sight where the site crops it, as the owner does by clicking the picture in the editor: `focus: { x, y }` (percentages) in an image field or gallery, `focalPointX` / `focalPointY` in an Image element's or image block's settings (saved in the item for an Image bound to one), `imageFocus` beside a page's SEO image.
+
 ## What to know
 
 - **An app connected by signing in (OAuth) publishes nothing on its own.** New pages and items stay private, and its changes to what visitors already see (texts, elements, a published item, SEO) wait as drafts, like the editor's unsaved changes. It is told to publish only when the person asks in so many words, and to hand over the editor's link when it is done (every change answers an `editUrl`), so the person can look, edit and publish themselves.
